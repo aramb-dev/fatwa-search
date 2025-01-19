@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, RotateCcw } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,33 +9,34 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 
+const DEFAULT_SITES = [
+  "binothaimeen.net",
+  "alfawzan.af.org.sa",
+  "lohaidan.af.org.sa",
+  "binbaz.org.sa",
+  "al-badr.net",
+  "obied-aljabri.com",
+];
+
 const CustomSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sites, setSites] = useState([
-    "binothaimeen.net",
-    "alfawzan.af.org.sa",
-    "lohaidan.af.org.sa",
-    "binbaz.org.sa",
-    "al-badr.net",
-    "obied-aljabri.com",
-  ]);
+  const [sites, setSites] = useState(DEFAULT_SITES);
   const [newSite, setNewSite] = useState("");
+  const [isDefaultSites, setIsDefaultSites] = useState(true);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    // Construct the Google search URL with site: operators
     const siteQuery = sites.map((site) => `site:${site}`).join(" OR ");
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
       `(${siteQuery}) ${searchQuery}`
     )}`;
 
-    // Open the search in a new tab
     window.open(searchUrl, "_blank", "noopener,noreferrer");
   };
 
-  const addSite = (e) => {
+  const handleSiteRequest = (e) => {
     e.preventDefault();
     if (!newSite.trim()) return;
 
@@ -46,14 +47,32 @@ const CustomSearch = () => {
       return;
     }
 
-    if (!sites.includes(site)) {
-      setSites([...sites, site]);
-    }
-    setNewSite("");
+    // Submit form to Netlify
+    const formData = new FormData();
+    formData.append("form-name", "site-request");
+    formData.append("requested-site", site);
+
+    fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(formData).toString(),
+    })
+      .then(() => {
+        alert("Site request submitted successfully!");
+        setNewSite("");
+      })
+      .catch((error) => alert("Error submitting request: " + error));
   };
 
   const removeSite = (siteToRemove) => {
-    setSites(sites.filter((site) => site !== siteToRemove));
+    const newSites = sites.filter((site) => site !== siteToRemove);
+    setSites(newSites);
+    setIsDefaultSites(false);
+  };
+
+  const restoreDefaultSites = () => {
+    setSites(DEFAULT_SITES);
+    setIsDefaultSites(true);
   };
 
   return (
@@ -83,14 +102,19 @@ const CustomSearch = () => {
           </div>
         </form>
 
-        {/* Add Site Form */}
-        <form onSubmit={addSite} className="mt-6">
+        {/* Site Request Form */}
+        <form
+          onSubmit={handleSiteRequest}
+          className="mt-6"
+          data-netlify="true"
+          name="site-request"
+        >
           <div className="flex gap-2">
             <Input
               type="text"
               value={newSite}
               onChange={(e) => setNewSite(e.target.value)}
-              placeholder="Add a site (e.g., example.com)"
+              placeholder="Request a site (e.g., example.com)"
               className="flex-grow"
             />
             <Button
@@ -99,14 +123,27 @@ const CustomSearch = () => {
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              Add Site
+              Request Site
             </Button>
           </div>
         </form>
 
         {/* Site List */}
         <div className="mt-6">
-          <h3 className="text-sm font-medium mb-2">Sites to search:</h3>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-medium">Sites to search:</h3>
+            {!isDefaultSites && (
+              <Button
+                onClick={restoreDefaultSites}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Restore Default Sites
+              </Button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
             {sites.map((site) => (
               <div

@@ -16,6 +16,7 @@ const DEFAULT_SITES = [
   "binbaz.org.sa",
   "al-badr.net",
   "obied-aljabri.com",
+  "aletioupi.com"
 ];
 
 const CustomSearch = () => {

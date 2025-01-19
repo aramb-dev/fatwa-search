@@ -103,11 +103,13 @@ const CustomSearch = () => {
             <Button
               type="submit"
               className={cn(
-                "w-24",
-                searchQuery.trim() && "bg-gray-900 hover:bg-gray-800 text-white"
+                "flex items-center gap-2", // Preserve flex layout
+                searchQuery.trim()
+                  ? "bg-gray-900 text-white hover:bg-gray-800"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
               )}
             >
-              <Search className="w-4 h-4 mr-2" />
+              <Search className="h-4 w-4" />
               Search
             </Button>
           </div>
@@ -124,12 +126,13 @@ const CustomSearch = () => {
               type="button"
               onClick={handleSiteRequest}
               className={cn(
-                "w-24",
-                isValidDomain(newSite) &&
-                  "bg-gray-900 hover:bg-gray-800 text-white"
+                "flex items-center gap-2", // Preserve flex layout
+                isValidDomain(newSite)
+                  ? "bg-gray-900 text-white hover:bg-gray-800"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
               )}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="h-4 w-4" />
               Request Site
             </Button>
           </div>

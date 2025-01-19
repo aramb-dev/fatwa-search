@@ -82,11 +82,15 @@ const CustomSearch = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>Fatwa Site</CardTitle>
+        <CardTitle>Fatwa Search</CardTitle>
         <p className="text-sm text-gray-500">
           Searches the Mashayikh sites for your keyword
+        </p>
+        <p className="text-sm text-gray-500">
+          Putting your keywords in Arabic is more effective as these are Arabic
+          sites
         </p>
       </CardHeader>
       <CardContent>
@@ -170,6 +174,26 @@ const CustomSearch = () => {
               </div>
             ))}
           </div>
+        </div>
+        <div className="mt-4 text-center text-sm text-gray-500">
+          Created by{" "}
+          <a
+            href="https://github.com/aramb-dev"
+            className="underline hover:text-gray-700"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Abdur-Rahman Bilal
+          </a>
+          {" | "}
+          <a
+            href="https://github.com/aramb-dev/fatwa-search"
+            className="underline hover:text-gray-700"
+            target="_blank"
+            rel="noreferrer"
+          >
+            View on GitHub
+          </a>
         </div>
       </CardContent>
     </Card>

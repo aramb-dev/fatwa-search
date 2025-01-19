@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { cn } from "../lib/utils";
 import { Search, Plus, X, RotateCcw } from "lucide-react";
 import {
   Card,
@@ -16,8 +17,12 @@ const DEFAULT_SITES = [
   "binbaz.org.sa",
   "al-badr.net",
   "obied-aljabri.com",
-  "aletioupi.com"
+  "aletioupi.com",
 ];
+
+const isValidDomain = (domain) => {
+  return domain.trim().match(/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/);
+};
 
 const CustomSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,7 +84,10 @@ const CustomSearch = () => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Custom Site Search</CardTitle>
+        <CardTitle>Fatwa Site</CardTitle>
+        <p className="text-sm text-gray-500">
+          Searches the Mashayikh sites for your keyword
+        </p>
       </CardHeader>
       <CardContent>
         {/* Search Form */}
@@ -94,22 +102,16 @@ const CustomSearch = () => {
             />
             <Button
               type="submit"
-              variant="default"
-              className="flex items-center gap-2"
+              className={cn(
+                "w-24",
+                searchQuery.trim() && "bg-gray-900 hover:bg-gray-800 text-white"
+              )}
             >
-              <Search className="h-4 w-4" />
+              <Search className="w-4 h-4 mr-2" />
               Search
             </Button>
           </div>
-        </form>
 
-        {/* Site Request Form */}
-        <form
-          onSubmit={handleSiteRequest}
-          className="mt-6"
-          data-netlify="true"
-          name="site-request"
-        >
           <div className="flex gap-2">
             <Input
               type="text"
@@ -119,17 +121,19 @@ const CustomSearch = () => {
               className="flex-grow"
             />
             <Button
-              type="submit"
-              variant="default"
-              className="flex items-center gap-2"
+              type="button"
+              onClick={handleSiteRequest}
+              className={cn(
+                "w-24",
+                isValidDomain(newSite) &&
+                  "bg-gray-900 hover:bg-gray-800 text-white"
+              )}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="w-4 h-4 mr-2" />
               Request Site
             </Button>
           </div>
         </form>
-
-        {/* Site List */}
         <div className="mt-6">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-sm font-medium">Sites to search:</h3>

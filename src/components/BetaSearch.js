@@ -14,25 +14,24 @@ import { Button } from "../components/ui/button";
 const BetaSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sites, setSites] = useState(DEFAULT_SITES);
-  const [selectedSite, setSelectedSite] = useState("all");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const resultsPerPage = 10;
 
   const handleSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setCurrentPage(1);
 
     try {
-      const siteQuery =
-        selectedSite === "all"
-          ? sites.map((site) => `site:${site}`).join(" OR ")
-          : `site:${selectedSite}`;
-
+      const siteQuery = sites.map((site) => `site:${site}`).join(" OR ");
       const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${
         process.env.REACT_APP_GOOGLE_API_KEY
       }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
         `(${siteQuery}) ${searchQuery}`
-      )}`;
+      )}&start=${(currentPage - 1) * resultsPerPage + 1}`;
 
       const response = await fetch(searchUrl);
       const data = await response.json();
@@ -43,6 +42,17 @@ const BetaSearch = () => {
       setLoading(false);
     }
   };
+
+  const filteredResults = searchResults.filter((result) => {
+    if (selectedFilter === "all") return true;
+    return result.displayLink.includes(selectedFilter);
+  });
+
+  const totalPages = Math.ceil(filteredResults.length / resultsPerPage);
+  const currentResults = filteredResults.slice(
+    (currentPage - 1) * resultsPerPage,
+    currentPage * resultsPerPage
+  );
 
   return (
     <Card className="w-full max-w-6xl mx-auto">
@@ -61,29 +71,45 @@ const BetaSearch = () => {
               placeholder="Enter your search query..."
               className="flex-grow"
             />
-            <select
-              value={selectedSite}
-              onChange={(e) => setSelectedSite(e.target.value)}
-              className="rounded-md border px-3"
+            <Button
+              type="submit"
+              disabled={loading}
+              className={cn(
+                "flex items-center gap-2",
+                searchQuery.trim() && "bg-gray-900 text-white hover:bg-gray-800"
+              )}
             >
-              <option value="all">All Sites</option>
-              {sites.map((site) => (
-                <option key={site} value={site}>
-                  {site}
-                </option>
-              ))}
-            </select>
-            <Button type="submit" disabled={loading}>
-              <Search className="h-4 w-4 mr-2" />
+              <Search className="h-4 w-4" />
               {loading ? "Searching..." : "Search"}
             </Button>
           </div>
         </form>
 
+        {/* Site Filters */}
+        <div className="flex gap-2 mt-4 flex-wrap">
+          <Button
+            onClick={() => setSelectedFilter("all")}
+            variant={selectedFilter === "all" ? "default" : "outline"}
+            size="sm"
+          >
+            All Sites
+          </Button>
+          {sites.map((site) => (
+            <Button
+              key={site}
+              onClick={() => setSelectedFilter(site)}
+              variant={selectedFilter === site ? "default" : "outline"}
+              size="sm"
+            >
+              {site}
+            </Button>
+          ))}
+        </div>
+
         {/* Search Results */}
-        <div className="mt-6">
-          {searchResults.map((result, index) => (
-            <div key={index} className="mb-4 p-4 border rounded-lg">
+        <div className="mt-6 space-y-4">
+          {currentResults.map((result, index) => (
+            <div key={index} className="p-4 border rounded-lg">
               <a
                 href={result.link}
                 className="text-blue-600 hover:underline font-medium"
@@ -97,6 +123,31 @@ const BetaSearch = () => {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-6">
+            <Button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              variant="outline"
+              size="sm"
+            >
+              Previous
+            </Button>
+            <span className="flex items-center px-3">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              variant="outline"
+              size="sm"
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

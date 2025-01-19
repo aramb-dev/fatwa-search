@@ -10,7 +10,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 
-const DEFAULT_SITES = [
+export const DEFAULT_SITES = [
   "binothaimeen.net",
   "alfawzan.af.org.sa",
   "lohaidan.af.org.sa",

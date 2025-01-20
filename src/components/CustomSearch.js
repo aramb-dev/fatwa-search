@@ -20,6 +20,7 @@ export const DEFAULT_SITES = [
   "aletioupi.com",
   "miraath.net",
   "al-albany.com",
+  "rabee.net"
 ];
 
 const isValidDomain = (domain) => {

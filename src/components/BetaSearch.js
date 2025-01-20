@@ -10,7 +10,7 @@ import {
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
+import { Dialog, DialogOverlay } from "@radix-ui/react-dialog"; // Import DialogOverlay
 
 // Update DialogContent styling with mobile responsiveness
 const CustomDialogContent = ({ children, ...props }) => (
@@ -175,6 +175,7 @@ const BetaSearch = () => {
     if (!siteInput.trim()) return;
 
     const formData = new FormData();
+    formData.append("form-name", "site-request"); // Add this line
     formData.append("requested-site", siteInput);
 
     try {
@@ -384,16 +385,19 @@ const BetaSearch = () => {
                         {siteResults
                           .slice(0, loadedCounts[site] || RESULTS_PER_SITE)
                           .map((result, index) => (
-                            <div key={index} className="space-y-2">
+                            <div
+                              key={index}
+                              className="p-4 border rounded-lg bg-white shadow-sm"
+                            >
                               <a
                                 href={result.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline block"
+                                className="text-blue-600 hover:underline block font-medium"
                               >
                                 {result.title}
                               </a>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 mt-2">
                                 {result.snippet}
                               </p>
                             </div>

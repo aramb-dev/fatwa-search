@@ -1,32 +1,33 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import CustomSearch from "./components/CustomSearch";
 import BetaSearch from "./components/BetaSearch";
+import { Switch } from "./components/ui/switch";
 
 function App() {
+  const [isBeta, setIsBeta] = useState(false);
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <nav className="max-w-4xl mx-auto mb-8">
-          <div className="flex gap-4 justify-center">
-            <Link
-              to="/"
-              className="text-gray-600 hover:text-gray-900 underline"
-            >
-              Classic Search
-            </Link>
-            <Link
-              to="/beta"
-              className="text-gray-600 hover:text-gray-900 underline"
-            >
-              Beta Search
-            </Link>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-sm font-medium">Beta Search</span>
+            <Switch
+              checked={isBeta}
+              onCheckedChange={(checked) => {
+                setIsBeta(checked);
+              }}
+            />
           </div>
         </nav>
 
         <Routes>
-          <Route path="/" element={<CustomSearch />} />
-          <Route path="/beta" element={<BetaSearch />} />
+          <Route
+            path="/"
+            element={isBeta ? <BetaSearch /> : <CustomSearch />}
+          />
+          <Route path="/beta" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </BrowserRouter>

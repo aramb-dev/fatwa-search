@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react"; // Add useCallback and useEffect import
+import React, { useState, useCallback, useEffect, useRef } from "react"; // Add useCallback and useEffect import
 import { cn } from "../lib/utils";
 import { Search, Plus } from "lucide-react";
 import { DEFAULT_SITES } from "./CustomSearch";
@@ -12,14 +12,25 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
 
-// Update DialogContent styling
+// Update DialogContent styling with mobile responsiveness
 const CustomDialogContent = ({ children, ...props }) => (
-  <DialogOverlay className="bg-black/50 fixed inset-0 flex items-center justify-center">
+  <DialogOverlay className="bg-black/50 fixed inset-0 flex items-center justify-center p-4">
     <div
       className={cn(
-        "fixed left-[50%] top-[50%] w-[670px] translate-x-[-50%] translate-y-[-50%]",
-        "bg-white rounded-lg shadow-[0_0_40px_8px_rgba(0,0,0,0.15)]",
-        "p-6 space-y-6"
+        // Base styles
+        "relative w-full bg-white rounded-lg shadow-[0_0_40px_8px_rgba(0,0,0,0.15)]",
+        // Mobile first padding
+        "p-4",
+        // Desktop padding
+        "sm:p-6",
+        // Width constraints
+        "max-w-[670px] min-h-[200px]",
+        // Mobile positioning
+        "mx-auto",
+        // Desktop positioning
+        "sm:fixed sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%]",
+        // Extra space for content
+        "space-y-4 sm:space-y-6"
       )}
       {...props}
     >
@@ -30,19 +41,27 @@ const CustomDialogContent = ({ children, ...props }) => (
 
 // Update DialogHeader styling
 const DialogHeader = ({ children }) => (
-  <div className="flex flex-col space-y-3 mb-6">{children}</div>
+  <div className="flex flex-col space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+    {children}
+  </div>
 );
 
 // Update DialogTitle styling
 const CustomDialogTitle = ({ children }) => (
-  <h2 className="text-xl font-semibold leading-none tracking-tight">
+  <h2 className="text-lg sm:text-xl font-semibold leading-none tracking-tight">
     {children}
   </h2>
 );
 
-// Update DialogFooter styling
+// Update DialogFooter styling for better mobile layout
 const DialogFooter = ({ children }) => (
-  <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-4 mt-6 pt-6 border-t">
+  <div
+    className={cn(
+      "mt-4 pt-4 sm:mt-6 sm:pt-6",
+      "border-t flex flex-col-reverse sm:flex-row gap-2 sm:gap-4",
+      "sm:justify-end"
+    )}
+  >
     {children}
   </div>
 );
@@ -62,6 +81,8 @@ const BetaSearch = () => {
   const [isShiftPressed, setIsShiftPressed] = useState(false); // Add state for shift key tracking
   const [loadedCounts, setLoadedCounts] = useState({}); // Add state for tracking loaded results per site
   const RESULTS_PER_SITE = 5; // Add these constants at the top of BetaSearch component
+  const [isMobileSelecting, setIsMobileSelecting] = useState(false); // Add this state for tracking mobile selection mode
+  const resultsContainerRef = useRef(null); // Add a ref for the results container
 
   // Add event listeners for shift key
   useEffect(() => {
@@ -98,6 +119,14 @@ const BetaSearch = () => {
     setStartIndex(1);
     setHasMore(true);
     await performSearch(1, true);
+
+    // Scroll to results after a small delay to ensure results are rendered
+    setTimeout(() => {
+      resultsContainerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 500);
   };
 
   const performSearch = useCallback(
@@ -184,6 +213,9 @@ const BetaSearch = () => {
     }));
   };
 
+  // Add this helper function to check if device is mobile
+  const isMobile = () => window.innerWidth <= 768;
+
   return (
     <>
       <Card className="w-full max-w-6xl mx-auto">
@@ -232,12 +264,47 @@ const BetaSearch = () => {
             </div>
             {/* Add helper text above site selection */}
             <div className="space-y-2">
-              <p className="text-sm text-gray-500 italic">
+              <p className="text-sm text-gray-500 italic md:block hidden">
                 Hold Shift to select multiple sites, click individual sites to
                 search one at a time, or click "All Sites" to search everything
               </p>
-              <div className="flex flex-wrap gap-2">
-                {/* Site Filters */}
+              <p className="text-sm text-gray-500 italic block md:hidden">
+                Tap "Select Sites" to choose multiple sites, or tap individual
+                sites to search one at a time
+              </p>
+
+              <div className="flex flex-wrap gap-2 relative">
+                {/* Mobile Selection Mode Buttons */}
+                <div className="md:hidden w-full flex gap-2 mb-2">
+                  <Button
+                    onClick={() => setIsMobileSelecting(!isMobileSelecting)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-grow"
+                  >
+                    {isMobileSelecting ? "Done" : "Select Sites"}
+                  </Button>
+                  {isMobileSelecting && (
+                    <>
+                      <Button
+                        onClick={() => setSelectedSites(sites)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        onClick={() => setSelectedSites([])}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Select None
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                {/* All Sites button - hidden on mobile when selecting */}
                 <Button
                   onClick={() => setSelectedSites(sites)}
                   variant={
@@ -247,18 +314,42 @@ const BetaSearch = () => {
                   }
                   size="sm"
                   type="button"
+                  className={cn(
+                    "md:block",
+                    isMobileSelecting ? "hidden" : "block"
+                  )}
                 >
                   All Sites
                 </Button>
+
+                {/* Site buttons */}
                 {sites.map((site) => (
                   <Button
                     key={site}
-                    onClick={(e) => toggleSite(site, e)}
+                    onClick={(e) => {
+                      if (isMobile()) {
+                        if (isMobileSelecting) {
+                          // Multiple selection mode on mobile
+                          setSelectedSites((prev) =>
+                            prev.includes(site)
+                              ? prev.filter((s) => s !== site)
+                              : [...prev, site]
+                          );
+                        } else {
+                          // Single selection mode on mobile
+                          setSelectedSites([site]);
+                        }
+                      } else {
+                        // Desktop behavior remains the same
+                        toggleSite(site, e);
+                      }
+                    }}
                     className={cn(
                       "transition-all duration-200",
                       selectedSites.includes(site)
                         ? "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600"
-                        : "bg-white text-gray-700 hover:bg-gray-100"
+                        : "bg-white text-gray-700 hover:bg-gray-100",
+                      !isMobileSelecting && "md:block"
                     )}
                     size="sm"
                     type="button"
@@ -271,63 +362,66 @@ const BetaSearch = () => {
           </form>
 
           {/* Search Results */}
-          <div className="mt-6 space-y-8">
-            {selectedSites.map((site) => {
-              const siteResults = searchResults.filter((result) =>
-                result.link.includes(site)
-              );
+          <div ref={resultsContainerRef} className="mt-6 space-y-8 scroll-mt-4">
+            {searchQuery && searchResults.length > 0 ? (
+              selectedSites.map((site) => {
+                const siteResults = searchResults.filter((result) =>
+                  result.link.includes(site)
+                );
 
-              return (
-                <div key={site} className="border rounded-lg p-4">
-                  <h3 className="text-lg font-medium mb-4">
-                    Results from {site}
-                  </h3>
+                return (
+                  <div key={site} className="border rounded-lg p-4">
+                    <h3 className="text-lg font-medium mb-4">
+                      Results from {site}
+                    </h3>
 
-                  {siteResults.length === 0 ? (
-                    <p className="text-gray-500 italic">
-                      No results found for {site}
-                    </p>
-                  ) : (
-                    <>
+                    {siteResults.length === 0 ? (
+                      <p className="text-gray-500 italic">
+                        No results found for {site}
+                      </p>
+                    ) : (
                       <div className="space-y-4">
                         {siteResults
                           .slice(0, loadedCounts[site] || RESULTS_PER_SITE)
                           .map((result, index) => (
-                            <div
-                              key={index}
-                              className="p-4 border rounded-lg bg-white"
-                            >
+                            <div key={index} className="space-y-2">
                               <a
                                 href={result.link}
-                                className="text-blue-600 hover:underline font-medium"
                                 target="_blank"
-                                rel="noreferrer"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline block"
                               >
                                 {result.title}
                               </a>
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="text-sm text-gray-600">
                                 {result.snippet}
                               </p>
                             </div>
                           ))}
+                        {siteResults.length >
+                          (loadedCounts[site] || RESULTS_PER_SITE) && (
+                          <Button
+                            onClick={() => handleLoadMore(site)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Load More from {site}
+                          </Button>
+                        )}
                       </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : searchQuery && !loading ? (
+              <div className="text-center text-gray-500">
+                No results found for your search
+              </div>
+            ) : null}
 
-                      {siteResults.length >
-                        (loadedCounts[site] || RESULTS_PER_SITE) && (
-                        <Button
-                          onClick={() => handleLoadMore(site)}
-                          variant="outline"
-                          className="mt-4 w-full"
-                          size="sm"
-                        >
-                          Load More Results from {site}
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
+            {loading && (
+              <div className="text-center text-gray-500">Searching...</div>
+            )}
           </div>
 
           {/* Replace pagination with Load More */}

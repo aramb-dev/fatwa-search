@@ -84,6 +84,10 @@ const BetaSearch = () => {
   const [isMobileSelecting, setIsMobileSelecting] = useState(false); // Add this state for tracking mobile selection mode
   const resultsContainerRef = useRef(null); // Add a ref for the results container
 
+  // Add this state for feedback form
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState("");
+
   // Add event listeners for shift key
   useEffect(() => {
     const handleKeyDown = (e) => e.shiftKey && setIsShiftPressed(true);
@@ -217,6 +221,28 @@ const BetaSearch = () => {
   // Add this helper function to check if device is mobile
   const isMobile = () => window.innerWidth <= 768;
 
+  // Add this handler for feedback submission
+  const handleFeedbackSubmit = async () => {
+    if (!feedback.trim()) return;
+
+    const formData = new FormData();
+    formData.append("form-name", "beta-feedback");
+    formData.append("feedback", feedback);
+
+    try {
+      await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams(formData).toString(),
+      });
+      setShowFeedback(false);
+      setFeedback("");
+      alert("Thank you for your feedback!");
+    } catch (error) {
+      alert("Error submitting feedback: " + error);
+    }
+  };
+
   return (
     <>
       <Card className="w-full max-w-6xl mx-auto">
@@ -275,7 +301,7 @@ const BetaSearch = () => {
               </p>
 
               <div className="flex flex-wrap gap-2 relative">
-                {/* Mobile Selection Mode Buttons */}
+                {/* Mobile Selection  Mode Buttons */}
                 <div className="md:hidden w-full flex gap-2 mb-2">
                   <Button
                     onClick={() => setIsMobileSelecting(!isMobileSelecting)}
@@ -430,6 +456,72 @@ const BetaSearch = () => {
 
           {/* Replace pagination with Load More */}
           <LoadMoreButton />
+
+          {/* Add this before the attribution footer */}
+          <div className="mt-8 border-t pt-8">
+            <div className="flex flex-col items-center space-y-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFeedback(!showFeedback)}
+                className="text-sm"
+              >
+                {showFeedback ? "Close Feedback" : "Provide Feedback"}
+              </Button>
+
+              {showFeedback && (
+                <div className="w-full max-w-md space-y-4">
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="Tell us what you think about the beta search..."
+                    className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowFeedback(false);
+                        setFeedback("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleFeedbackSubmit}
+                      disabled={!feedback.trim()}
+                    >
+                      Submit Feedback
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Add attribution footer */}
+          <div className="mt-4 text-center text-sm text-gray-500">
+            Created by{" "}
+            <a
+              href="https://github.com/aramb-dev"
+              className="underline hover:text-gray-700"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abdur-Rahman Bilal
+            </a>
+            {" | "}
+            <a
+              href="https://github.com/aramb-dev/fatwa-search"
+              className="underline hover:text-gray-700"
+              target="_blank"
+              rel="noreferrer"
+            >
+              View on GitHub
+            </a>
+          </div>
         </CardContent>
       </Card>
 

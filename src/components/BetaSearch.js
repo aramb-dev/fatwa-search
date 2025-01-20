@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react"; // Add useCallback import
 import { cn } from "../lib/utils";
-import { Search, Plus, X, RotateCcw } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { DEFAULT_SITES } from "./CustomSearch";
 import {
   Card,
@@ -10,13 +10,7 @@ import {
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-  DialogOverlay,
-} from "@radix-ui/react-dialog";
+import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
 
 // Update DialogContent styling
 const CustomDialogContent = ({ children, ...props }) => (
@@ -55,7 +49,7 @@ const DialogFooter = ({ children }) => (
 
 const BetaSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sites, setSites] = useState(DEFAULT_SITES);
+  const [sites] = useState(DEFAULT_SITES); // Remove unused setSites
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,49 +60,52 @@ const BetaSearch = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [siteInput, setSiteInput] = useState("");
 
-  const performSearch = async (page) => {
-    // Validate page number
-    if (page > 10) {
-      alert("Google Custom Search only allows up to 100 results (10 pages)");
-      setCurrentPage(10);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const siteQuery =
-        selectedFilter === "all"
-          ? sites.map((site) => `site:${site}`).join(" OR ")
-          : `site:${selectedFilter}`;
-
-      const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${
-        process.env.REACT_APP_GOOGLE_API_KEY
-      }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
-        `(${siteQuery}) ${searchQuery}`
-      )}&start=${(page - 1) * resultsPerPage + 1}`;
-
-      const response = await fetch(searchUrl);
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error.message);
+  const performSearch = useCallback(
+    async (page) => {
+      // Validate page number
+      if (page > 10) {
+        alert("Google Custom Search only allows up to 100 results (10 pages)");
+        setCurrentPage(10);
+        return;
       }
 
-      setSearchResults(data.items || []);
-      // Cap total results at 100
-      setTotalResults(
-        Math.min(
-          parseInt(data.searchInformation.totalResults) || 0,
-          MAX_RESULTS
-        )
-      );
-    } catch (error) {
-      console.error("Search failed:", error);
-      alert("Search failed: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(true);
+      try {
+        const siteQuery =
+          selectedFilter === "all"
+            ? sites.map((site) => `site:${site}`).join(" OR ")
+            : `site:${selectedFilter}`;
+
+        const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${
+          process.env.REACT_APP_GOOGLE_API_KEY
+        }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
+          `(${siteQuery}) ${searchQuery}`
+        )}&start=${(page - 1) * resultsPerPage + 1}`;
+
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error.message);
+        }
+
+        setSearchResults(data.items || []);
+        // Cap total results at 100
+        setTotalResults(
+          Math.min(
+            parseInt(data.searchInformation.totalResults) || 0,
+            MAX_RESULTS
+          )
+        );
+      } catch (error) {
+        console.error("Search failed:", error);
+        alert("Search failed: " + error.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [searchQuery, selectedFilter, sites]
+  ); // Add dependencies used inside performSearch
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -142,7 +139,7 @@ const BetaSearch = () => {
     if (searchQuery && currentPage) {
       performSearch(currentPage);
     }
-  }, [currentPage, searchQuery, selectedFilter, sites]); // Add missing dependencies
+  }, [currentPage, searchQuery, selectedFilter, sites, performSearch]); // Add performSearch to dependencies
 
   const filteredResults = searchResults.filter((result) => {
     if (selectedFilter === "all") return true;

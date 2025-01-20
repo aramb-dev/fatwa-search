@@ -18,6 +18,8 @@ export const DEFAULT_SITES = [
   "al-badr.net",
   "obied-aljabri.com",
   "aletioupi.com",
+  "miraath.net",
+  "al-albany.com",
 ];
 
 const isValidDomain = (domain) => {

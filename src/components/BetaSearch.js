@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"; // Add useCallback import
+import React, { useState, useCallback, useEffect } from "react"; // Add useCallback and useEffect import
 import { cn } from "../lib/utils";
 import { Search, Plus } from "lucide-react";
 import { DEFAULT_SITES } from "./CustomSearch";
@@ -52,35 +52,68 @@ const BetaSearch = () => {
   const [sites] = useState(DEFAULT_SITES); // Remove unused setSites
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [totalResults, setTotalResults] = useState(0);
   const MAX_RESULTS = 100; // Google CSE limit
-  const resultsPerPage = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [siteInput, setSiteInput] = useState("");
+  const [startIndex, setStartIndex] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const resultsPerPage = 10;
+  const [selectedSites, setSelectedSites] = useState(sites); // Initialize with all sites
+  const [isShiftPressed, setIsShiftPressed] = useState(false); // Add state for shift key tracking
+  const [loadedCounts, setLoadedCounts] = useState({}); // Add state for tracking loaded results per site
+  const RESULTS_PER_SITE = 5; // Add these constants at the top of BetaSearch component
+
+  // Add event listeners for shift key
+  useEffect(() => {
+    const handleKeyDown = (e) => e.shiftKey && setIsShiftPressed(true);
+    const handleKeyUp = (e) => !e.shiftKey && setIsShiftPressed(false);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  const toggleSite = (site, event) => {
+    if (!isShiftPressed) {
+      // Single selection
+      setSelectedSites([site]);
+    } else {
+      // Multiple selection
+      setSelectedSites((prev) =>
+        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
+      );
+    }
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    // Reset results and start index for new search
+    setSearchResults([]);
+    setStartIndex(1);
+    setHasMore(true);
+    await performSearch(1, true);
+  };
 
   const performSearch = useCallback(
-    async (page) => {
-      // Validate page number
-      if (page > 10) {
-        alert("Google Custom Search only allows up to 100 results (10 pages)");
-        setCurrentPage(10);
-        return;
-      }
-
+    async (start, isNewSearch = false) => {
       setLoading(true);
       try {
-        const siteQuery =
-          selectedFilter === "all"
-            ? sites.map((site) => `site:${site}`).join(" OR ")
-            : `site:${selectedFilter}`;
+        // Only use selected sites in query
+        const siteQuery = selectedSites
+          .map((site) => `site:${site}`)
+          .join(" OR ");
 
         const searchUrl = `https://www.googleapis.com/customsearch/v1?key=${
           process.env.REACT_APP_GOOGLE_API_KEY
         }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
           `(${siteQuery}) ${searchQuery}`
-        )}&start=${(page - 1) * resultsPerPage + 1}`;
+        )}&start=${start}`;
 
         const response = await fetch(searchUrl);
         const data = await response.json();
@@ -89,14 +122,16 @@ const BetaSearch = () => {
           throw new Error(data.error.message);
         }
 
-        setSearchResults(data.items || []);
-        // Cap total results at 100
-        setTotalResults(
-          Math.min(
-            parseInt(data.searchInformation.totalResults) || 0,
-            MAX_RESULTS
-          )
+        const newResults = data.items || [];
+        setSearchResults((prev) =>
+          isNewSearch ? newResults : [...prev, ...newResults]
         );
+
+        const totalResults = parseInt(data.searchInformation.totalResults) || 0;
+        setHasMore(
+          start + resultsPerPage < Math.min(totalResults, MAX_RESULTS)
+        );
+        setStartIndex(start + resultsPerPage);
       } catch (error) {
         console.error("Search failed:", error);
         alert("Search failed: " + error.message);
@@ -104,16 +139,8 @@ const BetaSearch = () => {
         setLoading(false);
       }
     },
-    [searchQuery, selectedFilter, sites]
-  ); // Add dependencies used inside performSearch
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setCurrentPage(1);
-    setSelectedFilter("all"); // Reset filter when performing new search
-    await performSearch(1);
-  };
+    [searchQuery, selectedSites]
+  ); // Update dependencies
 
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) return;
@@ -135,22 +162,27 @@ const BetaSearch = () => {
     }
   };
 
-  useEffect(() => {
-    if (searchQuery && currentPage) {
-      performSearch(currentPage);
-    }
-  }, [currentPage, searchQuery, selectedFilter, sites, performSearch]); // Add performSearch to dependencies
+  const LoadMoreButton = () =>
+    hasMore &&
+    searchResults.length > 0 && (
+      <div className="flex justify-center mt-6">
+        <Button
+          onClick={() => performSearch(startIndex)}
+          disabled={loading}
+          variant="outline"
+          className="w-full max-w-sm"
+        >
+          {loading ? "Loading..." : "Load More Results"}
+        </Button>
+      </div>
+    );
 
-  const filteredResults = searchResults.filter((result) => {
-    if (selectedFilter === "all") return true;
-    return result.displayLink.includes(selectedFilter);
-  });
-
-  const totalPages = Math.min(Math.ceil(totalResults / resultsPerPage), 10);
-  const currentResults = filteredResults.slice(
-    (currentPage - 1) * resultsPerPage,
-    currentPage * resultsPerPage
-  );
+  const handleLoadMore = (site) => {
+    setLoadedCounts((prev) => ({
+      ...prev,
+      [site]: (prev[site] || RESULTS_PER_SITE) + RESULTS_PER_SITE,
+    }));
+  };
 
   return (
     <>
@@ -198,75 +230,112 @@ const BetaSearch = () => {
                 {loading ? "Searching..." : "Search"}
               </Button>
             </div>
+            {/* Add helper text above site selection */}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">
+                Click multiple sites to search them together or click "All
+                Sites" to search everything
+              </p>
+              <p className="text-sm text-gray-500 italic">
+                Hold Shift to select multiple sites, or click individual sites
+                to search one at a time
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {/* Site Filters */}
+                <Button
+                  onClick={() => setSelectedSites(sites)}
+                  variant={
+                    selectedSites.length === sites.length
+                      ? "default"
+                      : "outline"
+                  }
+                  size="sm"
+                  type="button"
+                >
+                  All Sites
+                </Button>
+                {sites.map((site) => (
+                  <Button
+                    key={site}
+                    onClick={(e) => toggleSite(site, e)}
+                    className={cn(
+                      "transition-all duration-200",
+                      selectedSites.includes(site)
+                        ? "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600"
+                        : "bg-white text-gray-700 hover:bg-gray-100"
+                    )}
+                    size="sm"
+                    type="button"
+                  >
+                    {site}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </form>
 
-          {/* Site Filters */}
-          <div className="flex gap-2 mt-4 flex-wrap">
-            <Button
-              onClick={() => setSelectedFilter("all")}
-              variant={selectedFilter === "all" ? "default" : "outline"}
-              size="sm"
-            >
-              All Sites
-            </Button>
-            {sites.map((site) => (
-              <Button
-                key={site}
-                onClick={() => setSelectedFilter(site)}
-                variant={selectedFilter === site ? "default" : "outline"}
-                size="sm"
-              >
-                {site}
-              </Button>
-            ))}
-          </div>
-
           {/* Search Results */}
-          <div className="mt-6 space-y-4">
-            {currentResults.map((result, index) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <a
-                  href={result.link}
-                  className="text-blue-600 hover:underline font-medium"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {result.title}
-                </a>
-                <p className="text-sm text-gray-600 mt-1">{result.snippet}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {result.displayLink}
-                </p>
-              </div>
-            ))}
+          <div className="mt-6 space-y-8">
+            {selectedSites.map((site) => {
+              const siteResults = searchResults.filter((result) =>
+                result.link.includes(site)
+              );
+
+              return (
+                <div key={site} className="border rounded-lg p-4">
+                  <h3 className="text-lg font-medium mb-4">
+                    Results from {site}
+                  </h3>
+
+                  {siteResults.length === 0 ? (
+                    <p className="text-gray-500 italic">
+                      No results found for {site}
+                    </p>
+                  ) : (
+                    <>
+                      <div className="space-y-4">
+                        {siteResults
+                          .slice(0, loadedCounts[site] || RESULTS_PER_SITE)
+                          .map((result, index) => (
+                            <div
+                              key={index}
+                              className="p-4 border rounded-lg bg-white"
+                            >
+                              <a
+                                href={result.link}
+                                className="text-blue-600 hover:underline font-medium"
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                {result.title}
+                              </a>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {result.snippet}
+                              </p>
+                            </div>
+                          ))}
+                      </div>
+
+                      {siteResults.length >
+                        (loadedCounts[site] || RESULTS_PER_SITE) && (
+                        <Button
+                          onClick={() => handleLoadMore(site)}
+                          variant="outline"
+                          className="mt-4 w-full"
+                          size="sm"
+                        >
+                          Load More Results from {site}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6 mb-4">
-              <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1 || loading}
-                variant="outline"
-                size="sm"
-              >
-                Previous
-              </Button>
-              <span className="flex items-center px-3">
-                Page {currentPage} of {totalPages} (Max 10)
-              </span>
-              <Button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                disabled={currentPage === totalPages || loading}
-                variant="outline"
-                size="sm"
-              >
-                Next
-              </Button>
-            </div>
-          )}
+          {/* Replace pagination with Load More */}
+          <LoadMoreButton />
         </CardContent>
       </Card>
 

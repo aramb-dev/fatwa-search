@@ -232,13 +232,9 @@ const BetaSearch = () => {
             </div>
             {/* Add helper text above site selection */}
             <div className="space-y-2">
-              <p className="text-sm text-gray-500">
-                Click multiple sites to search them together or click "All
-                Sites" to search everything
-              </p>
               <p className="text-sm text-gray-500 italic">
-                Hold Shift to select multiple sites, or click individual sites
-                to search one at a time
+                Hold Shift to select multiple sites, click individual sites to
+                search one at a time, or click "All Sites" to search everything
               </p>
               <div className="flex flex-wrap gap-2">
                 {/* Site Filters */}

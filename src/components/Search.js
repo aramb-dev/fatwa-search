@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useEffect, useRef } from "react"; // Add useCallback and useEffect import
+import { useState, useCallback, useEffect, useRef } from "react"; // Add useCallback and useEffect import
 import { cn } from "../lib/utils";
 import { Search, Plus } from "lucide-react";
-import { DEFAULT_SITES } from "./CustomSearch";
 import {
   Card,
   CardContent,
@@ -11,6 +10,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogOverlay } from "@radix-ui/react-dialog"; // Import DialogOverlay
+import { Switch } from "../components/ui/switch";
 
 // Update DialogContent styling with mobile responsiveness
 const CustomDialogContent = ({ children, ...props }) => (
@@ -66,25 +66,37 @@ const DialogFooter = ({ children }) => (
   </div>
 );
 
-const BetaSearch = () => {
+export const DEFAULT_SITES = [
+  "binothaimeen.net",
+  "alfawzan.af.org.sa",
+  "lohaidan.af.org.sa",
+  "binbaz.org.sa",
+  "al-badr.net",
+  "obied-aljabri.com",
+  "aletioupi.com",
+  "miraath.net",
+  "al-albany.com",
+  "rabee.net"
+];
+
+const SearchComponent = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sites] = useState(DEFAULT_SITES); // Remove unused setSites
+  const [sites] = useState(DEFAULT_SITES);
+  const [includeShamela, setIncludeShamela] = useState(false); // Add this line
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const MAX_RESULTS = 100; // Google CSE limit
+  const MAX_RESULTS = 100;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [siteInput, setSiteInput] = useState("");
   const [startIndex, setStartIndex] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const resultsPerPage = 10;
-  const [selectedSites, setSelectedSites] = useState(sites); // Initialize with all sites
-  const [isShiftPressed, setIsShiftPressed] = useState(false); // Add state for shift key tracking
-  const [loadedCounts, setLoadedCounts] = useState({}); // Add state for tracking loaded results per site
-  const RESULTS_PER_SITE = 5; // Add these constants at the top of BetaSearch component
-  const [isMobileSelecting, setIsMobileSelecting] = useState(false); // Add this state for tracking mobile selection mode
-  const resultsContainerRef = useRef(null); // Add a ref for the results container
-
-  // Add this state for feedback form
+  const [selectedSites, setSelectedSites] = useState(sites);
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [loadedCounts, setLoadedCounts] = useState({});
+  const RESULTS_PER_SITE = 5;
+  const [isMobileSelecting, setIsMobileSelecting] = useState(false);
+  const resultsContainerRef = useRef(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState("");
 
@@ -137,8 +149,12 @@ const BetaSearch = () => {
     async (start, isNewSearch = false) => {
       setLoading(true);
       try {
-        // Only use selected sites in query
-        const siteQuery = selectedSites
+        // Include shamela in the sites if toggle is on
+        const sitesToSearch = includeShamela
+          ? [...selectedSites, "shamela.ws"]
+          : selectedSites;
+
+        const siteQuery = sitesToSearch
           .map((site) => `site:${site}`)
           .join(" OR ");
 
@@ -172,8 +188,8 @@ const BetaSearch = () => {
         setLoading(false);
       }
     },
-    [searchQuery, selectedSites]
-  ); // Update dependencies
+    [searchQuery, selectedSites, includeShamela]
+  );
 
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) return;
@@ -226,7 +242,7 @@ const BetaSearch = () => {
     if (!feedback.trim()) return;
 
     const formData = new FormData();
-    formData.append("form-name", "beta-feedback");
+    formData.append("form-name", "feedback"); // Update form name
     formData.append("feedback", feedback);
 
     try {
@@ -250,22 +266,31 @@ const BetaSearch = () => {
           <div>
             <CardTitle>Fatwa Search</CardTitle>
             <p className="text-sm text-gray-500">
-              Searches the Mashayikh sites for your keyword
+              Search the Mashayikh sites for your keyword
             </p>
             <p className="text-sm text-gray-500">
-              Putting your keywords in Arabic is more effective as these are
-              Arabic sites
+              Putting your keywords in Arabic is more effective as these are Arabic sites
             </p>
           </div>
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Request Site
-          </Button>
+          <div className="flex flex-col gap-2 items-end">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Request Site
+            </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Search Shamela.ws</span>
+              <Switch
+                checked={includeShamela}
+                onCheckedChange={setIncludeShamela}
+                className="data-[state=checked]:bg-green-600"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSearch} className="space-y-4">
@@ -391,7 +416,7 @@ const BetaSearch = () => {
           {/* Search Results */}
           <div ref={resultsContainerRef} className="mt-6 space-y-8 scroll-mt-4">
             {searchQuery && searchResults.length > 0 ? (
-              selectedSites.map((site) => {
+              [...selectedSites, ...(includeShamela ? ["shamela.ws"] : [])].map((site) => {
                 const siteResults = searchResults.filter((result) =>
                   result.link.includes(site)
                 );
@@ -474,7 +499,7 @@ const BetaSearch = () => {
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="Tell us what you think about the beta search..."
+                    placeholder="Tell us what you think about the search..."
                     className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
                   />
                   <div className="flex justify-end gap-2">
@@ -553,4 +578,4 @@ const BetaSearch = () => {
   );
 };
 
-export default BetaSearch;
+export default SearchComponent;

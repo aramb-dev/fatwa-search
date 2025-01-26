@@ -149,6 +149,11 @@ const SearchComponent = () => {
     async (start, isNewSearch = false) => {
       setLoading(true);
       try {
+        // Verify API credentials are available
+        if (!process.env.REACT_APP_GOOGLE_API_KEY || !process.env.REACT_APP_SEARCH_ENGINE_ID) {
+          throw new Error("Search API credentials are not properly configured. Please check your environment variables.");
+        }
+
         // Include shamela in the sites if toggle is on
         const sitesToSearch = includeShamela
           ? [...selectedSites, "shamela.ws"]
@@ -213,16 +218,22 @@ const SearchComponent = () => {
   };
 
   const LoadMoreButton = () =>
-    hasMore &&
-    searchResults.length > 0 && (
-      <div className="flex justify-center mt-6">
+    (hasMore && searchResults.length > 0) && (
+      <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
         <Button
           onClick={() => performSearch(startIndex)}
           disabled={loading}
           variant="outline"
-          className="w-full max-w-sm"
+          className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
         >
           {loading ? "Loading..." : "Load More Results"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setShowFeedback(true)}
+          className="shadow-lg bg-white hover:bg-gray-50"
+        >
+          Provide Feedback
         </Button>
       </div>
     );
@@ -261,7 +272,7 @@ const SearchComponent = () => {
 
   return (
     <>
-      <Card className="w-full max-w-6xl mx-auto">
+      <Card className="w-full max-w-6xl mx-auto mb-16"> {/* Add margin bottom to prevent button overlap */}
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Fatwa Search</CardTitle>
@@ -416,7 +427,7 @@ const SearchComponent = () => {
           {/* Search Results */}
           <div ref={resultsContainerRef} className="mt-6 space-y-8 scroll-mt-4">
             {searchQuery && searchResults.length > 0 ? (
-              [...selectedSites, ...(includeShamela ? ["shamela.ws"] : [])].map((site) => {
+              [...(includeShamela ? ["shamela.ws"] : []), ...selectedSites].map((site) => {
                 const siteResults = searchResults.filter((result) =>
                   result.link.includes(site)
                 );

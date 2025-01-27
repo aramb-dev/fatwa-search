@@ -12,6 +12,26 @@ import { Button } from "../components/ui/button";
 import { Dialog, DialogOverlay } from "@radix-ui/react-dialog"; // Import DialogOverlay
 import { Switch } from "../components/ui/switch";
 import { Toaster, toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
+
+// Add these animation variants
+const buttonVariants = {
+  hover: { scale: 1.05 },
+  tap: { scale: 0.95 },
+  initial: { scale: 1 },
+};
+
+const resultsVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+};
+
+const filterVariants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: 20 },
+};
 
 // Update DialogContent styling with mobile responsiveness
 const CustomDialogContent = ({ children, ...props }) => (
@@ -98,7 +118,7 @@ const SearchComponent = () => {
   const resultsContainerRef = useRef(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [siteFilters] = useState([]);
+  const [siteFilters, setSiteFilters] = useState([]);
   const [showFilterSidebar, setShowFilterSidebar] = useState(false);
 
   // Add event listeners for shift key
@@ -293,37 +313,54 @@ const SearchComponent = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSearch} className="space-y-4">
-            <div className="flex gap-2">
+            <motion.div className="flex gap-2">
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Enter your search query..."
                 className="flex-grow"
               />
-              <Button
-                type="submit"
-                disabled={loading}
-                className={cn(
-                  "flex items-center gap-2",
-                  searchQuery.trim() &&
-                    "bg-gray-900 text-white hover:bg-gray-800"
-                )}
+              <motion.div
+                variants={buttonVariants}
+                initial="initial"
+                whileHover="hover"
+                whileTap="tap"
               >
-                <Search className="h-4 w-4" />
-                {loading ? "Searching..." : "Search"}
-              </Button>
-              {searchResults.length > 0 && (
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowFilterSidebar(!showFilterSidebar)}
-                  className="flex items-center gap-2"
+                  type="submit"
+                  disabled={loading}
+                  className={cn(
+                    "flex items-center gap-2",
+                    searchQuery.trim() &&
+                      "bg-gray-900 text-white hover:bg-gray-800"
+                  )}
                 >
-                  <Filter className="h-4 w-4" />
-                  Filter
+                  <Search className="h-4 w-4" />
+                  {loading ? "Searching..." : "Search"}
                 </Button>
-              )}
-            </div>
+              </motion.div>
+
+              <AnimatePresence>
+                {searchResults.length > 0 && (
+                  <motion.div
+                    variants={filterVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowFilterSidebar(!showFilterSidebar)}
+                      className="flex items-center gap-2"
+                    >
+                      <Filter className="h-4 w-4" />
+                      Filter
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
             {/* Add helper text above site selection */}
             <div className="space-y-2">
               <p className="text-sm text-gray-500 italic md:block hidden">
@@ -335,14 +372,14 @@ const SearchComponent = () => {
                 sites to search one at a time
               </p>
 
-              <div className="flex flex-wrap gap-2 relative">
+              <div className="flex flex-wrap gap-2 relative w-full">
                 {/* Mobile Selection  Mode Buttons */}
-                <div className="md:hidden w-full flex gap-2 mb-2">
+                <div className="md:hidden w-full flex flex-wrap gap-2 mb-2">
                   <Button
                     onClick={() => setIsMobileSelecting(!isMobileSelecting)}
                     variant="outline"
                     size="sm"
-                    className="flex-grow"
+                    className="flex-shrink-0"
                   >
                     {isMobileSelecting ? "Done" : "Select Sites"}
                   </Button>
@@ -352,6 +389,7 @@ const SearchComponent = () => {
                         onClick={() => setSelectedSites(sites)}
                         variant="outline"
                         size="sm"
+                        className="flex-shrink-0"
                       >
                         Select All
                       </Button>
@@ -359,6 +397,7 @@ const SearchComponent = () => {
                         onClick={() => setSelectedSites([])}
                         variant="outline"
                         size="sm"
+                        className="flex-shrink-0"
                       >
                         Select None
                       </Button>
@@ -377,7 +416,7 @@ const SearchComponent = () => {
                   size="sm"
                   type="button"
                   className={cn(
-                    "md:block",
+                    "md:block flex-shrink-0",
                     isMobileSelecting ? "hidden" : "block"
                   )}
                 >
@@ -407,7 +446,7 @@ const SearchComponent = () => {
                       }
                     }}
                     className={cn(
-                      "transition-all duration-200",
+                      "transition-all duration-200 flex-shrink-0",
                       selectedSites.includes(site)
                         ? "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600"
                         : "bg-white text-gray-700 hover:bg-gray-100",
@@ -425,39 +464,53 @@ const SearchComponent = () => {
 
           {/* Search Results */}
           <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
-            {searchQuery && filteredResults.length > 0 ? (
-              <div className="space-y-4">
-                {filteredResults.map((result, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border rounded-lg bg-white shadow-sm"
-                  >
-                    <a
-                      href={result.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline block font-medium"
+            <AnimatePresence>
+              {searchQuery && filteredResults.length > 0 ? (
+                <motion.div
+                  className="space-y-4"
+                  variants={resultsVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  {filteredResults.map((result, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-4 border rounded-lg bg-white shadow-sm"
                     >
-                      {result.title}
-                    </a>
-                    <p className="text-sm text-gray-600 mt-2">
-                      {result.snippet}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new URL(result.link).hostname}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : searchQuery && !loading ? (
-              <div className="text-center text-gray-500">
-                No results found for your search
-              </div>
-            ) : null}
-
-            {loading && (
-              <div className="text-center text-gray-500">Searching...</div>
-            )}
+                      <a
+                        href={result.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline block font-medium"
+                      >
+                        {result.title}
+                      </a>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {result.snippet}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new URL(result.link).hostname}
+                      </p>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : searchQuery && !loading ? (
+                <motion.div
+                  variants={resultsVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="text-center text-gray-500"
+                >
+                  No results found for your search
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
 
           {/* Load More Button */}
@@ -609,6 +662,47 @@ const SearchComponent = () => {
           </DialogFooter>
         </CustomDialogContent>
       </Dialog>
+
+      {searchResults.length > 0 && (
+        <Dialog open={showFilterSidebar} onOpenChange={setShowFilterSidebar}>
+          <CustomDialogContent>
+            <DialogHeader>
+              <CustomDialogTitle>Filter Results</CustomDialogTitle>
+              <p className="text-sm text-gray-500">Filter results by site</p>
+            </DialogHeader>
+            <div className="space-y-4">
+              {Array.from(
+                new Set(
+                  searchResults.map((result) => new URL(result.link).hostname)
+                )
+              ).map((site) => (
+                <div key={site} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={site}
+                    checked={siteFilters.includes(site)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSiteFilters([...siteFilters, site]);
+                      } else {
+                        setSiteFilters(siteFilters.filter((s) => s !== site));
+                      }
+                    }}
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor={site}>{site}</label>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSiteFilters([])}>
+                Clear Filters
+              </Button>
+              <Button onClick={() => setShowFilterSidebar(false)}>Close</Button>
+            </DialogFooter>
+          </CustomDialogContent>
+        </Dialog>
+      )}
     </>
   );
 };

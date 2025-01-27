@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react"; // Add useCallback and useEffect import
 import { cn } from "../lib/utils";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Filter, X } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -11,6 +11,7 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogOverlay } from "@radix-ui/react-dialog"; // Import DialogOverlay
 import { Switch } from "../components/ui/switch";
+import { Toaster, toast } from 'sonner';
 
 // Update DialogContent styling with mobile responsiveness
 const CustomDialogContent = ({ children, ...props }) => (
@@ -149,9 +150,8 @@ const SearchComponent = () => {
     async (start, isNewSearch = false) => {
       setLoading(true);
       try {
-        // Verify API credentials are available
         if (!process.env.REACT_APP_GOOGLE_API_KEY || !process.env.REACT_APP_SEARCH_ENGINE_ID) {
-          throw new Error("Search API credentials are not properly configured. Please check your environment variables.");
+          throw new Error("Search API credentials are not properly configured");
         }
 
         // Include shamela in the sites if toggle is on
@@ -188,7 +188,7 @@ const SearchComponent = () => {
         setStartIndex(start + resultsPerPage);
       } catch (error) {
         console.error("Search failed:", error);
-        alert("Search failed: " + error.message);
+        toast.error("Search failed: " + error.message);
       } finally {
         setLoading(false);
       }
@@ -197,10 +197,13 @@ const SearchComponent = () => {
   );
 
   const handleSiteRequest = async () => {
-    if (!siteInput.trim()) return;
+    if (!siteInput.trim()) {
+      toast.error("Please enter a site URL");
+      return;
+    }
 
     const formData = new FormData();
-    formData.append("form-name", "site-request"); // Add this line
+    formData.append("form-name", "site-request");
     formData.append("requested-site", siteInput);
 
     try {
@@ -211,9 +214,9 @@ const SearchComponent = () => {
       });
       setIsModalOpen(false);
       setSiteInput("");
-      alert("Site request submitted successfully!");
+      toast.success("Site request submitted successfully!");
     } catch (error) {
-      alert("Error submitting request: " + error);
+      toast.error("Failed to submit site request");
     }
   };
 
@@ -250,10 +253,13 @@ const SearchComponent = () => {
 
   // Add this handler for feedback submission
   const handleFeedbackSubmit = async () => {
-    if (!feedback.trim()) return;
+    if (!feedback.trim()) {
+      toast.error("Please enter your feedback");
+      return;
+    }
 
     const formData = new FormData();
-    formData.append("form-name", "feedback"); // Update form name
+    formData.append("form-name", "feedback");
     formData.append("feedback", feedback);
 
     try {
@@ -264,15 +270,16 @@ const SearchComponent = () => {
       });
       setShowFeedback(false);
       setFeedback("");
-      alert("Thank you for your feedback!");
+      toast.success("Thank you for your feedback!");
     } catch (error) {
-      alert("Error submitting feedback: " + error);
+      toast.error("Failed to submit feedback");
     }
   };
 
   return (
     <>
-      <Card className="w-full max-w-6xl mx-auto mb-16"> {/* Add margin bottom to prevent button overlap */}
+      <Toaster position="top-center" />
+      <Card className="w-full max-w-6xl mx-auto mb-16">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Fatwa Search</CardTitle>
@@ -324,6 +331,17 @@ const SearchComponent = () => {
                 <Search className="h-4 w-4" />
                 {loading ? "Searching..." : "Search"}
               </Button>
+              {searchResults.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowFilterSidebar(!showFilterSidebar)}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filter
+                </Button>
+              )}
             </div>
             {/* Add helper text above site selection */}
             <div className="space-y-2">
@@ -425,60 +443,44 @@ const SearchComponent = () => {
           </form>
 
           {/* Search Results */}
-          <div ref={resultsContainerRef} className="mt-6 space-y-8 scroll-mt-4">
+          // Update the search results section to use filtered results
+          const filteredResults = searchResults.filter((result) => {
+
+if (siteFilters.length === 0) return true;
+            return siteFilters.some((site) => result.link.includes(site));
+          }); // Close the filter function
+
+          // Update the results mapping to use filteredResults instead of searchResults
+          <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
             {searchQuery && searchResults.length > 0 ? (
-              [...(includeShamela ? ["shamela.ws"] : []), ...selectedSites].map((site) => {
-                const siteResults = searchResults.filter((result) =>
-                  result.link.includes(site)
-                );
-
-                return (
-                  <div key={site} className="border rounded-lg p-4">
-                    <h3 className="text-lg font-medium mb-4">
-                      Results from {site}
-                    </h3>
-
-                    {siteResults.length === 0 ? (
-                      <p className="text-gray-500 italic">
-                        No results found for {site}
+              <div className="space-y-4">
+                {searchResults
+                  .filter((result) => {
+                    if (siteFilters.length === 0) return true;
+                    return siteFilters.some((site) => result.link.includes(site));
+                  })
+                  .map((result, index) => (
+                    <div
+                      key={index}
+                      className="p-4 border rounded-lg bg-white shadow-sm"
+                    >
+                      <a
+                        href={result.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline block font-medium"
+                      >
+                        {result.title}
+                      </a>
+                      <p className="text-sm text-gray-600 mt-2">
+                        {result.snippet}
                       </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {siteResults
-                          .slice(0, loadedCounts[site] || RESULTS_PER_SITE)
-                          .map((result, index) => (
-                            <div
-                              key={index}
-                              className="p-4 border rounded-lg bg-white shadow-sm"
-                            >
-                              <a
-                                href={result.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline block font-medium"
-                              >
-                                {result.title}
-                              </a>
-                              <p className="text-sm text-gray-600 mt-2">
-                                {result.snippet}
-                              </p>
-                            </div>
-                          ))}
-                        {siteResults.length >
-                          (loadedCounts[site] || RESULTS_PER_SITE) && (
-                          <Button
-                            onClick={() => handleLoadMore(site)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Load More from {site}
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new URL(result.link).hostname}
+                      </p>
+                    </div>
+                  ))}
+              </div>
             ) : searchQuery && !loading ? (
               <div className="text-center text-gray-500">
                 No results found for your search
@@ -490,8 +492,26 @@ const SearchComponent = () => {
             )}
           </div>
 
-          {/* Replace pagination with Load More */}
-          <LoadMoreButton />
+          {/* Load More Button */}
+          {hasMore && searchResults.length > 0 && (
+            <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+              <Button
+                onClick={() => performSearch(startIndex)}
+                disabled={loading}
+                variant="outline"
+                className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
+              >
+                {loading ? "Loading..." : "Load More Results"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowFeedback(true)}
+                className="shadow-lg bg-white hover:bg-gray-50"
+              >
+                Provide Feedback
+              </Button>
+            </div>
+          )}
 
           {/* Add this before the attribution footer */}
           <div className="mt-8 border-t pt-8">
@@ -561,6 +581,44 @@ const SearchComponent = () => {
         </CardContent>
       </Card>
 
+      {/* Add new feedback modal */}
+      <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
+        <CustomDialogContent>
+          <DialogHeader>
+            <CustomDialogTitle>Provide Feedback</CustomDialogTitle>
+            <p className="text-sm text-gray-500">
+              Help us improve by sharing your thoughts about the search experience.
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Tell us what you think about the search..."
+              className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowFeedback(false);
+                setFeedback("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleFeedbackSubmit}
+              disabled={!feedback.trim()}
+            >
+              Submit Feedback
+            </Button>
+          </DialogFooter>
+        </CustomDialogContent>
+      </Dialog>
+
+      {/* Existing site request modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <CustomDialogContent>
           <DialogHeader>

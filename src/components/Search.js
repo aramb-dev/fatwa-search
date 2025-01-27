@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react"; // Add useCallback and useEffect import
 import { cn } from "../lib/utils";
-import { Search, Plus, Filter, X } from "lucide-react";
+import { Search, Plus, Filter } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -94,13 +94,12 @@ const SearchComponent = () => {
   const resultsPerPage = 10;
   const [selectedSites, setSelectedSites] = useState(sites);
   const [isShiftPressed, setIsShiftPressed] = useState(false);
-  const [loadedCounts, setLoadedCounts] = useState({});
-  const RESULTS_PER_SITE = 5;
   const [isMobileSelecting, setIsMobileSelecting] = useState(false);
   const resultsContainerRef = useRef(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState("");
-  const [siteFilters, setSiteFilters] = useState([]);
+  const [siteFilters] = useState([]);
+  const [showFilterSidebar, setShowFilterSidebar] = useState(false);
 
   // Add event listeners for shift key
   useEffect(() => {
@@ -222,35 +221,6 @@ const SearchComponent = () => {
     } catch (error) {
       toast.error("Failed to submit site request");
     }
-  };
-
-  const LoadMoreButton = () =>
-    hasMore &&
-    searchResults.length > 0 && (
-      <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
-        <Button
-          onClick={() => performSearch(startIndex)}
-          disabled={loading}
-          variant="outline"
-          className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
-        >
-          {loading ? "Loading..." : "Load More Results"}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setShowFeedback(true)}
-          className="shadow-lg bg-white hover:bg-gray-50"
-        >
-          Provide Feedback
-        </Button>
-      </div>
-    );
-
-  const handleLoadMore = (site) => {
-    setLoadedCounts((prev) => ({
-      ...prev,
-      [site]: (prev[site] || RESULTS_PER_SITE) + RESULTS_PER_SITE,
-    }));
   };
 
   // Add this helper function to check if device is mobile

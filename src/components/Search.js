@@ -11,7 +11,7 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogOverlay } from "@radix-ui/react-dialog"; // Import DialogOverlay
 import { Switch } from "../components/ui/switch";
-import { Toaster, toast } from 'sonner';
+import { Toaster, toast } from "sonner";
 
 // Update DialogContent styling with mobile responsiveness
 const CustomDialogContent = ({ children, ...props }) => (
@@ -77,7 +77,7 @@ export const DEFAULT_SITES = [
   "aletioupi.com",
   "miraath.net",
   "al-albany.com",
-  "rabee.net"
+  "rabee.net",
 ];
 
 const SearchComponent = () => {
@@ -100,6 +100,7 @@ const SearchComponent = () => {
   const resultsContainerRef = useRef(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [siteFilters, setSiteFilters] = useState([]);
 
   // Add event listeners for shift key
   useEffect(() => {
@@ -150,7 +151,10 @@ const SearchComponent = () => {
     async (start, isNewSearch = false) => {
       setLoading(true);
       try {
-        if (!process.env.REACT_APP_GOOGLE_API_KEY || !process.env.REACT_APP_SEARCH_ENGINE_ID) {
+        if (
+          !process.env.REACT_APP_GOOGLE_API_KEY ||
+          !process.env.REACT_APP_SEARCH_ENGINE_ID
+        ) {
           throw new Error("Search API credentials are not properly configured");
         }
 
@@ -221,7 +225,8 @@ const SearchComponent = () => {
   };
 
   const LoadMoreButton = () =>
-    (hasMore && searchResults.length > 0) && (
+    hasMore &&
+    searchResults.length > 0 && (
       <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
         <Button
           onClick={() => performSearch(startIndex)}
@@ -276,6 +281,11 @@ const SearchComponent = () => {
     }
   };
 
+  const filteredResults = searchResults.filter((result) => {
+    if (siteFilters.length === 0) return true;
+    return siteFilters.some((site) => result.link.includes(site));
+  });
+
   return (
     <>
       <Toaster position="top-center" />
@@ -287,7 +297,8 @@ const SearchComponent = () => {
               Search the Mashayikh sites for your keyword
             </p>
             <p className="text-sm text-gray-500">
-              Putting your keywords in Arabic is more effective as these are Arabic sites
+              Putting your keywords in Arabic is more effective as these are
+              Arabic sites
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
@@ -443,43 +454,30 @@ const SearchComponent = () => {
           </form>
 
           {/* Search Results */}
-          // Update the search results section to use filtered results
-          const filteredResults = searchResults.filter((result) => {
-
-if (siteFilters.length === 0) return true;
-            return siteFilters.some((site) => result.link.includes(site));
-          }); // Close the filter function
-
-          // Update the results mapping to use filteredResults instead of searchResults
           <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
-            {searchQuery && searchResults.length > 0 ? (
+            {searchQuery && filteredResults.length > 0 ? (
               <div className="space-y-4">
-                {searchResults
-                  .filter((result) => {
-                    if (siteFilters.length === 0) return true;
-                    return siteFilters.some((site) => result.link.includes(site));
-                  })
-                  .map((result, index) => (
-                    <div
-                      key={index}
-                      className="p-4 border rounded-lg bg-white shadow-sm"
+                {filteredResults.map((result, index) => (
+                  <div
+                    key={index}
+                    className="p-4 border rounded-lg bg-white shadow-sm"
+                  >
+                    <a
+                      href={result.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline block font-medium"
                     >
-                      <a
-                        href={result.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline block font-medium"
-                      >
-                        {result.title}
-                      </a>
-                      <p className="text-sm text-gray-600 mt-2">
-                        {result.snippet}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new URL(result.link).hostname}
-                      </p>
-                    </div>
-                  ))}
+                      {result.title}
+                    </a>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {result.snippet}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new URL(result.link).hostname}
+                    </p>
+                  </div>
+                ))}
               </div>
             ) : searchQuery && !loading ? (
               <div className="text-center text-gray-500">
@@ -587,7 +585,8 @@ if (siteFilters.length === 0) return true;
           <DialogHeader>
             <CustomDialogTitle>Provide Feedback</CustomDialogTitle>
             <p className="text-sm text-gray-500">
-              Help us improve by sharing your thoughts about the search experience.
+              Help us improve by sharing your thoughts about the search
+              experience.
             </p>
           </DialogHeader>
           <div className="space-y-4">
@@ -608,10 +607,7 @@ if (siteFilters.length === 0) return true;
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleFeedbackSubmit}
-              disabled={!feedback.trim()}
-            >
+            <Button onClick={handleFeedbackSubmit} disabled={!feedback.trim()}>
               Submit Feedback
             </Button>
           </DialogFooter>

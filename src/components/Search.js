@@ -678,7 +678,7 @@ const SearchComponent = () => {
               target="_blank"
               rel="noreferrer"
             >
-              Abdur-Rahman Bilal
+              عبد من عباد الله
             </a>
             {" | "}
             <a

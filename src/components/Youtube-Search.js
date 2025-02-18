@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from "react";
-import { Youtube, X, Filter } from "lucide-react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Youtube, X, Filter, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog } from "@radix-ui/react-dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
+import { useSearchParams } from 'react-router-dom';
 
 // Animation variants
 const cardVariants = {
@@ -45,10 +46,11 @@ const CHANNELS = [
 ];
 
 const YoutubeSearch = () => {
+  // State declarations
   const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState([]);
   const [scholarRequest, setScholarRequest] = useState("");
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [channelRequest, setChannelRequest] = useState("");
@@ -56,39 +58,43 @@ const YoutubeSearch = () => {
   const [startIndex, setStartIndex] = useState(0);
   const [activeModal, setActiveModal] = useState(null);
   const [channelFilters, setChannelFilters] = useState([]);
+  const [searchParams] = useSearchParams();
+
+  // Refs
+  const initialLoadDoneRef = useRef(false);
+  const previousSearchRef = useRef("");
   const resultsPerPage = 10;
 
+  // Dedicated search function
   const performYoutubeSearch = useCallback(
     async (isNewSearch = false) => {
-      if (!searchQuery.trim()) return;
+      const currentQuery = searchQuery.trim();
+      if (!currentQuery) return;
 
       setLoading(true);
+      if (isNewSearch) {
+        setStartIndex(0);
+        setResults([]);
+      }
+
       try {
-        // Calculate which channels to search based on pagination
         const channelsToSearch = CHANNELS.slice(
-          startIndex,
-          startIndex + resultsPerPage
+          isNewSearch ? 0 : startIndex,
+          isNewSearch ? resultsPerPage : startIndex + resultsPerPage
         );
 
         const searches = channelsToSearch.map(async (channelId) => {
           const response = await fetch(
             `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-              searchQuery
-            )}&key=${
-              process.env.REACT_APP_YOUTUBE_API_KEY
-            }&type=video&maxResults=5&channelId=${channelId}`
+              currentQuery
+            )}&key=${process.env.REACT_APP_YOUTUBE_API_KEY}&type=video&maxResults=5&channelId=${channelId}`
           );
           const data = await response.json();
 
-          // Check for quota exceeded error
-          if (data.error && data.error.code === 403) {
-            if (
-              data.error.errors?.some(
-                (err) =>
-                  err.reason === "quotaExceeded" ||
-                  err.message?.includes("quota")
-              )
-            ) {
+          if (data.error?.code === 403) {
+            if (data.error.errors?.some(err =>
+              err.reason === "quotaExceeded" || err.message?.includes("quota")
+            )) {
               throw new Error("QUOTA_EXCEEDED");
             }
           }
@@ -97,39 +103,41 @@ const YoutubeSearch = () => {
         });
 
         const newResults = (await Promise.all(searches)).flat();
-
-        // Sort by date
-        newResults.sort(
-          (a, b) =>
-            new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)
+        newResults.sort((a, b) =>
+          new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)
         );
 
-        setResults((prev) =>
-          isNewSearch ? newResults : [...prev, ...newResults]
-        );
+        setResults(prev => isNewSearch ? newResults : [...prev, ...newResults]);
         setHasMore(startIndex + resultsPerPage < CHANNELS.length);
         if (!isNewSearch) {
-          setStartIndex((prev) => prev + resultsPerPage);
+          setStartIndex(prev => prev + resultsPerPage);
         }
       } catch (error) {
         console.error("YouTube search failed:", error);
-        if (error.message === "QUOTA_EXCEEDED") {
-          toast.error(
-            "Sorry, Youtube API quota limit reached. Please try again in 24hrs.",
-            {
-              duration: 10000, // Show for 10 seconds
-              closeButton: true,
-            }
-          );
-        } else {
-          toast.error("Failed to fetch YouTube results");
-        }
+        toast.error(error.message === "QUOTA_EXCEEDED"
+          ? "API quota exceeded. Please try again later."
+          : "Failed to perform search"
+        );
       } finally {
         setLoading(false);
       }
     },
     [searchQuery, startIndex]
   );
+
+  // Handle URL params and initial search
+  useEffect(() => {
+    const queryParam = searchParams.get('q');
+    if (queryParam && !initialLoadDoneRef.current) {
+      setSearchQuery(queryParam);
+      previousSearchRef.current = queryParam;
+      initialLoadDoneRef.current = true;
+
+      if (queryParam.trim()) {
+        performYoutubeSearch(true);
+      }
+    }
+  }, [searchParams, performYoutubeSearch]);
 
   const handleScholarRequest = async () => {
     if (!scholarRequest.trim()) {
@@ -202,6 +210,32 @@ const YoutubeSearch = () => {
     await performYoutubeSearch(true);
   };
 
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Create URL with correct path
+    const url = new URL(window.location.href);
+    url.pathname = '/yt-search'; // Ensure we're on the YouTube search path
+    url.searchParams.set('q', searchQuery);
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Fatwa Search Results',
+        text: `Check out these YouTube search results for "${searchQuery}"`,
+        url: url.toString()
+      }).catch(error => {
+        console.error('Error sharing:', error);
+        // Fallback to clipboard if sharing fails
+        navigator.clipboard.writeText(url.toString());
+        toast.success('Link copied to clipboard!');
+      });
+    } else {
+      navigator.clipboard.writeText(url.toString());
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="space-y-4">
@@ -220,6 +254,19 @@ const YoutubeSearch = () => {
             <Youtube className="h-4 w-4" />
             {loading ? "Searching..." : "Search"}
           </Button>
+
+          {/* Add Share Button */}
+          {searchQuery && (
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              className="flex items-center gap-2"
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </Button>
+          )}
+
           <Button
             variant="outline"
             onClick={() => setShowRequestModal(true)}

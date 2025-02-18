@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useCallback, useEffect, useRef } from "react"; // Add useCallback and useEffect import
 import { cn } from "../lib/utils";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Filter, Share2 } from "lucide-react"; // Add Share2 import
 import {
   Card,
   CardContent,
@@ -14,6 +14,7 @@ import { Dialog, DialogOverlay } from "@radix-ui/react-dialog"; // Import Dialog
 import { Switch } from "../components/ui/switch";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
+import { useSearchParams } from 'react-router-dom'; // Add useSearchParams import
 
 // Add these animation variants
 const buttonVariants = {
@@ -137,9 +138,12 @@ export const DEFAULT_SITES = [
 ];
 
 const SearchComponent = () => {
+  const resultsPerPage = 10; // Define results per page constant
+
+  // Initialize all state variables first
   const [searchQuery, setSearchQuery] = useState("");
   const [sites] = useState(DEFAULT_SITES);
-  const [includeShamela, setIncludeShamela] = useState(false); // Add this line
+  const [includeShamela, setIncludeShamela] = useState(false);
   const [includeAlmaany, setIncludeAlmaany] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -147,77 +151,20 @@ const SearchComponent = () => {
   const [siteInput, setSiteInput] = useState("");
   const [startIndex, setStartIndex] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const resultsPerPage = 10;
   const [selectedSites, setSelectedSites] = useState(sites);
   const [isShiftPressed, setIsShiftPressed] = useState(false);
   const [isMobileSelecting, setIsMobileSelecting] = useState(false);
-  const resultsContainerRef = useRef(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [siteFilters, setSiteFilters] = useState([]);
-  // Add a new state for managing which modal is currently open
-  const [activeModal, setActiveModal] = useState(null); // 'feedback', 'filter', or 'siteRequest'
+  const [activeModal, setActiveModal] = useState(null);
+  const [searchParams] = useSearchParams();
 
-  // Replace the individual modal state setters with this function
-  const openModal = (modalName) => {
-    setActiveModal(modalName);
-  };
+  // Use ref instead of state for tracking initial load
+  const initialLoadDoneRef = useRef(false);
+  const resultsContainerRef = useRef(null);
 
-  // Replace the individual modal state closers with this function
-  const closeModal = () => {
-    setActiveModal(null);
-  };
-
-  // Update the button handlers
-  const openFeedbackModal = () => openModal("feedback");
-  const openFilterModal = () => openModal("filter");
-  const openSiteRequestModal = () => openModal("siteRequest");
-
-  // Add event listeners for shift key
-  useEffect(() => {
-    const handleKeyDown = (e) => e.shiftKey && setIsShiftPressed(true);
-    const handleKeyUp = (e) => !e.shiftKey && setIsShiftPressed(false);
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
-
-  const toggleSite = (site, event) => {
-    if (!isShiftPressed) {
-      // Single selection
-      setSelectedSites([site]);
-    } else {
-      // Multiple selection
-      setSelectedSites((prev) =>
-        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
-      );
-    }
-  };
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    // Reset results and start index for new search
-    setSearchResults([]);
-    setStartIndex(1);
-    setHasMore(true);
-    await performSearch(1, true);
-
-    // Scroll to results after a small delay to ensure results are rendered
-    setTimeout(() => {
-      resultsContainerRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 500);
-  };
-
+  // Define performSearch first
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
       setLoading(true);
@@ -313,6 +260,69 @@ const SearchComponent = () => {
     [searchQuery, selectedSites, includeShamela, includeAlmaany]
   );
 
+  // Update useEffect to use ref
+  useEffect(() => {
+    const queryParam = searchParams.get('q');
+    if (queryParam && !initialLoadDoneRef.current) {
+      setSearchQuery(queryParam);
+      initialLoadDoneRef.current = true;
+      performSearch(1, true);
+    }
+  }, [searchParams, performSearch]);
+
+  // Rest of the component remains the same
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    // Reset results and start index for new search
+    setSearchResults([]);
+    setStartIndex(1);
+    setHasMore(true);
+    await performSearch(1, true);
+  };
+
+  // Replace the individual modal state setters with this function
+  const openModal = (modalName) => {
+    setActiveModal(modalName);
+  };
+
+  // Replace the individual modal state closers with this function
+  const closeModal = () => {
+    setActiveModal(null);
+  };
+
+  // Update the button handlers
+  const openFeedbackModal = () => openModal("feedback");
+  const openFilterModal = () => openModal("filter");
+  const openSiteRequestModal = () => openModal("siteRequest");
+
+  // Add event listeners for shift key
+  useEffect(() => {
+    const handleKeyDown = (e) => e.shiftKey && setIsShiftPressed(true);
+    const handleKeyUp = (e) => !e.shiftKey && setIsShiftPressed(false);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  const toggleSite = (site, event) => {
+    if (!isShiftPressed) {
+      // Single selection
+      setSelectedSites([site]);
+    } else {
+      // Multiple selection
+      setSelectedSites((prev) =>
+        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
+      );
+    }
+  };
+
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
       toast.error("Please enter a site URL");
@@ -362,6 +372,25 @@ const SearchComponent = () => {
       toast.success("Thank you for your feedback!");
     } catch (error) {
       toast.error("Failed to submit feedback");
+    }
+  };
+
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('q', searchQuery);
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'Fatwa Search Results',
+        text: `Check out these search results for "${searchQuery}"`,
+        url: url.toString()
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(url.toString());
+      toast.success('Link copied to clipboard!');
     }
   };
 
@@ -445,6 +474,18 @@ const SearchComponent = () => {
                   {loading ? "Searching..." : "Search"}
                 </Button>
               </motion.div>
+
+              {/* Add Share Button */}
+              {searchQuery && (
+                <Button
+                  variant="outline"
+                  onClick={handleShare}
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </Button>
+              )}
 
               <AnimatePresence>
                 {searchResults.length > 0 && (

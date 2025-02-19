@@ -24,3 +24,5 @@ yarn-error.log*
 
 # macOS resource forks
 ._*
+# Local Netlify folder
+.netlify

@@ -128,16 +128,27 @@ const YoutubeSearch = () => {
   // Handle URL params and initial search
   useEffect(() => {
     const queryParam = searchParams.get('q');
+
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
       previousSearchRef.current = queryParam;
       initialLoadDoneRef.current = true;
 
-      if (queryParam.trim()) {
+      // Wrap in setTimeout to ensure state updates have completed
+      setTimeout(() => {
         performYoutubeSearch(true);
-      }
+      }, 0);
     }
   }, [searchParams, performYoutubeSearch]);
+
+  // Add this new effect to handle direct URL access
+  useEffect(() => {
+    const queryParam = searchParams.get('q');
+    if (queryParam && window.location.pathname === '/yt-search') {
+      setSearchQuery(queryParam);
+      performYoutubeSearch(true);
+    }
+  }, [searchParams, performYoutubeSearch]); // Include required dependencies
 
   const handleScholarRequest = async () => {
     if (!scholarRequest.trim()) {

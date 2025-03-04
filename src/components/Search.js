@@ -145,6 +145,7 @@ const SearchComponent = () => {
   const [sites] = useState(DEFAULT_SITES);
   const [includeShamela, setIncludeShamela] = useState(false);
   const [includeAlmaany, setIncludeAlmaany] = useState(false);
+  const [includeDorar, setIncludeDorar] = useState(false); // Add this line
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [setIsModalOpen] = useState(false);
@@ -181,6 +182,7 @@ const SearchComponent = () => {
         const specialSitesToSearch = [
           ...(includeShamela ? ["shamela.ws"] : []),
           ...(includeAlmaany ? ["almaany.com"] : []),
+          ...(includeDorar ? ["dorar.net"] : []), // Add this line
         ];
 
         let allResults = [];
@@ -195,6 +197,12 @@ const SearchComponent = () => {
 
           const specialResponse = await fetch(specialSearchUrl);
           const specialData = await specialResponse.json();
+
+          // Add inside the special sites loop in performSearch
+          console.log(`Searching ${specialSite}:`, specialData);
+          if (!specialData.items) {
+            console.warn(`No results found for ${specialSite}`);
+          }
 
           if (specialData.items) {
             allResults = [...allResults, ...specialData.items];
@@ -220,16 +228,25 @@ const SearchComponent = () => {
           }
         }
 
-        // Sort results to prioritize special sites
+        // Add inside performSearch before the sorting
+        console.log('Special sites to search:', specialSitesToSearch);
+        console.log('Before sorting:', allResults.map(r => r.link));
+
+        // Update the sorting logic in performSearch function
         allResults.sort((a, b) => {
-          const aIsSpecial = specialSitesToSearch.some((site) =>
-            a.link.includes(site)
-          );
-          const bIsSpecial = specialSitesToSearch.some((site) =>
-            b.link.includes(site)
-          );
+          const aIsDorar = a.link.includes("dorar.net");
+          const bIsDorar = b.link.includes("dorar.net");
+          if (aIsDorar && !bIsDorar) return -1;
+          if (!aIsDorar && bIsDorar) return 1;
+
+          // Then handle other special sites
+          const aIsSpecial = specialSitesToSearch.some(site => a.link.includes(site));
+          const bIsSpecial = specialSitesToSearch.some(site => b.link.includes(site));
           return bIsSpecial - aIsSpecial;
         });
+
+        // After sorting
+        console.log('After sorting:', allResults.map(r => r.link));
 
         // Update results state
         setSearchResults((prev) => {
@@ -257,7 +274,7 @@ const SearchComponent = () => {
         setLoading(false);
       }
     },
-    [searchQuery, selectedSites, includeShamela, includeAlmaany]
+    [searchQuery, selectedSites, includeShamela, includeAlmaany, includeDorar] // Add includeDorar here
   );
 
   // Update useEffect to use ref
@@ -440,6 +457,14 @@ const SearchComponent = () => {
                 <Switch
                   checked={includeAlmaany}
                   onCheckedChange={setIncludeAlmaany}
+                  className="data-[state=checked]:bg-green-600"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">Search Dorar.net</span>
+                <Switch
+                  checked={includeDorar}
+                  onCheckedChange={setIncludeDorar}
                   className="data-[state=checked]:bg-green-600"
                 />
               </div>

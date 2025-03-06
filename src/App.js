@@ -146,6 +146,28 @@ function App() {
             <Route path="/en" element={<Navigate to="/en/search" replace />} />
             <Route path="/ar" element={<Navigate to="/ar/search" replace />} />
 
+            {/* Add new config redirect routes */}
+            <Route
+              path="/config"
+              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+            />
+            <Route
+              path="/en/config"
+              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+            />
+            <Route
+              path="/ar/config"
+              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+            />
+            <Route
+              path="/:lang/search/config"
+              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+            />
+            <Route
+              path="/:lang/yt-search/config"
+              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+            />
+
             {/* English routes */}
             <Route
               path="/en/search"

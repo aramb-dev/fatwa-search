@@ -1,4 +1,28 @@
 [[redirects]]
+  from = "/config"
+  to = "https://app.netlify.com/sites/fatwa-search/overview"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/*/config"
+  to = "https://app.netlify.com/sites/fatwa-search/overview"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/*/search/config"
+  to = "https://app.netlify.com/sites/fatwa-search/overview"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/*/yt-search/config"
+  to = "https://app.netlify.com/sites/fatwa-search/overview"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/en/*"
   to = "/index.html"
   status = 200

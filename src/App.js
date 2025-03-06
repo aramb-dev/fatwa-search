@@ -16,6 +16,14 @@ import { translations } from './translations';
 
 const cn = (...args) => clsx(...args);
 
+// Add this component at the top of the file
+const ExternalRedirect = ({ to }) => {
+  useEffect(() => {
+    window.location.href = to;
+  }, [to]);
+  return null;
+};
+
 // Animation variants remain the same
 const tabContentVariants = {
   enter: {
@@ -79,7 +87,7 @@ function App() {
       const newPath = `/${language}/${currentPath || 'search'}`;
       navigate(newPath, { replace: true });
     }
-  }, []);
+  }, [language, location.pathname, navigate]); // Added missing dependencies
 
   // Handle tab changes with language prefix
   const handleTabChange = (value) => {
@@ -149,23 +157,23 @@ function App() {
             {/* Add new config redirect routes */}
             <Route
               path="/config"
-              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
             />
             <Route
               path="/en/config"
-              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
             />
             <Route
               path="/ar/config"
-              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
             />
             <Route
               path="/:lang/search/config"
-              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
             />
             <Route
               path="/:lang/yt-search/config"
-              element={<Navigate to="https://app.netlify.com/sites/fatwa-search/overview" replace />}
+              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
             />
 
             {/* English routes */}

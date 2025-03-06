@@ -250,7 +250,7 @@ const SearchComponent = ({ language = 'en' }) => {
 
         if (isNewSearch) {
           toast(
-            translations[language].searchResultsDisclaimer,
+            t.searchResultsDisclaimer,
             {
               duration: 5000,
               closeButton: true,
@@ -264,7 +264,7 @@ const SearchComponent = ({ language = 'en' }) => {
         setLoading(false);
       }
     },
-    [searchQuery, selectedSites, includeShamela, includeAlmaany, includeDorar, translations, language]
+    [searchQuery, selectedSites, includeShamela, includeAlmaany, includeDorar, t] // Removed translations, added t
   );
 
   useEffect(() => {

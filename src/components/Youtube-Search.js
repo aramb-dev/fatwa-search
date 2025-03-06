@@ -45,7 +45,7 @@ const CHANNELS = [
   "UC0ljB6Xfg9RWjFWNb4JO-IQ",
 ];
 
-const YoutubeSearch = () => {
+const YoutubeSearch = ({ language, translations }) => {
   // State declarations
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -254,7 +254,7 @@ const YoutubeSearch = () => {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search YouTube videos..."
+            placeholder={translations.searchPlaceholder}
             className="flex-grow"
           />
           <Button
@@ -263,7 +263,7 @@ const YoutubeSearch = () => {
             className="flex items-center gap-2"
           >
             <Youtube className="h-4 w-4" />
-            {loading ? "Searching..." : "Search"}
+            {loading ? translations.searching : translations.searchAction}
           </Button>
 
           {/* Add Share Button */}
@@ -274,7 +274,7 @@ const YoutubeSearch = () => {
               className="flex items-center gap-2"
             >
               <Share2 className="h-4 w-4" />
-              Share
+              {translations.share}
             </Button>
           )}
 
@@ -283,7 +283,7 @@ const YoutubeSearch = () => {
             onClick={() => setShowRequestModal(true)}
             className="flex items-center gap-2"
           >
-            Request Channel
+            {translations.requestChannel}
           </Button>
           {results.length > 0 && (
             <Button
@@ -292,7 +292,7 @@ const YoutubeSearch = () => {
               className="flex items-center gap-2"
             >
               <Filter className="h-4 w-4" />
-              Filter
+              {translations.filter}
             </Button>
           )}
         </form>
@@ -353,7 +353,7 @@ const YoutubeSearch = () => {
                           className="flex items-center gap-2"
                         >
                           <Youtube className="h-4 w-4" />
-                          View on YouTube
+                          {translations.viewOnYoutube}
                         </Button>
                       </a>
                       <Button
@@ -392,12 +392,12 @@ const YoutubeSearch = () => {
               >
                 <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
                   <h2 className="text-lg font-medium mb-4">
-                    Request a Scholar
+                    {translations.requestScholar}
                   </h2>
                   <Input
                     value={scholarRequest}
                     onChange={(e) => setScholarRequest(e.target.value)}
-                    placeholder="Enter scholar's name..."
+                    placeholder={translations.enterScholarName}
                     className="mb-4"
                   />
                   <div className="flex justify-end gap-2">
@@ -405,10 +405,10 @@ const YoutubeSearch = () => {
                       variant="outline"
                       onClick={() => setShowRequestModal(false)}
                     >
-                      Cancel
+                      {translations.enterScholarName}
                     </Button>
                     <Button onClick={handleScholarRequest}>
-                      Submit Request
+                      {translations.submitRequest}
                     </Button>
                   </div>
                 </div>
@@ -430,10 +430,10 @@ const YoutubeSearch = () => {
               >
                 <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
                   <h2 className="text-lg font-medium mb-4">
-                    Request YouTube Channel
+                    {translations.requestChannel}
                   </h2>
                   <p className="text-sm text-gray-500 mb-4">
-                    Paste YouTube link to the Shaykh's YouTube channel
+                    {translations.pasteYoutubeLink}
                   </p>
                   <Input
                     value={channelRequest}
@@ -446,10 +446,10 @@ const YoutubeSearch = () => {
                       variant="outline"
                       onClick={() => setShowRequestModal(false)}
                     >
-                      Cancel
+                      {translations.cancel}
                     </Button>
                     <Button onClick={handleChannelRequest}>
-                      Submit Request
+                      {translations.submitRequest}
                     </Button>
                   </div>
                 </div>
@@ -467,14 +467,14 @@ const YoutubeSearch = () => {
               variant="outline"
               className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
             >
-              {loading ? "Loading..." : "Load More Results"}
+              {loading ? translations.loading : translations.loadMore}
             </Button>
             <Button
               variant="outline"
               onClick={() => setActiveModal("feedback")}
               className="shadow-lg bg-white hover:bg-gray-50"
             >
-              Provide Feedback
+              {translations.provideFeedback}
             </Button>
           </div>
         )}
@@ -491,9 +491,9 @@ const YoutubeSearch = () => {
                 exit="exit"
               >
                 <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                  <h2 className="text-lg font-medium mb-4">Filter Results</h2>
+                  <h2 className="text-lg font-medium mb-4">{translations.filterResults}</h2>
                   <p className="text-sm text-gray-500 mb-4">
-                    Filter results by channel
+                    {translations.filterByChannel}
                   </p>
                   <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                     {Array.from(
@@ -539,9 +539,9 @@ const YoutubeSearch = () => {
                       variant="outline"
                       onClick={() => setChannelFilters([])}
                     >
-                      Clear Filters
+                      {translations.clearFilters}
                     </Button>
-                    <Button onClick={() => setActiveModal(null)}>Close</Button>
+                    <Button onClick={() => setActiveModal(null)}>{translations.close}</Button>
                   </div>
                 </div>
               </motion.div>

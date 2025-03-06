@@ -1,4 +1,14 @@
 [[redirects]]
+  from = "/en/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/ar/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

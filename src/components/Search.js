@@ -1,7 +1,7 @@
 import React from "react";
-import { useState, useCallback, useEffect, useRef } from "react"; // Add useCallback and useEffect import
+import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "../lib/utils";
-import { Search, Plus, Filter, Share2 } from "lucide-react"; // Add Share2 import
+import { Search, Plus, Filter, Share2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,13 +10,13 @@ import {
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { Dialog, DialogOverlay } from "@radix-ui/react-dialog"; // Import DialogOverlay
+import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
 import { Switch } from "../components/ui/switch";
 import { Toaster, toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion
-import { useSearchParams } from 'react-router-dom'; // Add useSearchParams import
+import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from 'react-router-dom';
+import { translations } from '../translations';
 
-// Add these animation variants
 const buttonVariants = {
   hover: { scale: 1.05 },
   tap: { scale: 0.95 },
@@ -67,7 +67,6 @@ const overlayVariants = {
   exit: { opacity: 0 },
 };
 
-// Update DialogContent styling with mobile responsiveness
 const CustomDialogContent = ({ children, ...props }) => (
   <motion.div
     initial="initial"
@@ -86,9 +85,9 @@ const CustomDialogContent = ({ children, ...props }) => (
         "bg-white rounded-lg",
         "p-6",
         "shadow-lg",
-        "mx-4 sm:mx-auto", // Add horizontal margin for mobile
-        "z-50", // Ensure modal is above overlay
-        "overflow-y-auto max-h-[90vh]" // Handle overflow for tall content
+        "mx-4 sm:mx-auto",
+        "z-50",
+        "overflow-y-auto max-h-[90vh]"
       )}
       {...props}
     >
@@ -97,21 +96,18 @@ const CustomDialogContent = ({ children, ...props }) => (
   </motion.div>
 );
 
-// Update DialogHeader styling
 const DialogHeader = ({ children }) => (
   <div className="flex flex-col space-y-2 sm:space-y-3 mb-4 sm:mb-6">
     {children}
   </div>
 );
 
-// Update DialogTitle styling
 const CustomDialogTitle = ({ children }) => (
   <h2 className="text-lg sm:text-xl font-semibold leading-none tracking-tight">
     {children}
   </h2>
 );
 
-// Update DialogFooter styling for better mobile layout
 const DialogFooter = ({ children }) => (
   <div
     className={cn(
@@ -137,15 +133,21 @@ export const DEFAULT_SITES = [
   "rabee.net",
 ];
 
-const SearchComponent = () => {
-  const resultsPerPage = 10; // Define results per page constant
+const SearchComponent = ({ language = 'en' }) => {
+  let t = translations[language];
 
-  // Initialize all state variables first
+  if (!t) {
+    console.error('Missing translations for language:', language);
+    t = translations.en;
+  }
+
+  const resultsPerPage = 10;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [sites] = useState(DEFAULT_SITES);
   const [includeShamela, setIncludeShamela] = useState(false);
   const [includeAlmaany, setIncludeAlmaany] = useState(false);
-  const [includeDorar, setIncludeDorar] = useState(false); // Add this line
+  const [includeDorar, setIncludeDorar] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [setIsModalOpen] = useState(false);
@@ -161,11 +163,9 @@ const SearchComponent = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [searchParams] = useSearchParams();
 
-  // Use ref instead of state for tracking initial load
   const initialLoadDoneRef = useRef(false);
   const resultsContainerRef = useRef(null);
 
-  // Define performSearch first
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
       setLoading(true);
@@ -177,17 +177,15 @@ const SearchComponent = () => {
           throw new Error("Search API credentials are not properly configured");
         }
 
-        // Separate regular sites from special sites
         const regularSites = selectedSites;
         const specialSitesToSearch = [
           ...(includeShamela ? ["shamela.ws"] : []),
           ...(includeAlmaany ? ["almaany.com"] : []),
-          ...(includeDorar ? ["dorar.net"] : []), // Add this line
+          ...(includeDorar ? ["dorar.net"] : []),
         ];
 
         let allResults = [];
 
-        // First, search special sites individually if enabled
         for (const specialSite of specialSitesToSearch) {
           const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
             process.env.REACT_APP_GOOGLE_API_KEY
@@ -198,7 +196,6 @@ const SearchComponent = () => {
           const specialResponse = await fetch(specialSearchUrl);
           const specialData = await specialResponse.json();
 
-          // Add inside the special sites loop in performSearch
           console.log(`Searching ${specialSite}:`, specialData);
           if (!specialData.items) {
             console.warn(`No results found for ${specialSite}`);
@@ -209,7 +206,6 @@ const SearchComponent = () => {
           }
         }
 
-        // Then search regular sites
         if (regularSites.length > 0) {
           const regularSiteQuery = regularSites
             .map((site) => `site:${site}`)
@@ -228,27 +224,22 @@ const SearchComponent = () => {
           }
         }
 
-        // Add inside performSearch before the sorting
         console.log('Special sites to search:', specialSitesToSearch);
         console.log('Before sorting:', allResults.map(r => r.link));
 
-        // Update the sorting logic in performSearch function
         allResults.sort((a, b) => {
           const aIsDorar = a.link.includes("dorar.net");
           const bIsDorar = b.link.includes("dorar.net");
           if (aIsDorar && !bIsDorar) return -1;
           if (!aIsDorar && bIsDorar) return 1;
 
-          // Then handle other special sites
           const aIsSpecial = specialSitesToSearch.some(site => a.link.includes(site));
           const bIsSpecial = specialSitesToSearch.some(site => b.link.includes(site));
           return bIsSpecial - aIsSpecial;
         });
 
-        // After sorting
         console.log('After sorting:', allResults.map(r => r.link));
 
-        // Update results state
         setSearchResults((prev) => {
           if (isNewSearch) return allResults;
           return [...prev, ...allResults];
@@ -257,12 +248,11 @@ const SearchComponent = () => {
         setHasMore(allResults.length >= resultsPerPage);
         setStartIndex(start + resultsPerPage);
 
-        // After search is complete and results are set, show the toast
         if (isNewSearch) {
           toast(
-            "Some websites are more prominently indexed and ranked by search engines, which means you may see a higher number of results from those sites compared to others when searching. For example: Shaykh Bin Baz (رحمه الله) may have more results than that of Shaykh Luhaydan (رحمه الله).",
+            translations[language].searchResultsDisclaimer,
             {
-              duration: Infinity,
+              duration: 5000,
               closeButton: true,
             }
           );
@@ -274,10 +264,9 @@ const SearchComponent = () => {
         setLoading(false);
       }
     },
-    [searchQuery, selectedSites, includeShamela, includeAlmaany, includeDorar] // Add includeDorar here
+    [searchQuery, selectedSites, includeShamela, includeAlmaany, includeDorar, translations, language]
   );
 
-  // Update useEffect to use ref
   useEffect(() => {
     const queryParam = searchParams.get('q');
     if (queryParam && !initialLoadDoneRef.current) {
@@ -287,34 +276,28 @@ const SearchComponent = () => {
     }
   }, [searchParams, performSearch]);
 
-  // Rest of the component remains the same
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    // Reset results and start index for new search
     setSearchResults([]);
     setStartIndex(1);
     setHasMore(true);
     await performSearch(1, true);
   };
 
-  // Replace the individual modal state setters with this function
   const openModal = (modalName) => {
     setActiveModal(modalName);
   };
 
-  // Replace the individual modal state closers with this function
   const closeModal = () => {
     setActiveModal(null);
   };
 
-  // Update the button handlers
   const openFeedbackModal = () => openModal("feedback");
   const openFilterModal = () => openModal("filter");
   const openSiteRequestModal = () => openModal("siteRequest");
 
-  // Add event listeners for shift key
   useEffect(() => {
     const handleKeyDown = (e) => e.shiftKey && setIsShiftPressed(true);
     const handleKeyUp = (e) => !e.shiftKey && setIsShiftPressed(false);
@@ -330,10 +313,8 @@ const SearchComponent = () => {
 
   const toggleSite = (site, event) => {
     if (!isShiftPressed) {
-      // Single selection
       setSelectedSites([site]);
     } else {
-      // Multiple selection
       setSelectedSites((prev) =>
         prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
       );
@@ -342,7 +323,7 @@ const SearchComponent = () => {
 
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
-      toast.error("Please enter a site URL");
+      toast.error(t.pleaseEnterSite);
       return;
     }
 
@@ -358,16 +339,14 @@ const SearchComponent = () => {
       });
       setIsModalOpen(false);
       setSiteInput("");
-      toast.success("Site request submitted successfully!");
+      toast.success(t.requestSubmitted);
     } catch (error) {
-      toast.error("Failed to submit site request");
+      toast.error(t.requestFailed);
     }
   };
 
-  // Add this helper function to check if device is mobile
   const isMobile = () => window.innerWidth <= 768;
 
-  // Add this handler for feedback submission
   const handleFeedbackSubmit = async () => {
     if (!feedback.trim()) {
       toast.error("Please enter your feedback");
@@ -422,13 +401,12 @@ const SearchComponent = () => {
       <Card className="w-full max-w-6xl mx-auto mb-16">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Fatwa Search</CardTitle>
+            <CardTitle>{t.searchLabel}</CardTitle>
             <p className="text-sm text-gray-500">
-              Search the Mashayikh sites for your keyword
+              {t.searchDescription}
             </p>
             <p className="text-sm text-gray-500">
-              Putting your keywords in Arabic is more effective as these are
-              Arabic sites
+              {t.arabicTip}
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
@@ -439,11 +417,11 @@ const SearchComponent = () => {
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
-              Request Site
+              {t.requestSite}
             </Button>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Search Shamela.ws</span>
+                <span className="text-sm text-gray-500">{t.searchShamela}</span>
                 <Switch
                   checked={includeShamela}
                   onCheckedChange={setIncludeShamela}
@@ -452,7 +430,7 @@ const SearchComponent = () => {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">
-                  Search Almaany.com
+                  {t.searchAlmaany}
                 </span>
                 <Switch
                   checked={includeAlmaany}
@@ -461,7 +439,7 @@ const SearchComponent = () => {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Search Dorar.net</span>
+                <span className="text-sm text-gray-500">{t.searchDorar}</span>
                 <Switch
                   checked={includeDorar}
                   onCheckedChange={setIncludeDorar}
@@ -477,7 +455,7 @@ const SearchComponent = () => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Enter your search query..."
+                placeholder={t.searchPlaceholder}  // Changed this line
                 className="flex-grow"
               />
               <motion.div
@@ -496,11 +474,11 @@ const SearchComponent = () => {
                   )}
                 >
                   <Search className="h-4 w-4" />
-                  {loading ? "Searching..." : "Search"}
+                  {loading ? t.searching : t.searchAction}
                 </Button>
               </motion.div>
 
-              {/* Add Share Button */}
+              {}
               {searchQuery && (
                 <Button
                   variant="outline"
@@ -508,7 +486,7 @@ const SearchComponent = () => {
                   className="flex items-center gap-2"
                 >
                   <Share2 className="h-4 w-4" />
-                  Share
+                  {t.share}
                 </Button>
               )}
 
@@ -527,25 +505,22 @@ const SearchComponent = () => {
                       className="flex items-center gap-2"
                     >
                       <Filter className="h-4 w-4" />
-                      Filter
+                      {t.filter}
                     </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </motion.div>
-            {/* Add helper text above site selection */}
+            {}
             <div className="space-y-2">
-              <p className="text-sm text-gray-500 italic md:block hidden">
-                Hold Shift to select multiple sites, click individual sites to
-                search one at a time, or click "All Sites" to search everything
-              </p>
+              <p className="text-sm text-gray-500 italic md:block hidden">{t.selectTooltip}</p>
               <p className="text-sm text-gray-500 italic block md:hidden">
                 Tap "Select Sites" to choose multiple sites, or tap individual
                 sites to search one at a time
               </p>
 
               <div className="flex flex-wrap gap-2 relative w-full">
-                {/* Mobile Selection  Mode Buttons */}
+                {}
                 <div className="md:hidden w-full flex flex-wrap gap-2 mb-2">
                   <Button
                     onClick={() => setIsMobileSelecting(!isMobileSelecting)}
@@ -577,7 +552,7 @@ const SearchComponent = () => {
                   )}
                 </div>
 
-                {/* All Sites button - hidden on mobile when selecting */}
+                {}
                 <Button
                   onClick={() => setSelectedSites(sites)}
                   variant={
@@ -595,25 +570,22 @@ const SearchComponent = () => {
                   All Sites
                 </Button>
 
-                {/* Site buttons */}
+                {}
                 {sites.map((site) => (
                   <Button
                     key={site}
                     onClick={(e) => {
                       if (isMobile()) {
                         if (isMobileSelecting) {
-                          // Multiple selection mode on mobile
                           setSelectedSites((prev) =>
                             prev.includes(site)
                               ? prev.filter((s) => s !== site)
                               : [...prev, site]
                           );
                         } else {
-                          // Single selection mode on mobile
                           setSelectedSites([site]);
                         }
                       } else {
-                        // Desktop behavior remains the same
                         toggleSite(site, e);
                       }
                     }}
@@ -634,7 +606,7 @@ const SearchComponent = () => {
             </div>
           </form>
 
-          {/* Search Results */}
+          {}
           <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
             <AnimatePresence mode="wait">
               {searchQuery && filteredResults.length > 0 ? (
@@ -664,13 +636,13 @@ const SearchComponent = () => {
                   exit="exit"
                   className="text-center text-gray-500"
                 >
-                  No results found for your search
+                  {t.noResults}
                 </motion.div>
               ) : null}
             </AnimatePresence>
           </div>
 
-          {/* Load More Button */}
+          {}
           {hasMore && searchResults.length > 0 && (
             <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
               <Button
@@ -679,19 +651,19 @@ const SearchComponent = () => {
                 variant="outline"
                 className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
               >
-                {loading ? "Loading..." : "Load More Results"}
+                {loading ? t.loading : t.loadMore}
               </Button>
               <Button
                 variant="outline"
                 onClick={openFeedbackModal}
                 className="shadow-lg bg-white hover:bg-gray-50"
               >
-                Provide Feedback
+                {t.provideFeedback}
               </Button>
             </div>
           )}
 
-          {/* Add this before the attribution footer */}
+          {}
           <div className="mt-8 border-t pt-8">
             <div className="flex flex-col items-center space-y-4">
               <Button
@@ -700,7 +672,7 @@ const SearchComponent = () => {
                 onClick={openFeedbackModal}
                 className="text-sm"
               >
-                {showFeedback ? "Close Feedback" : "Provide Feedback"}
+                {showFeedback ? t.closeFeedback : t.provideFeedback}
               </Button>
 
               {showFeedback && (
@@ -708,7 +680,7 @@ const SearchComponent = () => {
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    placeholder="Tell us what you think about the search..."
+                    placeholder={t.feedbackPlaceholder}
                     className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
                   />
                   <div className="flex justify-end gap-2">
@@ -720,7 +692,7 @@ const SearchComponent = () => {
                         setFeedback("");
                       }}
                     >
-                      Cancel
+                      {t.cancel}
                     </Button>
                     <Button
                       size="sm"
@@ -735,9 +707,9 @@ const SearchComponent = () => {
             </div>
           </div>
 
-          {/* Add attribution footer */}
+          {}
           <div className="mt-4 text-center text-sm text-gray-500">
-            Created by{" "}
+            {t.createdBy}{" "}
             <a
               href="https://github.com/aramb-dev"
               className="underline hover:text-gray-700"
@@ -753,72 +725,72 @@ const SearchComponent = () => {
               target="_blank"
               rel="noreferrer"
             >
-              View on GitHub
+              {t.viewOnGithub}
             </a>
           </div>
         </CardContent>
       </Card>
 
-      {/* Add new feedback modal */}
+      {}
       <AnimatePresence mode="wait">
-        {/* Feedback Modal */}
+        {}
         {activeModal === "feedback" && (
           <Dialog open={true} onOpenChange={closeModal}>
             <CustomDialogContent onClick={(e) => e.stopPropagation()}>
               <DialogHeader>
-                <CustomDialogTitle>Provide Feedback</CustomDialogTitle>
+                <CustomDialogTitle>{t.provideFeedback}</CustomDialogTitle>
                 <p className="text-sm text-gray-500">
-                  Help us improve by sharing your thoughts about the search
-                  experience.
+                  {t.feedbackDescription}
                 </p>
               </DialogHeader>
               <div className="space-y-4">
                 <textarea
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Tell us what you think about the search..."
+                  placeholder={t.feedbackPlaceholder}
                   className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
                 />
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={closeModal}>
-                  Cancel
+                  {t.cancel}
                 </Button>
                 <Button
                   onClick={handleFeedbackSubmit}
                   disabled={!feedback.trim()}
                 >
-                  Submit Feedback
+                  {t.feedbackSubmit}
                 </Button>
               </DialogFooter>
             </CustomDialogContent>
           </Dialog>
         )}
 
-        {/* Site Request Modal */}
+        {}
         {activeModal === "siteRequest" && (
           <Dialog open={true} onOpenChange={closeModal}>
             <CustomDialogContent onClick={(e) => e.stopPropagation()}>
               <DialogHeader>
-                <CustomDialogTitle>Request New Site</CustomDialogTitle>
+                <CustomDialogTitle>{t.requestNewSite}</CustomDialogTitle>
                 <p className="text-sm text-gray-500">
-                  Enter the domain of the site you'd like to include in the
-                  search.
+                  {t.enterSiteDomain}
                 </p>
               </DialogHeader>
               <div className="space-y-4">
                 <Input
                   value={siteInput}
                   onChange={(e) => setSiteInput(e.target.value)}
-                  placeholder="Enter site URL (e.g., example.com)"
+                  placeholder={t.siteUrlPlaceholder}
                   className="w-full"
                 />
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={closeModal}>
-                  Cancel
+                  {t.cancel}
                 </Button>
-                <Button onClick={handleSiteRequest}>Submit Request</Button>
+                <Button onClick={handleSiteRequest}>
+                  {t.submitRequest}
+                </Button>
               </DialogFooter>
             </CustomDialogContent>
           </Dialog>
@@ -829,10 +801,10 @@ const SearchComponent = () => {
           <Dialog open={true} onOpenChange={closeModal}>
             <CustomDialogContent onClick={(e) => e.stopPropagation()}>
               <DialogHeader>
-                <CustomDialogTitle>Filter Results</CustomDialogTitle>
-                <p className="text-sm text-gray-500">Filter results by site</p>
+                <CustomDialogTitle>{t.filterResults}</CustomDialogTitle>
+                <p className="text-sm text-gray-500">{t.filterBySite}</p>
                 <p className="text-xs text-gray-400 italic">
-                  Click the "Load More" button to filter more sites
+                  {t.loadMoreTip}
                 </p>
               </DialogHeader>
               <div className="space-y-4">
@@ -861,9 +833,9 @@ const SearchComponent = () => {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSiteFilters([])}>
-                  Clear Filters
+                   {t.clearFilters}
                 </Button>
-                <Button onClick={closeModal}>Close</Button>
+                <Button onClick={closeModal}>{t.close}</Button>
               </DialogFooter>
             </CustomDialogContent>
           </Dialog>

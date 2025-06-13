@@ -1,0 +1,47 @@
+name: Request to Add Website
+description: Suggest a new website to be added to our curated list.
+title: "[ADD WEBSITE] "
+labels:
+  - content
+  - new-source
+  - website
+body:
+  - type: input
+    id: website-name
+    attributes:
+      label: Website Name
+      description: What is the name of the website?
+      placeholder: "e.g., Shaykh bin Baz"
+    validations:
+      required: true
+  - type: input
+    id: website-url
+    attributes:
+      label: Website URL
+      description: Please provide the full URL of the website.
+      placeholder: "e.g., https://binbaz.org.sa/"
+    validations:
+      required: true
+  - type: textarea
+    id: justification
+    attributes:
+      label: Justification & Relevance
+      description: Why should this website be added? Explain its relevance to fatwas, Islamic scholarship, etc.
+      placeholder: This website offers a comprehensive collection of...
+    validations:
+      required: true
+  - type: input
+    id: languages
+    attributes:
+      label: Primary Language(s)
+      description: What are the main languages of the website content?
+      placeholder: "e.g., Arabic, English"
+    validations:
+      required: true
+  - type: textarea
+    id: additional-comments
+    attributes:
+      label: Additional Comments (Optional)
+      description: Any other information you'd like to provide?
+    validations:
+      required: false

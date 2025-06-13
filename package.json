@@ -1,7 +1,7 @@
 {
   "name": "fatwa-search",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
   "dependencies": {
     "@babel/runtime": "^7.27.0",
     "@microsoft/clarity": "^1.0.0",
@@ -29,7 +29,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src/**/*.{js,jsx}",
+    "lint:fix": "eslint src/**/*.{js,jsx} --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"*.md\""
   },
   "eslintConfig": {
     "extends": [
@@ -42,11 +45,20 @@
     },
     "overrides": [
       {
-        "files": ["**/*.test.js", "**/*.test.jsx"],
+        "files": [
+          "**/*.test.js",
+          "**/*.test.jsx"
+        ],
         "env": {
           "jest": true
         }
       }
+    ]
+  },
+"jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!react-router-dom|react-router)/",
+      "^.+\\.module\\.(css|sass|scss)$"
     ]
   },
   "browserslist": {
@@ -65,9 +77,13 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.5",
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-jest": "^25.7.0",
+    "eslint-plugin-prettier": "^5.4.1",
+    "eslint-plugin-react": "^7.34.1",
     "postcss": "^8.4.33",
+    "prettier": "^3.5.3",
     "tailwindcss": "^3.4.1"
   },
   "config": {

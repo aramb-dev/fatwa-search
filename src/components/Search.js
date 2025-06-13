@@ -14,8 +14,8 @@ import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
 import { Switch } from "../components/ui/switch";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from 'react-router-dom';
-import { translations } from '../translations';
+import { useSearchParams } from "react-router-dom";
+import { translations } from "../translations";
 
 const buttonVariants = {
   hover: { scale: 1.05 },
@@ -87,7 +87,7 @@ const CustomDialogContent = ({ children, ...props }) => (
         "shadow-lg",
         "mx-4 sm:mx-auto",
         "z-50",
-        "overflow-y-auto max-h-[90vh]"
+        "overflow-y-auto max-h-[90vh]",
       )}
       {...props}
     >
@@ -113,7 +113,7 @@ const DialogFooter = ({ children }) => (
     className={cn(
       "mt-4 pt-4 sm:mt-6 sm:pt-6",
       "border-t flex flex-col-reverse sm:flex-row gap-2 sm:gap-4",
-      "sm:justify-end"
+      "sm:justify-end",
     )}
   >
     {children}
@@ -133,11 +133,11 @@ export const DEFAULT_SITES = [
   "rabee.net",
 ];
 
-const SearchComponent = ({ language = 'en' }) => {
+const SearchComponent = ({ language = "en" }) => {
   let t = translations[language];
 
   if (!t) {
-    console.error('Missing translations for language:', language);
+    console.error("Missing translations for language:", language);
     t = translations.en;
   }
 
@@ -190,7 +190,7 @@ const SearchComponent = ({ language = 'en' }) => {
           const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
             process.env.REACT_APP_GOOGLE_API_KEY
           }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
-            `site:${specialSite} ${searchQuery}`
+            `site:${specialSite} ${searchQuery}`,
           )}&start=${start}`;
 
           const specialResponse = await fetch(specialSearchUrl);
@@ -213,7 +213,7 @@ const SearchComponent = ({ language = 'en' }) => {
           const regularSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
             process.env.REACT_APP_GOOGLE_API_KEY
           }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
-            `(${regularSiteQuery}) ${searchQuery}`
+            `(${regularSiteQuery}) ${searchQuery}`,
           )}&start=${start}`;
 
           const regularResponse = await fetch(regularSearchUrl);
@@ -224,8 +224,11 @@ const SearchComponent = ({ language = 'en' }) => {
           }
         }
 
-        console.log('Special sites to search:', specialSitesToSearch);
-        console.log('Before sorting:', allResults.map(r => r.link));
+        console.log("Special sites to search:", specialSitesToSearch);
+        console.log(
+          "Before sorting:",
+          allResults.map((r) => r.link),
+        );
 
         allResults.sort((a, b) => {
           const aIsDorar = a.link.includes("dorar.net");
@@ -233,12 +236,19 @@ const SearchComponent = ({ language = 'en' }) => {
           if (aIsDorar && !bIsDorar) return -1;
           if (!aIsDorar && bIsDorar) return 1;
 
-          const aIsSpecial = specialSitesToSearch.some(site => a.link.includes(site));
-          const bIsSpecial = specialSitesToSearch.some(site => b.link.includes(site));
+          const aIsSpecial = specialSitesToSearch.some((site) =>
+            a.link.includes(site),
+          );
+          const bIsSpecial = specialSitesToSearch.some((site) =>
+            b.link.includes(site),
+          );
           return bIsSpecial - aIsSpecial;
         });
 
-        console.log('After sorting:', allResults.map(r => r.link));
+        console.log(
+          "After sorting:",
+          allResults.map((r) => r.link),
+        );
 
         setSearchResults((prev) => {
           if (isNewSearch) return allResults;
@@ -249,13 +259,10 @@ const SearchComponent = ({ language = 'en' }) => {
         setStartIndex(start + resultsPerPage);
 
         if (isNewSearch) {
-          toast(
-            t.searchResultsDisclaimer,
-            {
-              duration: 5000,
-              closeButton: true,
-            }
-          );
+          toast(t.searchResultsDisclaimer, {
+            duration: 5000,
+            closeButton: true,
+          });
         }
       } catch (error) {
         console.error("Search failed:", error);
@@ -264,11 +271,18 @@ const SearchComponent = ({ language = 'en' }) => {
         setLoading(false);
       }
     },
-    [searchQuery, selectedSites, includeShamela, includeAlmaany, includeDorar, t] // Removed translations, added t
+    [
+      searchQuery,
+      selectedSites,
+      includeShamela,
+      includeAlmaany,
+      includeDorar,
+      t,
+    ], // Removed translations, added t
   );
 
   useEffect(() => {
-    const queryParam = searchParams.get('q');
+    const queryParam = searchParams.get("q");
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
       initialLoadDoneRef.current = true;
@@ -311,12 +325,12 @@ const SearchComponent = ({ language = 'en' }) => {
     };
   }, []);
 
-  const toggleSite = (site, event) => {
+  const toggleSite = (site) => {
     if (!isShiftPressed) {
       setSelectedSites([site]);
     } else {
       setSelectedSites((prev) =>
-        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
+        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
       );
     }
   };
@@ -376,17 +390,19 @@ const SearchComponent = ({ language = 'en' }) => {
     e.stopPropagation();
 
     const url = new URL(window.location.href);
-    url.searchParams.set('q', searchQuery);
+    url.searchParams.set("q", searchQuery);
 
     if (navigator.share) {
-      navigator.share({
-        title: 'Fatwa Search Results',
-        text: `Check out these search results for "${searchQuery}"`,
-        url: url.toString()
-      }).catch(console.error);
+      navigator
+        .share({
+          title: "Fatwa Search Results",
+          text: `Check out these search results for "${searchQuery}"`,
+          url: url.toString(),
+        })
+        .catch(console.error);
     } else {
       navigator.clipboard.writeText(url.toString());
-      toast.success('Link copied to clipboard!');
+      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -402,12 +418,8 @@ const SearchComponent = ({ language = 'en' }) => {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>{t.searchLabel}</CardTitle>
-            <p className="text-sm text-gray-500">
-              {t.searchDescription}
-            </p>
-            <p className="text-sm text-gray-500">
-              {t.arabicTip}
-            </p>
+            <p className="text-sm text-gray-500">{t.searchDescription}</p>
+            <p className="text-sm text-gray-500">{t.arabicTip}</p>
           </div>
           <div className="flex flex-col gap-2 items-end">
             <Button
@@ -429,9 +441,7 @@ const SearchComponent = ({ language = 'en' }) => {
                 />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">
-                  {t.searchAlmaany}
-                </span>
+                <span className="text-sm text-gray-500">{t.searchAlmaany}</span>
                 <Switch
                   checked={includeAlmaany}
                   onCheckedChange={setIncludeAlmaany}
@@ -455,7 +465,7 @@ const SearchComponent = ({ language = 'en' }) => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchPlaceholder}  // Changed this line
+                placeholder={t.searchPlaceholder} // Changed this line
                 className="flex-grow"
               />
               <motion.div
@@ -470,7 +480,7 @@ const SearchComponent = ({ language = 'en' }) => {
                   className={cn(
                     "flex items-center gap-2",
                     searchQuery.trim() &&
-                      "bg-gray-900 text-white hover:bg-gray-800"
+                      "bg-gray-900 text-white hover:bg-gray-800",
                   )}
                 >
                   <Search className="h-4 w-4" />
@@ -513,10 +523,12 @@ const SearchComponent = ({ language = 'en' }) => {
             </motion.div>
             {}
             <div className="space-y-2">
-              <p className="text-sm text-gray-500 italic md:block hidden">{t.selectTooltip}</p>
+              <p className="text-sm text-gray-500 italic md:block hidden">
+                {t.selectTooltip}
+              </p>
               <p className="text-sm text-gray-500 italic block md:hidden">
-                Tap "Select Sites" to choose multiple sites, or tap individual
-                sites to search one at a time
+                Tap &ldquo;Select Sites&rdquo; to choose multiple sites, or tap
+                individual sites to search one at a time
               </p>
 
               <div className="flex flex-wrap gap-2 relative w-full">
@@ -564,7 +576,7 @@ const SearchComponent = ({ language = 'en' }) => {
                   type="button"
                   className={cn(
                     "md:block flex-shrink-0",
-                    isMobileSelecting ? "hidden" : "block"
+                    isMobileSelecting ? "hidden" : "block",
                   )}
                 >
                   All Sites
@@ -580,7 +592,7 @@ const SearchComponent = ({ language = 'en' }) => {
                           setSelectedSites((prev) =>
                             prev.includes(site)
                               ? prev.filter((s) => s !== site)
-                              : [...prev, site]
+                              : [...prev, site],
                           );
                         } else {
                           setSelectedSites([site]);
@@ -594,7 +606,7 @@ const SearchComponent = ({ language = 'en' }) => {
                       selectedSites.includes(site)
                         ? "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600"
                         : "bg-white text-gray-700 hover:bg-gray-100",
-                      !isMobileSelecting && "md:block"
+                      !isMobileSelecting && "md:block",
                     )}
                     size="sm"
                     type="button"
@@ -739,9 +751,7 @@ const SearchComponent = ({ language = 'en' }) => {
             <CustomDialogContent onClick={(e) => e.stopPropagation()}>
               <DialogHeader>
                 <CustomDialogTitle>{t.provideFeedback}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">
-                  {t.feedbackDescription}
-                </p>
+                <p className="text-sm text-gray-500">{t.feedbackDescription}</p>
               </DialogHeader>
               <div className="space-y-4">
                 <textarea
@@ -772,9 +782,7 @@ const SearchComponent = ({ language = 'en' }) => {
             <CustomDialogContent onClick={(e) => e.stopPropagation()}>
               <DialogHeader>
                 <CustomDialogTitle>{t.requestNewSite}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">
-                  {t.enterSiteDomain}
-                </p>
+                <p className="text-sm text-gray-500">{t.enterSiteDomain}</p>
               </DialogHeader>
               <div className="space-y-4">
                 <Input
@@ -788,9 +796,7 @@ const SearchComponent = ({ language = 'en' }) => {
                 <Button variant="outline" onClick={closeModal}>
                   {t.cancel}
                 </Button>
-                <Button onClick={handleSiteRequest}>
-                  {t.submitRequest}
-                </Button>
+                <Button onClick={handleSiteRequest}>{t.submitRequest}</Button>
               </DialogFooter>
             </CustomDialogContent>
           </Dialog>
@@ -803,15 +809,15 @@ const SearchComponent = ({ language = 'en' }) => {
               <DialogHeader>
                 <CustomDialogTitle>{t.filterResults}</CustomDialogTitle>
                 <p className="text-sm text-gray-500">{t.filterBySite}</p>
-                <p className="text-xs text-gray-400 italic">
-                  {t.loadMoreTip}
-                </p>
+                <p className="text-xs text-gray-400 italic">{t.loadMoreTip}</p>
               </DialogHeader>
               <div className="space-y-4">
                 {Array.from(
                   new Set(
-                    searchResults.map((result) => new URL(result.link).hostname)
-                  )
+                    searchResults.map(
+                      (result) => new URL(result.link).hostname,
+                    ),
+                  ),
                 ).map((site) => (
                   <div key={site} className="flex items-center space-x-2">
                     <input
@@ -833,7 +839,7 @@ const SearchComponent = ({ language = 'en' }) => {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSiteFilters([])}>
-                   {t.clearFilters}
+                  {t.clearFilters}
                 </Button>
                 <Button onClick={closeModal}>{t.close}</Button>
               </DialogFooter>
@@ -845,7 +851,7 @@ const SearchComponent = ({ language = 'en' }) => {
   );
 };
 
-const SearchResult = React.memo(({ result, index, isNewResult }) => {
+const SearchResult = React.memo(({ result, isNewResult }) => {
   return (
     <motion.div
       key={result.link}

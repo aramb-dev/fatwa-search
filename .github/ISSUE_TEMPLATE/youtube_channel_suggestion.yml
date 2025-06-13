@@ -1,0 +1,54 @@
+name: "Suggest a YouTube Channel"
+description: "Suggest a new YouTube channel to be added to our curated list."
+title: "[ADD YOUTUBE] "
+labels:
+  - "content"
+  - "new-source"
+  - "youtube"
+body:
+  - type: input
+    id: channel-name
+    attributes:
+      label: "YouTube Channel Name"
+      description: "What is the name of the YouTube channel?"
+      placeholder: "e.g., Channel Name"
+    validations:
+      required: true
+  - type: input
+    id: channel-url
+    attributes:
+      label: "YouTube Channel URL"
+      description: "Please provide the full URL of the channel's main page."
+      placeholder: "e.g., https://www.youtube.com/c/ChannelName"
+    validations:
+      required: true
+  - type: textarea
+    id: content-overview
+    attributes:
+      label: "Content Overview & Relevance"
+      description: "Describe the channel's typical content. Why should it be added? Explain its relevance to fatwas, Islamic scholarship, specific scholars, etc."
+      placeholder: ""
+    validations:
+      required: true
+  - type: input
+    id: languages
+    attributes:
+      label: "Primary Language(s) of Videos"
+      description: "What are the main languages used in the videos?"
+      placeholder: "e.g., English, Arabic with English subtitles"
+    validations:
+      required: false
+  - type: textarea
+    id: relevant-playlists-videos
+    attributes:
+      label: "Specific Relevant Playlists/Videos (Optional)"
+      description: "Are there any specific playlists or types of videos on this channel that are particularly relevant? You can list them or provide links."
+    validations:
+      required: false
+  - type: textarea
+    id: additional-comments
+    attributes:
+      label: "Additional Comments (Optional)"
+      description: "Any other information you'd like to provide?"
+    validations:
+      required: false

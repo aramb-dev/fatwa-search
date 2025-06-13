@@ -12,7 +12,7 @@ import {
 } from "react-router-dom";
 import Search from "./components/Search";
 import YoutubeSearch from "./components/Youtube-Search";
-import { translations } from './translations';
+import { translations } from "./translations";
 
 const cn = (...args) => clsx(...args);
 
@@ -49,33 +49,33 @@ function App() {
   // Initialize language based on URL path or stored preference
   const initLanguage = () => {
     // Check URL first
-    if (location.pathname.startsWith('/en/')) return 'en';
-    if (location.pathname.startsWith('/ar/')) return 'ar';
+    if (location.pathname.startsWith("/en/")) return "en";
+    if (location.pathname.startsWith("/ar/")) return "ar";
 
     // Then check localStorage
-    const stored = localStorage.getItem('language');
+    const stored = localStorage.getItem("language");
     if (stored) return stored;
 
     // Default to Arabic
-    return 'ar';
+    return "ar";
   };
 
   const [language, setLanguage] = useState(initLanguage);
   const [activeTab, setActiveTab] = useState(
-    location.pathname.includes("/yt-search") ? "youtube" : "search"
+    location.pathname.includes("/yt-search") ? "youtube" : "search",
   );
 
   // Handle language changes
   const handleLanguageChange = (newLang) => {
     setLanguage(newLang);
-    localStorage.setItem('language', newLang);
+    localStorage.setItem("language", newLang);
 
     // Update URL to include language prefix
     const currentPath = location.pathname
-      .replace(/^\/[a-z]{2}\//, '/') // Remove any existing language prefix
-      .replace(/^\//, ''); // Remove leading slash
+      .replace(/^\/[a-z]{2}\//, "/") // Remove any existing language prefix
+      .replace(/^\//, ""); // Remove leading slash
 
-    const newPath = `/${newLang}/${currentPath || 'search'}`;
+    const newPath = `/${newLang}/${currentPath || "search"}`;
     navigate(newPath);
   };
 
@@ -83,8 +83,8 @@ function App() {
   useEffect(() => {
     // Only redirect if we're at root or missing language prefix
     if (!location.pathname.match(/^\/[a-z]{2}\//)) {
-      const currentPath = location.pathname.replace(/^\//, '');
-      const newPath = `/${language}/${currentPath || 'search'}`;
+      const currentPath = location.pathname.replace(/^\//, "");
+      const newPath = `/${language}/${currentPath || "search"}`;
       navigate(newPath, { replace: true });
     }
   }, [language, location.pathname, navigate]); // Added missing dependencies
@@ -100,27 +100,33 @@ function App() {
     <div className="min-h-screen bg-gray-50 py-4 px-4">
       {/* Add language toggle above tabs */}
       <div className="flex justify-center mb-4">
-        <div className="inline-flex items-center rounded-lg border bg-white p-0.5 shadow-sm"> {/* Reduced padding from p-1 to p-0.5 */}
+        <div className="inline-flex items-center rounded-lg border bg-white p-0.5 shadow-sm">
+          {" "}
+          {/* Reduced padding from p-1 to p-0.5 */}
           <button
-            onClick={() => handleLanguageChange('en')}
+            onClick={() => handleLanguageChange("en")}
             className={cn(
               "inline-flex items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium", // Reduced from px-3 py-1.5
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
-              language === 'en' ? "bg-gray-100 text-gray-900 shadow-sm" : "text-gray-500"
+              language === "en"
+                ? "bg-gray-100 text-gray-900 shadow-sm"
+                : "text-gray-500",
             )}
           >
             EN
           </button>
           <button
-            onClick={() => handleLanguageChange('ar')}
+            onClick={() => handleLanguageChange("ar")}
             className={cn(
               "inline-flex items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium", // Reduced from px-3 py-1.5
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
-              language === 'ar' ? "bg-gray-100 text-gray-900 shadow-sm" : "text-gray-500"
+              language === "ar"
+                ? "bg-gray-100 text-gray-900 shadow-sm"
+                : "text-gray-500",
             )}
           >
             ع
@@ -157,23 +163,33 @@ function App() {
             {/* Add new config redirect routes */}
             <Route
               path="/config"
-              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
+              element={
+                <ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />
+              }
             />
             <Route
               path="/en/config"
-              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
+              element={
+                <ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />
+              }
             />
             <Route
               path="/ar/config"
-              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
+              element={
+                <ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />
+              }
             />
             <Route
               path="/:lang/search/config"
-              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
+              element={
+                <ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />
+              }
             />
             <Route
               path="/:lang/yt-search/config"
-              element={<ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />}
+              element={
+                <ExternalRedirect to="https://app.netlify.com/sites/fatwa-search/overview" />
+              }
             />
 
             {/* English routes */}
@@ -192,7 +208,10 @@ function App() {
               element={
                 <motion.div key="youtube" variants={tabContentVariants}>
                   <Tabs.Content value="youtube">
-                    <YoutubeSearch language="en" translations={translations.en} />
+                    <YoutubeSearch
+                      language="en"
+                      translations={translations.en}
+                    />
                   </Tabs.Content>
                 </motion.div>
               }
@@ -214,7 +233,10 @@ function App() {
               element={
                 <motion.div key="youtube" variants={tabContentVariants}>
                   <Tabs.Content value="youtube">
-                    <YoutubeSearch language="ar" translations={translations.ar} />
+                    <YoutubeSearch
+                      language="ar"
+                      translations={translations.ar}
+                    />
                   </Tabs.Content>
                 </motion.div>
               }

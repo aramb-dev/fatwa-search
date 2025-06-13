@@ -5,7 +5,7 @@ import { Dialog } from "@radix-ui/react-dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from "react-router-dom";
 
 // Animation variants
 const cardVariants = {
@@ -80,21 +80,25 @@ const YoutubeSearch = ({ language, translations }) => {
       try {
         const channelsToSearch = CHANNELS.slice(
           isNewSearch ? 0 : startIndex,
-          isNewSearch ? resultsPerPage : startIndex + resultsPerPage
+          isNewSearch ? resultsPerPage : startIndex + resultsPerPage,
         );
 
         const searches = channelsToSearch.map(async (channelId) => {
           const response = await fetch(
             `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-              currentQuery
-            )}&key=${process.env.REACT_APP_YOUTUBE_API_KEY}&type=video&maxResults=5&channelId=${channelId}`
+              currentQuery,
+            )}&key=${process.env.REACT_APP_YOUTUBE_API_KEY}&type=video&maxResults=5&channelId=${channelId}`,
           );
           const data = await response.json();
 
           if (data.error?.code === 403) {
-            if (data.error.errors?.some(err =>
-              err.reason === "quotaExceeded" || err.message?.includes("quota")
-            )) {
+            if (
+              data.error.errors?.some(
+                (err) =>
+                  err.reason === "quotaExceeded" ||
+                  err.message?.includes("quota"),
+              )
+            ) {
               throw new Error("QUOTA_EXCEEDED");
             }
           }
@@ -103,31 +107,35 @@ const YoutubeSearch = ({ language, translations }) => {
         });
 
         const newResults = (await Promise.all(searches)).flat();
-        newResults.sort((a, b) =>
-          new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)
+        newResults.sort(
+          (a, b) =>
+            new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt),
         );
 
-        setResults(prev => isNewSearch ? newResults : [...prev, ...newResults]);
+        setResults((prev) =>
+          isNewSearch ? newResults : [...prev, ...newResults],
+        );
         setHasMore(startIndex + resultsPerPage < CHANNELS.length);
         if (!isNewSearch) {
-          setStartIndex(prev => prev + resultsPerPage);
+          setStartIndex((prev) => prev + resultsPerPage);
         }
       } catch (error) {
         console.error("YouTube search failed:", error);
-        toast.error(error.message === "QUOTA_EXCEEDED"
-          ? "API quota exceeded. Please try again later."
-          : "Failed to perform search"
+        toast.error(
+          error.message === "QUOTA_EXCEEDED"
+            ? "API quota exceeded. Please try again later."
+            : "Failed to perform search",
         );
       } finally {
         setLoading(false);
       }
     },
-    [searchQuery, startIndex]
+    [searchQuery, startIndex],
   );
 
   // Handle URL params and initial search
   useEffect(() => {
-    const queryParam = searchParams.get('q');
+    const queryParam = searchParams.get("q");
 
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
@@ -143,8 +151,8 @@ const YoutubeSearch = ({ language, translations }) => {
 
   // Add this new effect to handle direct URL access
   useEffect(() => {
-    const queryParam = searchParams.get('q');
-    if (queryParam && window.location.pathname === '/yt-search') {
+    const queryParam = searchParams.get("q");
+    if (queryParam && window.location.pathname === "/yt-search") {
       setSearchQuery(queryParam);
       performYoutubeSearch(true);
     }
@@ -227,23 +235,25 @@ const YoutubeSearch = ({ language, translations }) => {
 
     // Create URL with correct path
     const url = new URL(window.location.href);
-    url.pathname = '/yt-search'; // Ensure we're on the YouTube search path
-    url.searchParams.set('q', searchQuery);
+    url.pathname = "/yt-search"; // Ensure we're on the YouTube search path
+    url.searchParams.set("q", searchQuery);
 
     if (navigator.share) {
-      navigator.share({
-        title: 'Fatwa Search Results',
-        text: `Check out these YouTube search results for "${searchQuery}"`,
-        url: url.toString()
-      }).catch(error => {
-        console.error('Error sharing:', error);
-        // Fallback to clipboard if sharing fails
-        navigator.clipboard.writeText(url.toString());
-        toast.success('Link copied to clipboard!');
-      });
+      navigator
+        .share({
+          title: "Fatwa Search Results",
+          text: `Check out these YouTube search results for "${searchQuery}"`,
+          url: url.toString(),
+        })
+        .catch((error) => {
+          console.error("Error sharing:", error);
+          // Fallback to clipboard if sharing fails
+          navigator.clipboard.writeText(url.toString());
+          toast.success("Link copied to clipboard!");
+        });
     } else {
       navigator.clipboard.writeText(url.toString());
-      toast.success('Link copied to clipboard!');
+      toast.success("Link copied to clipboard!");
     }
   };
 
@@ -491,16 +501,18 @@ const YoutubeSearch = ({ language, translations }) => {
                 exit="exit"
               >
                 <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                  <h2 className="text-lg font-medium mb-4">{translations.filterResults}</h2>
+                  <h2 className="text-lg font-medium mb-4">
+                    {translations.filterResults}
+                  </h2>
                   <p className="text-sm text-gray-500 mb-4">
                     {translations.filterByChannel}
                   </p>
                   <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                     {Array.from(
-                      new Set(results.map((r) => r.snippet.channelId))
+                      new Set(results.map((r) => r.snippet.channelId)),
                     ).map((channelId) => {
                       const channel = results.find(
-                        (r) => r.snippet.channelId === channelId
+                        (r) => r.snippet.channelId === channelId,
                       );
                       return (
                         <div
@@ -520,8 +532,8 @@ const YoutubeSearch = ({ language, translations }) => {
                               } else {
                                 setChannelFilters(
                                   channelFilters.filter(
-                                    (id) => id !== channelId
-                                  )
+                                    (id) => id !== channelId,
+                                  ),
                                 );
                               }
                             }}
@@ -541,7 +553,9 @@ const YoutubeSearch = ({ language, translations }) => {
                     >
                       {translations.clearFilters}
                     </Button>
-                    <Button onClick={() => setActiveModal(null)}>{translations.close}</Button>
+                    <Button onClick={() => setActiveModal(null)}>
+                      {translations.close}
+                    </Button>
                   </div>
                 </div>
               </motion.div>

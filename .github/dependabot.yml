@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "main"
+    reviewers:
+      - "aramb-dev"
+    labels:
+      - "dependencies"
+      - "dependabot"

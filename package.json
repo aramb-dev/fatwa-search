@@ -55,6 +55,12 @@
       }
     ]
   },
+"jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!react-router-dom|react-router)/",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ]
+  },
   "browserslist": {
     "production": [
       ">0.2%",

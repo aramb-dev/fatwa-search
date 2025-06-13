@@ -1,7 +1,7 @@
 {
   "name": "fatwa-search",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
   "dependencies": {
     "@babel/runtime": "^7.27.0",
     "@microsoft/clarity": "^1.0.0",

@@ -527,7 +527,8 @@ const SearchComponent = ({ language = "en" }) => {
                 {t.selectTooltip}
               </p>
               <p className="text-sm text-gray-500 italic block md:hidden">
-                Tap &ldquo;Select Sites&rdquo; to choose multiple sites, or tap individual sites to search one at a time
+                Tap &ldquo;Select Sites&rdquo; to choose multiple sites, or tap
+                individual sites to search one at a time
               </p>
 
               <div className="flex flex-wrap gap-2 relative w-full">

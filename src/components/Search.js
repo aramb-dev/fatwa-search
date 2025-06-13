@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import { cn } from "../lib/utils";
 import { Search, Plus, Filter, Share2 } from "lucide-react";
 import {
@@ -586,7 +587,7 @@ const SearchComponent = ({ language = "en" }) => {
                 {sites.map((site) => (
                   <Button
                     key={site}
-                    onClick={(e) => {
+                    onClick={() => {
                       if (isMobile()) {
                         if (isMobileSelecting) {
                           setSelectedSites((prev) =>
@@ -598,7 +599,7 @@ const SearchComponent = ({ language = "en" }) => {
                           setSelectedSites([site]);
                         }
                       } else {
-                        toggleSite(site, e);
+                        toggleSite(site);
                       }
                     }}
                     className={cn(
@@ -875,6 +876,15 @@ const SearchResult = React.memo(({ result, isNewResult }) => {
     </motion.div>
   );
 });
+
+SearchResult.propTypes = {
+  result: PropTypes.shape({
+    link: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    snippet: PropTypes.string.isRequired,
+  }).isRequired,
+  isNewResult: PropTypes.bool,
+};
 
 SearchResult.displayName = "SearchResult";
 

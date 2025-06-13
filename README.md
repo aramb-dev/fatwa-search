@@ -1,4 +1,4 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/fa4dfc86-e352-4428-85bb-b4913d7f740b/deploy-status)](https://fatwa-search.netlify.app)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/fa4dfc86-e352-4428-85bb-b4913d7f740b/deploy-status)](https://is-search.aramb.dev)
 
 # Fatwa Search App
 

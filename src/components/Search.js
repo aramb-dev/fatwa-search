@@ -325,7 +325,7 @@ const SearchComponent = ({ language = "en" }) => {
     };
   }, []);
 
-  const toggleSite = (site, event) => {
+  const toggleSite = (site) => {
     if (!isShiftPressed) {
       setSelectedSites([site]);
     } else {
@@ -527,8 +527,7 @@ const SearchComponent = ({ language = "en" }) => {
                 {t.selectTooltip}
               </p>
               <p className="text-sm text-gray-500 italic block md:hidden">
-                Tap "Select Sites" to choose multiple sites, or tap individual
-                sites to search one at a time
+                Tap &ldquo;Select Sites&rdquo; to choose multiple sites, or tap individual sites to search one at a time
               </p>
 
               <div className="flex flex-wrap gap-2 relative w-full">
@@ -851,7 +850,7 @@ const SearchComponent = ({ language = "en" }) => {
   );
 };
 
-const SearchResult = React.memo(({ result, index, isNewResult }) => {
+const SearchResult = React.memo(({ result, isNewResult }) => {
   return (
     <motion.div
       key={result.link}

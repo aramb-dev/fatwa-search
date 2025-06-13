@@ -45,7 +45,7 @@ const CHANNELS = [
   "UC0ljB6Xfg9RWjFWNb4JO-IQ",
 ];
 
-const YoutubeSearch = ({ language, translations }) => {
+const YoutubeSearch = ({ translations }) => {
   // State declarations
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState([]);

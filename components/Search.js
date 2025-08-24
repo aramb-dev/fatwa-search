@@ -3,19 +3,14 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { cn } from "../lib/utils";
 import { Search, Plus, Filter, Share2 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
-import { Switch } from "../components/ui/switch";
+import { Switch } from "./ui/switch";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "next/navigation";
 import { translations } from "../translations";
 
 const buttonVariants = {
@@ -172,8 +167,8 @@ const SearchComponent = ({ language = "en" }) => {
       setLoading(true);
       try {
         if (
-          !process.env.REACT_APP_GOOGLE_API_KEY ||
-          !process.env.REACT_APP_SEARCH_ENGINE_ID
+          !process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
+          !process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID
         ) {
           throw new Error("Search API credentials are not properly configured");
         }
@@ -189,8 +184,8 @@ const SearchComponent = ({ language = "en" }) => {
 
         for (const specialSite of specialSitesToSearch) {
           const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
-            process.env.REACT_APP_GOOGLE_API_KEY
-          }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
+            process.env.NEXT_PUBLIC_GOOGLE_API_KEY
+          }&cx=${process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
             `site:${specialSite} ${searchQuery}`,
           )}&start=${start}`;
 
@@ -212,8 +207,8 @@ const SearchComponent = ({ language = "en" }) => {
             .map((site) => `site:${site}`)
             .join(" OR ");
           const regularSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
-            process.env.REACT_APP_GOOGLE_API_KEY
-          }&cx=${process.env.REACT_APP_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
+            process.env.NEXT_PUBLIC_GOOGLE_API_KEY
+          }&cx=${process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
             `(${regularSiteQuery}) ${searchQuery}`,
           )}&start=${start}`;
 
@@ -283,7 +278,7 @@ const SearchComponent = ({ language = "en" }) => {
   );
 
   useEffect(() => {
-    const queryParam = searchParams.get("q");
+    const queryParam = searchParams?.get("q");
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
       initialLoadDoneRef.current = true;

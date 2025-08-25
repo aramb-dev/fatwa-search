@@ -1,3 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
 [[redirects]]
   from = "/config"
   to = "https://app.netlify.com/sites/fatwa-search/overview"
@@ -21,18 +28,3 @@
   to = "https://app.netlify.com/sites/fatwa-search/overview"
   status = 301
   force = true
-
-[[redirects]]
-  from = "/en/*"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/ar/*"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

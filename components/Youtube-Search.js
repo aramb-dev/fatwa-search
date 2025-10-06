@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Youtube, X, Filter, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog } from "@radix-ui/react-dialog";
@@ -318,12 +319,16 @@ const YoutubeSearch = ({ translations }) => {
                 exit="exit"
                 className="border rounded-lg overflow-hidden shadow-sm"
               >
-                <img
-                  src={video.snippet.thumbnails.medium.url}
-                  alt={video.snippet.title}
-                  className="w-full aspect-video object-cover cursor-pointer"
-                  onClick={() => setSelectedVideo(video)}
-                />
+                <div className="relative w-full aspect-video cursor-pointer" onClick={() => setSelectedVideo(video)}>
+                  <Image
+                    src={video.snippet.thumbnails.medium.url}
+                    alt={video.snippet.title || "YouTube video thumbnail"}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
+                    priority={false}
+                  />
+                </div>
                 <div className="p-4">
                   <h3 className="font-medium line-clamp-2">
                     {video.snippet.title}

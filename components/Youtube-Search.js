@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import Image from "next/image";
 import { Youtube, X, Filter, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog } from "@radix-ui/react-dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "next/navigation";
 
 // Animation variants
 const cardVariants = {
@@ -87,7 +88,7 @@ const YoutubeSearch = ({ translations }) => {
           const response = await fetch(
             `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
               currentQuery,
-            )}&key=${process.env.REACT_APP_YOUTUBE_API_KEY}&type=video&maxResults=5&channelId=${channelId}`,
+            )}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}&type=video&maxResults=5&channelId=${channelId}`,
           );
           const data = await response.json();
 
@@ -135,7 +136,7 @@ const YoutubeSearch = ({ translations }) => {
 
   // Handle URL params and initial search
   useEffect(() => {
-    const queryParam = searchParams.get("q");
+    const queryParam = searchParams?.get("q");
 
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
@@ -151,7 +152,7 @@ const YoutubeSearch = ({ translations }) => {
 
   // Add this new effect to handle direct URL access
   useEffect(() => {
-    const queryParam = searchParams.get("q");
+    const queryParam = searchParams?.get("q");
     if (queryParam && window.location.pathname === "/yt-search") {
       setSearchQuery(queryParam);
       performYoutubeSearch(true);
@@ -318,12 +319,16 @@ const YoutubeSearch = ({ translations }) => {
                 exit="exit"
                 className="border rounded-lg overflow-hidden shadow-sm"
               >
-                <img
-                  src={video.snippet.thumbnails.medium.url}
-                  alt={video.snippet.title}
-                  className="w-full aspect-video object-cover cursor-pointer"
-                  onClick={() => setSelectedVideo(video)}
-                />
+                <div className="relative w-full aspect-video cursor-pointer" onClick={() => setSelectedVideo(video)}>
+                  <Image
+                    src={video.snippet.thumbnails.medium.url}
+                    alt={video.snippet.title || "YouTube video thumbnail"}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover"
+                    priority={false}
+                  />
+                </div>
                 <div className="p-4">
                   <h3 className="font-medium line-clamp-2">
                     {video.snippet.title}

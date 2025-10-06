@@ -120,15 +120,24 @@ rabee.net/*
 
 ### 3. Environment Variables
 
-Create a `.env` file in the root directory:
+Create a `.env.local` file in the root directory (or configure these in Netlify's UI):
 
 ```env
-REACT_APP_GOOGLE_API_KEY=your_api_key_here
-REACT_APP_SEARCH_ENGINE_ID=your_search_engine_id_here
-REACT_APP_YOUTUBE_API_KEY=your_youtube_api_key_here
+NEXT_PUBLIC_GOOGLE_API_KEY=your_api_key_here
+NEXT_PUBLIC_SEARCH_ENGINE_ID=your_search_engine_id_here
+NEXT_PUBLIC_YOUTUBE_API_KEY=your_api_key_here # can reuse same Google API key
+NEXT_PUBLIC_CLARITY_ID=optional_ms_clarity_project_id
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 
-Under `REACT_APP_YOUTUBE_API_KEY`, enter the same API key as your `REACT_APP_GOOGLE_API_KEY`. This is due to the `YouTube Data API` being a part of the Google Cloud Platform.
+All public variables must start with `NEXT_PUBLIC_` to be available to the client bundle.
+
+Netlify setup:
+
+- Build command: `npm run build`
+- Publish directory: `.next`
+- Ensure the Netlify Next.js Runtime plugin (`@netlify/plugin-nextjs`) is installed (already configured in `netlify.toml`).
+- Set environment variables in Netlify under Site Settings > Build & Deploy > Environment.
 
 ## Usage
 
@@ -140,8 +149,7 @@ Under `REACT_APP_YOUTUBE_API_KEY`, enter the same API key as your `REACT_APP_GOO
 
 ## Technology Stack
 
-- React
-- React Router
+- Next.js 15 (App Router)
 - Tailwind CSS
 - shadcn/ui components
 - Framer Motion for animations

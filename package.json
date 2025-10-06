@@ -47,6 +47,10 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^3.4.1"
   },
+  "engines": {
+    "node": ">=18.18.0 <=20.x",
+    "npm": ">=9"
+  },
   "config": {
     "loglevel": "warn"
   }

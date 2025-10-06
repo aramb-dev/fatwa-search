@@ -1,5 +1,7 @@
 [build]
   command = "npm run build"
+  # Optional: pin Node version if not set in Netlify UI (must match package.json engines)
+  # environment = { NODE_VERSION = "20" }
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

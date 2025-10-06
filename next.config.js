@@ -10,22 +10,22 @@ const nextConfig = {
       {
         source: '/config',
         destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/:lang(en|ar)/config',
         destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/:lang(en|ar)/search/config',
         destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: false,
+        permanent: true,
       },
       {
         source: '/:lang(en|ar)/yt-search/config',
         destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: false,
+        permanent: true,
       },
     ];
   },
@@ -46,6 +46,20 @@ const nextConfig = {
         destination: '/ar/search',
       },
     ];
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+        pathname: '/vi/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        pathname: '/vi/**',
+      },
+    ],
   },
 };
 

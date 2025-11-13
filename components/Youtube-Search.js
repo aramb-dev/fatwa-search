@@ -52,8 +52,6 @@ const YoutubeSearch = ({ translations }) => {
   const [results, setResults] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [scholarRequest, setScholarRequest] = useState("");
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [channelRequest, setChannelRequest] = useState("");
   const [hasMore, setHasMore] = useState(true);
   const [startIndex, setStartIndex] = useState(0);
@@ -86,22 +84,16 @@ const YoutubeSearch = ({ translations }) => {
 
         const searches = channelsToSearch.map(async (channelId) => {
           const response = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-              currentQuery,
-            )}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}&type=video&maxResults=5&channelId=${channelId}`,
+            `/api/youtube?q=${encodeURIComponent(currentQuery)}&channelId=${channelId}&maxResults=5`
           );
           const data = await response.json();
 
-          if (data.error?.code === 403) {
-            if (
-              data.error.errors?.some(
-                (err) =>
-                  err.reason === "quotaExceeded" ||
-                  err.message?.includes("quota"),
-              )
-            ) {
+          if (data.error) {
+            if (data.error === "QUOTA_EXCEEDED") {
               throw new Error("QUOTA_EXCEEDED");
             }
+            console.error(`YouTube search error for channel ${channelId}:`, data.error);
+            return [];
           }
 
           return data.items || [];
@@ -121,7 +113,6 @@ const YoutubeSearch = ({ translations }) => {
           setStartIndex((prev) => prev + resultsPerPage);
         }
       } catch (error) {
-        console.error("YouTube search failed:", error);
         toast.error(
           error.message === "QUOTA_EXCEEDED"
             ? "API quota exceeded. Please try again later."
@@ -150,39 +141,6 @@ const YoutubeSearch = ({ translations }) => {
     }
   }, [searchParams, performYoutubeSearch]);
 
-  // Add this new effect to handle direct URL access
-  useEffect(() => {
-    const queryParam = searchParams?.get("q");
-    if (queryParam && window.location.pathname === "/yt-search") {
-      setSearchQuery(queryParam);
-      performYoutubeSearch(true);
-    }
-  }, [searchParams, performYoutubeSearch]); // Include required dependencies
-
-  const handleScholarRequest = async () => {
-    if (!scholarRequest.trim()) {
-      toast.error("Please enter a scholar's name");
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("scholar-request", scholarRequest);
-
-      await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(formData).toString(),
-      });
-
-      toast.success("Scholar request submitted successfully!");
-      setScholarRequest("");
-      setShowRequestModal(false);
-    } catch (error) {
-      toast.error("Failed to submit scholar request");
-    }
-  };
-
   const handleChannelRequest = async () => {
     if (!channelRequest.trim()) {
       toast.error("Please enter a YouTube channel URL");
@@ -210,7 +168,7 @@ const YoutubeSearch = ({ translations }) => {
 
       toast.success("Channel request submitted successfully!");
       setChannelRequest("");
-      setShowRequestModal(false);
+      setActiveModal(null);
     } catch (error) {
       toast.error("Failed to submit channel request");
     }
@@ -291,7 +249,7 @@ const YoutubeSearch = ({ translations }) => {
 
           <Button
             variant="outline"
-            onClick={() => setShowRequestModal(true)}
+            onClick={() => setActiveModal("channel")}
             className="flex items-center gap-2"
           >
             {translations.requestChannel}
@@ -394,48 +352,10 @@ const YoutubeSearch = ({ translations }) => {
           )}
         </AnimatePresence>
 
-        {/* Scholar Request Modal */}
-        <AnimatePresence>
-          {showRequestModal && (
-            <Dialog open={true} onOpenChange={() => setShowRequestModal(false)}>
-              <motion.div
-                className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
-                variants={modalVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                  <h2 className="text-lg font-medium mb-4">
-                    {translations.requestScholar}
-                  </h2>
-                  <Input
-                    value={scholarRequest}
-                    onChange={(e) => setScholarRequest(e.target.value)}
-                    placeholder={translations.enterScholarName}
-                    className="mb-4"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowRequestModal(false)}
-                    >
-                      {translations.enterScholarName}
-                    </Button>
-                    <Button onClick={handleScholarRequest}>
-                      {translations.submitRequest}
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </Dialog>
-          )}
-        </AnimatePresence>
-
         {/* Channel Request Modal */}
         <AnimatePresence>
-          {showRequestModal && (
-            <Dialog open={true} onOpenChange={() => setShowRequestModal(false)}>
+          {activeModal === "channel" && (
+            <Dialog open={true} onOpenChange={() => setActiveModal(null)}>
               <motion.div
                 className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
                 variants={modalVariants}
@@ -459,7 +379,7 @@ const YoutubeSearch = ({ translations }) => {
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => setShowRequestModal(false)}
+                      onClick={() => setActiveModal(null)}
                     >
                       {translations.cancel}
                     </Button>

@@ -146,7 +146,6 @@ const SearchComponent = ({ language = "en" }) => {
   const [includeDorar, setIncludeDorar] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [setIsModalOpen] = useState(false);
   const [siteInput, setSiteInput] = useState("");
   const [startIndex, setStartIndex] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -166,13 +165,6 @@ const SearchComponent = ({ language = "en" }) => {
     async (start, isNewSearch = false) => {
       setLoading(true);
       try {
-        if (
-          !process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
-          !process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID
-        ) {
-          throw new Error("Search API credentials are not properly configured");
-        }
-
         const regularSites = selectedSites;
         const specialSitesToSearch = [
           ...(includeShamela ? ["shamela.ws"] : []),
@@ -182,49 +174,44 @@ const SearchComponent = ({ language = "en" }) => {
 
         let allResults = [];
 
-        for (const specialSite of specialSitesToSearch) {
-          const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
-            process.env.NEXT_PUBLIC_GOOGLE_API_KEY
-          }&cx=${process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
-            `site:${specialSite} ${searchQuery}`,
-          )}&start=${start}`;
+        // Search special sites in parallel
+        const specialSearches = specialSitesToSearch.map(async (specialSite) => {
+          const response = await fetch(
+            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`
+          );
+          const data = await response.json();
 
-          const specialResponse = await fetch(specialSearchUrl);
-          const specialData = await specialResponse.json();
-
-          console.log(`Searching ${specialSite}:`, specialData);
-          if (!specialData.items) {
-            console.warn(`No results found for ${specialSite}`);
+          if (data.error) {
+            console.error(`Search error for ${specialSite}:`, data.error);
+            return [];
           }
 
-          if (specialData.items) {
-            allResults = [...allResults, ...specialData.items];
-          }
-        }
+          return data.items || [];
+        });
 
+        const specialResults = await Promise.all(specialSearches);
+        allResults = specialResults.flat();
+
+        // Search regular sites
         if (regularSites.length > 0) {
           const regularSiteQuery = regularSites
             .map((site) => `site:${site}`)
             .join(" OR ");
-          const regularSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
-            process.env.NEXT_PUBLIC_GOOGLE_API_KEY
-          }&cx=${process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
-            `(${regularSiteQuery}) ${searchQuery}`,
-          )}&start=${start}`;
 
-          const regularResponse = await fetch(regularSearchUrl);
+          const regularResponse = await fetch(
+            `/api/search?q=${encodeURIComponent(`(${regularSiteQuery}) ${searchQuery}`)}&start=${start}`
+          );
           const regularData = await regularResponse.json();
+
+          if (regularData.error) {
+            console.error('Search error:', regularData.error);
+            throw new Error(regularData.error);
+          }
 
           if (regularData.items) {
             allResults = [...allResults, ...regularData.items];
           }
         }
-
-        console.log("Special sites to search:", specialSitesToSearch);
-        console.log(
-          "Before sorting:",
-          allResults.map((r) => r.link),
-        );
 
         allResults.sort((a, b) => {
           const aIsDorar = a.link.includes("dorar.net");
@@ -240,11 +227,6 @@ const SearchComponent = ({ language = "en" }) => {
           );
           return bIsSpecial - aIsSpecial;
         });
-
-        console.log(
-          "After sorting:",
-          allResults.map((r) => r.link),
-        );
 
         setSearchResults((prev) => {
           if (isNewSearch) return allResults;

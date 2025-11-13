@@ -1,17 +1,20 @@
 import React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
-import PropTypes from "prop-types";
-import { cn } from "../lib/utils";
 import { Search, Plus, Filter, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
 import { Switch } from "./ui/switch";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import { translations } from "../translations";
+import { FeedbackModal } from "./search/FeedbackModal";
+import { SiteRequestModal } from "./search/SiteRequestModal";
+import { FilterModal } from "./search/FilterModal";
+import { SiteFilters } from "./search/SiteFilters";
+import PropTypes from "prop-types";
+import { cn } from "../lib/utils";
 
 const buttonVariants = {
   hover: { scale: 1.05 },
@@ -30,91 +33,6 @@ const filterVariants = {
   animate: { opacity: 1, x: 0 },
   exit: { opacity: 0, x: 20 },
 };
-
-const modalVariants = {
-  initial: {
-    opacity: 0,
-    scale: 0.95,
-    y: 20,
-  },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      damping: 25,
-      stiffness: 400,
-    },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    y: 20,
-    transition: {
-      duration: 0.2,
-    },
-  },
-};
-
-const overlayVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-};
-
-const CustomDialogContent = ({ children, ...props }) => (
-  <motion.div
-    initial="initial"
-    animate="animate"
-    exit="exit"
-    variants={overlayVariants}
-    className="fixed inset-0 z-50 flex items-center justify-center"
-  >
-    <DialogOverlay className="fixed inset-0 bg-black/50" />
-    <motion.div
-      variants={modalVariants}
-      className={cn(
-        "relative",
-        "w-full max-w-[670px]",
-        "min-h-[200px]",
-        "bg-white rounded-lg",
-        "p-6",
-        "shadow-lg",
-        "mx-4 sm:mx-auto",
-        "z-50",
-        "overflow-y-auto max-h-[90vh]",
-      )}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  </motion.div>
-);
-
-const DialogHeader = ({ children }) => (
-  <div className="flex flex-col space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-    {children}
-  </div>
-);
-
-const CustomDialogTitle = ({ children }) => (
-  <h2 className="text-lg sm:text-xl font-semibold leading-none tracking-tight">
-    {children}
-  </h2>
-);
-
-const DialogFooter = ({ children }) => (
-  <div
-    className={cn(
-      "mt-4 pt-4 sm:mt-6 sm:pt-6",
-      "border-t flex flex-col-reverse sm:flex-row gap-2 sm:gap-4",
-      "sm:justify-end",
-    )}
-  >
-    {children}
-  </div>
-);
 
 export const DEFAULT_SITES = [
   "binothaimeen.net",
@@ -256,7 +174,7 @@ const SearchComponent = ({ language = "en" }) => {
       includeAlmaany,
       includeDorar,
       t,
-    ], // Removed translations, added t
+    ],
   );
 
   useEffect(() => {
@@ -303,16 +221,6 @@ const SearchComponent = ({ language = "en" }) => {
     };
   }, []);
 
-  const toggleSite = (site) => {
-    if (!isShiftPressed) {
-      setSelectedSites([site]);
-    } else {
-      setSelectedSites((prev) =>
-        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
-      );
-    }
-  };
-
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
       toast.error(t.pleaseEnterSite);
@@ -329,15 +237,13 @@ const SearchComponent = ({ language = "en" }) => {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(formData).toString(),
       });
-      setIsModalOpen(false);
       setSiteInput("");
+      closeModal();
       toast.success(t.requestSubmitted);
     } catch (error) {
       toast.error(t.requestFailed);
     }
   };
-
-  const isMobile = () => window.innerWidth <= 768;
 
   const handleFeedbackSubmit = async () => {
     if (!feedback.trim()) {
@@ -357,6 +263,7 @@ const SearchComponent = ({ language = "en" }) => {
       });
       setShowFeedback(false);
       setFeedback("");
+      closeModal();
       toast.success("Thank you for your feedback!");
     } catch (error) {
       toast.error("Failed to submit feedback");
@@ -443,7 +350,7 @@ const SearchComponent = ({ language = "en" }) => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchPlaceholder} // Changed this line
+                placeholder={t.searchPlaceholder}
                 className="flex-grow"
               />
               <motion.div
@@ -466,7 +373,6 @@ const SearchComponent = ({ language = "en" }) => {
                 </Button>
               </motion.div>
 
-              {}
               {searchQuery && (
                 <Button
                   variant="outline"
@@ -499,104 +405,18 @@ const SearchComponent = ({ language = "en" }) => {
                 )}
               </AnimatePresence>
             </motion.div>
-            {}
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500 italic md:block hidden">
-                {t.selectTooltip}
-              </p>
-              <p className="text-sm text-gray-500 italic block md:hidden">
-                Tap &ldquo;Select Sites&rdquo; to choose multiple sites, or tap
-                individual sites to search one at a time
-              </p>
 
-              <div className="flex flex-wrap gap-2 relative w-full">
-                {}
-                <div className="md:hidden w-full flex flex-wrap gap-2 mb-2">
-                  <Button
-                    onClick={() => setIsMobileSelecting(!isMobileSelecting)}
-                    variant="outline"
-                    size="sm"
-                    className="flex-shrink-0"
-                  >
-                    {isMobileSelecting ? "Done" : "Select Sites"}
-                  </Button>
-                  {isMobileSelecting && (
-                    <>
-                      <Button
-                        onClick={() => setSelectedSites(sites)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-shrink-0"
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        onClick={() => setSelectedSites([])}
-                        variant="outline"
-                        size="sm"
-                        className="flex-shrink-0"
-                      >
-                        Select None
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                {}
-                <Button
-                  onClick={() => setSelectedSites(sites)}
-                  variant={
-                    selectedSites.length === sites.length
-                      ? "default"
-                      : "outline"
-                  }
-                  size="sm"
-                  type="button"
-                  className={cn(
-                    "md:block flex-shrink-0",
-                    isMobileSelecting ? "hidden" : "block",
-                  )}
-                >
-                  All Sites
-                </Button>
-
-                {}
-                {sites.map((site) => (
-                  <Button
-                    key={site}
-                    onClick={() => {
-                      if (isMobile()) {
-                        if (isMobileSelecting) {
-                          setSelectedSites((prev) =>
-                            prev.includes(site)
-                              ? prev.filter((s) => s !== site)
-                              : [...prev, site],
-                          );
-                        } else {
-                          setSelectedSites([site]);
-                        }
-                      } else {
-                        toggleSite(site);
-                      }
-                    }}
-                    className={cn(
-                      "transition-all duration-200 flex-shrink-0",
-                      selectedSites.includes(site)
-                        ? "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600"
-                        : "bg-white text-gray-700 hover:bg-gray-100",
-                      !isMobileSelecting && "md:block",
-                    )}
-                    size="sm"
-                    type="button"
-                  >
-                    {site}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <SiteFilters
+              sites={sites}
+              selectedSites={selectedSites}
+              setSelectedSites={setSelectedSites}
+              isShiftPressed={isShiftPressed}
+              isMobileSelecting={isMobileSelecting}
+              setIsMobileSelecting={setIsMobileSelecting}
+              translations={t}
+            />
           </form>
 
-          {}
           <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
             <AnimatePresence mode="wait">
               {searchQuery && filteredResults.length > 0 ? (
@@ -632,7 +452,6 @@ const SearchComponent = ({ language = "en" }) => {
             </AnimatePresence>
           </div>
 
-          {}
           {hasMore && searchResults.length > 0 && (
             <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
               <Button
@@ -653,7 +472,6 @@ const SearchComponent = ({ language = "en" }) => {
             </div>
           )}
 
-          {}
           <div className="mt-8 border-t pt-8">
             <div className="flex flex-col items-center space-y-4">
               <Button
@@ -697,7 +515,6 @@ const SearchComponent = ({ language = "en" }) => {
             </div>
           </div>
 
-          {}
           <div className="mt-4 text-center text-sm text-gray-500">
             {t.createdBy}{" "}
             <a
@@ -721,108 +538,34 @@ const SearchComponent = ({ language = "en" }) => {
         </CardContent>
       </Card>
 
-      {}
       <AnimatePresence mode="wait">
-        {}
-        {activeModal === "feedback" && (
-          <Dialog open={true} onOpenChange={closeModal}>
-            <CustomDialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader>
-                <CustomDialogTitle>{t.provideFeedback}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">{t.feedbackDescription}</p>
-              </DialogHeader>
-              <div className="space-y-4">
-                <textarea
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  placeholder={t.feedbackPlaceholder}
-                  className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
-                />
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={closeModal}>
-                  {t.cancel}
-                </Button>
-                <Button
-                  onClick={handleFeedbackSubmit}
-                  disabled={!feedback.trim()}
-                >
-                  {t.feedbackSubmit}
-                </Button>
-              </DialogFooter>
-            </CustomDialogContent>
-          </Dialog>
-        )}
+        <FeedbackModal
+          isOpen={activeModal === "feedback"}
+          onClose={closeModal}
+          feedback={feedback}
+          setFeedback={setFeedback}
+          onSubmit={handleFeedbackSubmit}
+          translations={t}
+        />
 
-        {}
-        {activeModal === "siteRequest" && (
-          <Dialog open={true} onOpenChange={closeModal}>
-            <CustomDialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader>
-                <CustomDialogTitle>{t.requestNewSite}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">{t.enterSiteDomain}</p>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  value={siteInput}
-                  onChange={(e) => setSiteInput(e.target.value)}
-                  placeholder={t.siteUrlPlaceholder}
-                  className="w-full"
-                />
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={closeModal}>
-                  {t.cancel}
-                </Button>
-                <Button onClick={handleSiteRequest}>{t.submitRequest}</Button>
-              </DialogFooter>
-            </CustomDialogContent>
-          </Dialog>
-        )}
+        <SiteRequestModal
+          isOpen={activeModal === "siteRequest"}
+          onClose={closeModal}
+          siteInput={siteInput}
+          setSiteInput={setSiteInput}
+          onSubmit={handleSiteRequest}
+          translations={t}
+        />
 
-        {/* Filter Modal */}
-        {activeModal === "filter" && searchResults.length > 0 && (
-          <Dialog open={true} onOpenChange={closeModal}>
-            <CustomDialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader>
-                <CustomDialogTitle>{t.filterResults}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">{t.filterBySite}</p>
-                <p className="text-xs text-gray-400 italic">{t.loadMoreTip}</p>
-              </DialogHeader>
-              <div className="space-y-4">
-                {Array.from(
-                  new Set(
-                    searchResults.map(
-                      (result) => new URL(result.link).hostname,
-                    ),
-                  ),
-                ).map((site) => (
-                  <div key={site} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={site}
-                      checked={siteFilters.includes(site)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSiteFilters([...siteFilters, site]);
-                        } else {
-                          setSiteFilters(siteFilters.filter((s) => s !== site));
-                        }
-                      }}
-                      className="rounded border-gray-300"
-                    />
-                    <label htmlFor={site}>{site}</label>
-                  </div>
-                ))}
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSiteFilters([])}>
-                  {t.clearFilters}
-                </Button>
-                <Button onClick={closeModal}>{t.close}</Button>
-              </DialogFooter>
-            </CustomDialogContent>
-          </Dialog>
+        {searchResults.length > 0 && (
+          <FilterModal
+            isOpen={activeModal === "filter"}
+            onClose={closeModal}
+            searchResults={searchResults}
+            siteFilters={siteFilters}
+            setSiteFilters={setSiteFilters}
+            translations={t}
+          />
         )}
       </AnimatePresence>
     </>

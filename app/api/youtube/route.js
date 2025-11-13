@@ -23,7 +23,10 @@ export async function GET(request) {
     }
 
     // Check if API credentials are configured
-    if (!process.env.YOUTUBE_API_KEY) {
+    // Support both new (YOUTUBE_API_KEY) and legacy (REACT_APP_*) variable names
+    const apiKey = process.env.YOUTUBE_API_KEY || process.env.REACT_APP_YOUTUBE_API_KEY;
+
+    if (!apiKey) {
       return NextResponse.json(
         { error: 'YouTube API credentials are not configured' },
         { status: 500 }
@@ -33,9 +36,7 @@ export async function GET(request) {
     // Make request to YouTube Data API
     const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
       query
-    )}&key=${
-      process.env.YOUTUBE_API_KEY
-    }&type=video&maxResults=${maxResults}&channelId=${channelId}`;
+    )}&key=${apiKey}&type=video&maxResults=${maxResults}&channelId=${channelId}`;
 
     const response = await fetch(apiUrl);
     const data = await response.json();

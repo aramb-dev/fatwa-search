@@ -16,7 +16,11 @@ export async function GET(request) {
     }
 
     // Check if API credentials are configured
-    if (!process.env.GOOGLE_API_KEY || !process.env.SEARCH_ENGINE_ID) {
+    // Support both new (GOOGLE_API_KEY) and legacy (REACT_APP_*) variable names
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY;
+    const searchEngineId = process.env.SEARCH_ENGINE_ID || process.env.REACT_APP_SEARCH_ENGINE_ID;
+
+    if (!apiKey || !searchEngineId) {
       return NextResponse.json(
         { error: 'Search API credentials are not configured' },
         { status: 500 }
@@ -27,11 +31,7 @@ export async function GET(request) {
     const searchQuery = site ? `site:${site} ${query}` : query;
 
     // Make request to Google Custom Search API
-    const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${
-      process.env.GOOGLE_API_KEY
-    }&cx=${
-      process.env.SEARCH_ENGINE_ID
-    }&q=${encodeURIComponent(searchQuery)}&start=${start}`;
+    const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&start=${start}`;
 
     const response = await fetch(apiUrl);
     const data = await response.json();

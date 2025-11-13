@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Button } from "../ui/button";
-import { cn } from "../../lib/utils";
+import { cn, isMobile } from "../../lib/utils";
 
 export const SiteFilters = ({
   sites,
@@ -12,7 +12,6 @@ export const SiteFilters = ({
   setIsMobileSelecting,
   translations,
 }) => {
-  const isMobile = () => window.innerWidth <= 768;
 
   const toggleSite = (site) => {
     if (!isShiftPressed) {

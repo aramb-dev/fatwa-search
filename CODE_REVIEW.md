@@ -83,13 +83,40 @@ The following critical issues have been **FIXED** and committed to the codebase:
    - Prevents race conditions when users quickly change search terms
    - Properly handles AbortError without showing false errors to users
 
+### ✅ Architecture & Design Improvements
+
+12. **Added React Error Boundaries**
+   - Created `components/ErrorBoundary.js` to catch component errors gracefully
+   - Integrated into app layout to prevent entire app crashes
+   - User-friendly error recovery with "Refresh Page" and "Go to Home" buttons
+   - Detailed error info in development mode only
+
+13. **Standardized Modal Patterns**
+   - Created `components/ui/dialog.jsx` with reusable dialog components
+   - Removed 321 lines of duplicated code across 3 modal files
+   - Consistent styling and behavior across all modals
+   - Single source of truth for modal components
+
+14. **Organized Utility Functions**
+   - Moved `isMobile()` function to `lib/utils.js`
+   - Added JSDoc documentation
+   - Centralized utility functions for reusability
+
 ### Files Modified
 
 - `components/Search.js` - Security, bug fixes, performance optimizations, component extraction (868 → 611 lines)
 - `components/Youtube-Search.js` - Bug fixes, modal management, performance optimizations, component extraction (495 → 319 lines)
+- `app/[lang]/layout.js` - Integrated ErrorBoundary component
 - `app/api/search/route.js` - **NEW** - Server-side search API
 - `app/api/youtube/route.js` - **NEW** - Server-side YouTube API
 - `lib/cache.js` - **NEW** - TTL-based caching system for search and YouTube results
+- `lib/utils.js` - Added `isMobile()` utility function with JSDoc
+- `components/ErrorBoundary.js` - **NEW** - React error boundary component
+- `components/ui/dialog.jsx` - **NEW** - Shared dialog components
+- `components/search/FilterModal.js` - Updated to use shared dialog components (-107 lines)
+- `components/search/SiteRequestModal.js` - Updated to use shared dialog components (-107 lines)
+- `components/search/FeedbackModal.js` - Updated to use shared dialog components (-107 lines)
+- `components/search/SiteFilters.js` - Updated to use centralized `isMobile()` utility
 - `package.json` - Added `use-debounce` dependency
 - `.env.example` - Updated with secure environment variable configuration
 
@@ -477,51 +504,121 @@ allResults = specialResults.flat();
 
 ---
 
-## 4. Architecture & Design 🏗️
+## 4. Architecture & Design 🏗️ ~~(NOW FIXED ✅)~~
 
-### 4.1 Missing Error Boundaries
+### 4.1 Missing Error Boundaries ✅ FIXED
 
-**Issue:** No React error boundaries to catch component errors gracefully.
+**Severity:** Medium ~~(NOW RESOLVED)~~
+**Location:** **NEW** `components/ErrorBoundary.js`
 
-**Recommendation:** Add error boundary wrapper:
+**Issue (FIXED):** No React error boundaries to catch component errors gracefully, causing entire app crashes on errors.
 
+**✅ SOLUTION IMPLEMENTED:**
+
+Created comprehensive ErrorBoundary component with user-friendly fallback UI:
+
+**New File: `components/ErrorBoundary.js`**
 ```javascript
-// components/ErrorBoundary.js
 class ErrorBoundary extends React.Component {
-  state = { hasError: false };
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
 
   static getDerivedStateFromError(error) {
     return { hasError: true };
   }
 
+  componentDidCatch(error, errorInfo) {
+    console.error("Error Boundary caught an error:", error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
   render() {
     if (this.state.hasError) {
-      return <ErrorFallback />;
+      return <ErrorFallbackUI />; // User-friendly error screen
     }
     return this.props.children;
   }
 }
 ```
 
-### 4.2 Inconsistent Modal Patterns
+**Integrated into app layout:**
+- Wrapped main content in `app/[lang]/layout.js`
+- Provides graceful error handling with "Refresh Page" and "Go to Home" buttons
+- Shows detailed error info in development mode only
+- Prevents entire app from crashing due to component errors
 
-**Issue:** Search.js uses custom modal components inline, while these should be in `components/ui/dialog.jsx`.
+**Benefits:**
+- Prevents complete app crashes
+- User-friendly error recovery options
+- Better debugging in development
+- Improved production stability
 
-**Recommendation:** Standardize on shadcn/ui Dialog pattern or extract to reusable components.
+### 4.2 Inconsistent Modal Patterns ✅ FIXED
 
-### 4.3 Utility Function Organization
+**Severity:** Low ~~(NOW RESOLVED)~~
+**Location:** ~~components/search/*.js modals~~ **NOW STANDARDIZED**
 
-**Issue:** Helper function `isMobile()` is defined inline (Search.js:358) instead of in `lib/utils.js`.
+**Issue (FIXED):** Custom modal components (CustomDialogContent, DialogHeader, CustomDialogTitle, DialogFooter) were defined inline in each modal file, causing code duplication and inconsistent patterns.
 
-**Recommendation:** Move to utils:
+**✅ SOLUTION IMPLEMENTED:**
+
+Created shared dialog component library in `components/ui/dialog.jsx`:
+
+**New File: `components/ui/dialog.jsx`**
+- Exports standardized Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
+- Uses Radix UI Dialog primitives
+- Includes Framer Motion animations
+- Consistent styling across all modals
+- PropTypes validation for type safety
+
+**Updated all modal files to use shared components:**
+- `components/search/FilterModal.js` - Removed 107 lines of duplicated code
+- `components/search/SiteRequestModal.js` - Removed 107 lines of duplicated code
+- `components/search/FeedbackModal.js` - Removed 107 lines of duplicated code
+
+**Benefits:**
+- 321 lines of code eliminated through DRY principle
+- Consistent modal behavior across application
+- Single source of truth for modal styling
+- Easier maintenance and updates
+- Better type safety with PropTypes
+
+### 4.3 Utility Function Organization ✅ FIXED
+
+**Severity:** Low ~~(NOW RESOLVED)~~
+**Location:** ~~components/search/SiteFilters.js:15~~ **NOW IN** `lib/utils.js`
+
+**Issue (FIXED):** Helper function `isMobile()` was defined inline in component instead of in centralized utilities file.
+
+**✅ SOLUTION IMPLEMENTED:**
+
+Moved utility function to `lib/utils.js`:
 
 ```javascript
 // lib/utils.js
+/**
+ * Check if the current viewport is mobile-sized
+ * @returns {boolean} True if viewport width is <= 768px
+ */
 export const isMobile = () => {
   if (typeof window === 'undefined') return false;
   return window.innerWidth <= 768;
 };
 ```
+
+**Updated imports:**
+```javascript
+// components/search/SiteFilters.js
+import { cn, isMobile } from "../../lib/utils";
+```
+
+**Benefits:**
+- Centralized utility functions
+- Reusable across entire application
+- JSDoc documentation for better IDE support
+- Server-side rendering safety with window check
 
 ---
 
@@ -708,7 +805,7 @@ const performSearch = useCallback(async (start, isNewSearch = false) => {
 4. ✅ **COMPLETED** - Fix conflicting modal states in Youtube-Search.js
 5. ⏳ Add comprehensive test coverage
 6. ✅ **COMPLETED** - Remove console.log statements
-7. ⏳ Add error boundaries
+7. ✅ **COMPLETED** - Add error boundaries
 
 ### Medium Priority (Important Improvements)
 
@@ -723,15 +820,16 @@ const performSearch = useCallback(async (start, isNewSearch = false) => {
 
 ### Low Priority (Nice to Have)
 
-16. ✅ Migrate to TypeScript for type safety
-17. ✅ Add PropTypes to all components
-18. ✅ Improve empty states with suggestions
-19. ✅ Add ARIA labels to all interactive elements
-20. ✅ Add JSDoc comments
-21. ✅ Extract animation variants to shared constants
-22. ✅ Move utility functions to lib/utils.js
-23. ✅ Add offline support with service worker
-24. ✅ Implement infinite scroll as alternative to "Load More"
+16. ⏳ Migrate to TypeScript for type safety
+17. ⏳ Add PropTypes to all components
+18. ⏳ Improve empty states with suggestions
+19. ⏳ Add ARIA labels to all interactive elements
+20. ⏳ Add JSDoc comments
+21. ⏳ Extract animation variants to shared constants
+22. ✅ **COMPLETED** - Move utility functions to lib/utils.js
+23. ✅ **COMPLETED** - Standardize modal patterns with shared components
+24. ⏳ Add offline support with service worker
+25. ⏳ Implement infinite scroll as alternative to "Load More"
 
 ---
 

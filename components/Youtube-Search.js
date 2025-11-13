@@ -4,11 +4,13 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
 import { AnimatePresence } from "framer-motion";
 import { VideoGrid } from "./youtube/VideoGrid";
 import { VideoModal } from "./youtube/VideoModal";
 import { ChannelRequestModal } from "./youtube/ChannelRequestModal";
 import { ChannelFilterModal } from "./youtube/ChannelFilterModal";
+import { youtubeCache } from "../lib/cache";
 
 // Default channels array
 const CHANNELS = [
@@ -51,6 +53,7 @@ const YoutubeSearch = ({ translations }) => {
   // Refs
   const initialLoadDoneRef = useRef(false);
   const previousSearchRef = useRef("");
+  const abortControllerRef = useRef(null);
   const resultsPerPage = 10;
 
   // Dedicated search function
@@ -58,6 +61,15 @@ const YoutubeSearch = ({ translations }) => {
     async (isNewSearch = false) => {
       const currentQuery = searchQuery.trim();
       if (!currentQuery) return;
+
+      // Cancel previous request if still running
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
 
       setLoading(true);
       if (isNewSearch) {
@@ -71,9 +83,25 @@ const YoutubeSearch = ({ translations }) => {
           isNewSearch ? resultsPerPage : startIndex + resultsPerPage,
         );
 
+        // Check cache first
+        const cacheKey = {
+          query: currentQuery,
+          channels: channelsToSearch,
+          startIndex: isNewSearch ? 0 : startIndex,
+        };
+        const cachedResults = youtubeCache.get(cacheKey);
+
+        if (cachedResults && isNewSearch) {
+          setResults(cachedResults);
+          setHasMore(startIndex + resultsPerPage < CHANNELS.length);
+          setLoading(false);
+          return;
+        }
+
         const searches = channelsToSearch.map(async (channelId) => {
           const response = await fetch(
-            `/api/youtube?q=${encodeURIComponent(currentQuery)}&channelId=${channelId}&maxResults=5`
+            `/api/youtube?q=${encodeURIComponent(currentQuery)}&channelId=${channelId}&maxResults=5`,
+            { signal }
           );
           const data = await response.json();
 
@@ -94,14 +122,26 @@ const YoutubeSearch = ({ translations }) => {
             new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt),
         );
 
-        setResults((prev) =>
-          isNewSearch ? newResults : [...prev, ...newResults],
-        );
+        setResults((prev) => {
+          const finalResults = isNewSearch ? newResults : [...prev, ...newResults];
+
+          // Cache the results for new searches only
+          if (isNewSearch && newResults.length > 0) {
+            youtubeCache.set(cacheKey, newResults);
+          }
+
+          return finalResults;
+        });
+
         setHasMore(startIndex + resultsPerPage < CHANNELS.length);
         if (!isNewSearch) {
           setStartIndex((prev) => prev + resultsPerPage);
         }
       } catch (error) {
+        // Don't show error if request was cancelled
+        if (error.name === 'AbortError') {
+          return;
+        }
         toast.error(
           error.message === "QUOTA_EXCEEDED"
             ? "API quota exceeded. Please try again later."
@@ -109,9 +149,23 @@ const YoutubeSearch = ({ translations }) => {
         );
       } finally {
         setLoading(false);
+        abortControllerRef.current = null;
       }
     },
     [searchQuery, startIndex],
+  );
+
+  // Debounced search for auto-search as you type (optional future feature)
+  const debouncedSearch = useDebouncedCallback(
+    () => {
+      if (searchQuery.trim()) {
+        setResults([]);
+        setStartIndex(0);
+        setHasMore(true);
+        performYoutubeSearch(true);
+      }
+    },
+    500 // 500ms delay
   );
 
   // Handle URL params and initial search
@@ -172,6 +226,10 @@ const YoutubeSearch = ({ translations }) => {
   // Add handleSearch function for new searches
   const handleSearch = async (e) => {
     e.preventDefault();
+
+    // Cancel debounced search if user manually submits
+    debouncedSearch.cancel();
+
     setStartIndex(0);
     setHasMore(true);
     await performYoutubeSearch(true);

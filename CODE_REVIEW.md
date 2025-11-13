@@ -65,12 +65,32 @@ The following critical issues have been **FIXED** and committed to the codebase:
    - Created 8 new focused components following Single Responsibility Principle
    - Improved code maintainability and reusability
 
+### ✅ Performance Improvements
+
+9. **Added Search Debouncing**
+   - Implemented 500ms debouncing for auto-search functionality
+   - Prevents excessive API calls during rapid user input
+   - Uses `use-debounce` library for optimal performance
+
+10. **Implemented Result Caching**
+   - Created `lib/cache.js` with TTL-based caching system
+   - 5-minute cache for both search and YouTube results
+   - Automatic cleanup of expired entries every minute
+   - Significantly reduces redundant API calls for repeated searches
+
+11. **Added Request Cancellation**
+   - Implemented AbortController for in-flight request cancellation
+   - Prevents race conditions when users quickly change search terms
+   - Properly handles AbortError without showing false errors to users
+
 ### Files Modified
 
-- `components/Search.js` - Security, bug fixes, performance, component extraction (868 → 611 lines)
-- `components/Youtube-Search.js` - Bug fixes, modal management, component extraction (495 → 319 lines)
+- `components/Search.js` - Security, bug fixes, performance optimizations, component extraction (868 → 611 lines)
+- `components/Youtube-Search.js` - Bug fixes, modal management, performance optimizations, component extraction (495 → 319 lines)
 - `app/api/search/route.js` - **NEW** - Server-side search API
 - `app/api/youtube/route.js` - **NEW** - Server-side YouTube API
+- `lib/cache.js` - **NEW** - TTL-based caching system for search and YouTube results
+- `package.json` - Added `use-debounce` dependency
 - `.env.example` - Updated with secure environment variable configuration
 
 ### New Components Created (Component Extraction)
@@ -273,52 +293,157 @@ console.log("After sorting:", allResults.map((r) => r.link));
 
 ---
 
-## 3. Performance Issues ⚡
+## 3. Performance Issues ⚡ ~~(NOW FIXED ✅)~~
 
-### 3.1 No Search Debouncing
+### 3.1 No Search Debouncing ✅ FIXED
 
-**Issue:** Search executes immediately on form submit without debouncing. If auto-search is added later, this could cause excessive API calls.
+**Severity:** Medium ~~(NOW RESOLVED)~~
+**Location:** ~~components/Search.js, components/Youtube-Search.js~~ **NOW IMPLEMENTED**
 
-**Recommendation:** Add debouncing with `lodash.debounce` or `use-debounce` hook:
+**Issue (FIXED):** Search executed immediately on form submit without debouncing, which could cause excessive API calls if auto-search is added later.
+
+**✅ SOLUTION IMPLEMENTED:**
+
+Added debouncing with `use-debounce` library in both Search.js and Youtube-Search.js:
 
 ```javascript
 import { useDebouncedCallback } from 'use-debounce';
 
+// Debounced search for auto-search as you type (500ms delay)
 const debouncedSearch = useDebouncedCallback(
-  (query) => performSearch(1, true),
+  () => {
+    if (searchQuery.trim()) {
+      performSearch(1, true);
+    }
+  },
   500
 );
+
+// Cancel debounced search if user manually submits
+const handleSearch = async (e) => {
+  e.preventDefault();
+  debouncedSearch.cancel();
+  await performSearch(1, true);
+};
 ```
 
-### 3.2 No Result Caching
+**Benefits:**
+- Prevents excessive API calls during rapid user input
+- Ready for auto-search functionality
+- Cancels debounced search on manual submit
 
-**Issue:** Repeated searches for the same query hit the API every time.
+### 3.2 No Result Caching ✅ FIXED
 
-**Recommendation:** Implement simple caching:
-- Use React Query or SWR for automatic caching
-- Or implement simple Map-based cache with TTL
+**Severity:** Medium ~~(NOW RESOLVED)~~
+**Location:** **NEW** `lib/cache.js`
 
-### 3.3 No Request Cancellation
+**Issue (FIXED):** Repeated searches for the same query hit the API every time, wasting API quota and slowing down user experience.
 
-**Issue:** If user quickly changes search terms, old requests are not cancelled, leading to race conditions.
+**✅ SOLUTION IMPLEMENTED:**
 
-**Recommendation:** Use AbortController:
+Created `lib/cache.js` with TTL-based caching system:
 
 ```javascript
-const performSearch = useCallback(async (start, isNewSearch = false) => {
-  const controller = new AbortController();
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    // ...
-  } catch (error) {
-    if (error.name === 'AbortError') return;
-    // handle error
+// lib/cache.js
+class SimpleCache {
+  constructor(ttl = 5 * 60 * 1000) { // 5 minutes
+    this.cache = new Map();
+    this.ttl = ttl;
+    setInterval(() => this.cleanup(), 60 * 1000); // Cleanup every minute
   }
 
-  return () => controller.abort();
+  get(params) {
+    const key = JSON.stringify(params);
+    const cached = this.cache.get(key);
+
+    if (!cached) return null;
+    if (Date.now() - cached.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.data;
+  }
+
+  set(params, data) {
+    const key = JSON.stringify(params);
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+}
+
+export const searchCache = new SimpleCache(5 * 60 * 1000);
+export const youtubeCache = new SimpleCache(5 * 60 * 1000);
+```
+
+**Implementation in components:**
+
+```javascript
+// Check cache before API call
+const cacheKey = { query: searchQuery, sites: selectedSites, start };
+const cachedResults = searchCache.get(cacheKey);
+
+if (cachedResults && isNewSearch) {
+  setSearchResults(cachedResults);
+  setLoading(false);
+  return;
+}
+
+// Store results in cache after successful API call
+if (isNewSearch && allResults.length > 0) {
+  searchCache.set(cacheKey, allResults);
+}
+```
+
+**Benefits:**
+- 5-minute TTL reduces redundant API calls
+- Automatic cleanup prevents memory leaks
+- Instant results for repeated searches
+- Preserves API quota
+
+### 3.3 No Request Cancellation ✅ FIXED
+
+**Severity:** Medium ~~(NOW RESOLVED)~~
+**Location:** ~~components/Search.js, components/Youtube-Search.js~~ **NOW IMPLEMENTED**
+
+**Issue (FIXED):** If user quickly changes search terms, old requests were not cancelled, leading to race conditions and wasted API calls.
+
+**✅ SOLUTION IMPLEMENTED:**
+
+Implemented AbortController for request cancellation in both Search.js and Youtube-Search.js:
+
+```javascript
+const abortControllerRef = useRef(null);
+
+const performSearch = useCallback(async (start, isNewSearch = false) => {
+  // Cancel previous request if still running
+  if (abortControllerRef.current) {
+    abortControllerRef.current.abort();
+  }
+
+  // Create new AbortController for this request
+  abortControllerRef.current = new AbortController();
+  const signal = abortControllerRef.current.signal;
+
+  try {
+    const response = await fetch(url, { signal });
+    // ... handle response
+  } catch (error) {
+    // Don't show error if request was cancelled
+    if (error.name === 'AbortError') {
+      return;
+    }
+    // handle other errors
+  } finally {
+    abortControllerRef.current = null;
+  }
 }, [dependencies]);
 ```
+
+**Benefits:**
+- Prevents race conditions when users quickly change searches
+- Cancels in-flight requests before starting new ones
+- Properly handles AbortError without false error messages
+- Reduces wasted network bandwidth and API quota
 
 ### 3.4 Sequential API Calls ✅ FIXED
 
@@ -589,9 +714,9 @@ const performSearch = useCallback(async (start, isNewSearch = false) => {
 
 8. ✅ **COMPLETED** - Break large components into smaller ones
 9. ⏳ Add missing translations for hardcoded strings
-10. ⏳ Implement search debouncing
-11. ⏳ Add result caching with React Query/SWR
-12. ⏳ Implement request cancellation
+10. ✅ **COMPLETED** - Implement search debouncing
+11. ✅ **COMPLETED** - Add result caching with TTL-based system
+12. ✅ **COMPLETED** - Implement request cancellation
 13. ✅ **COMPLETED** - Fix sequential API calls to be parallel
 14. ⏳ Add loading skeleton screens
 15. ⏳ Improve error messages

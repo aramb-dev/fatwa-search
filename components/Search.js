@@ -8,11 +8,13 @@ import { Switch } from "./ui/switch";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
 import { translations } from "../translations";
 import { FeedbackModal } from "./search/FeedbackModal";
 import { SiteRequestModal } from "./search/SiteRequestModal";
 import { FilterModal } from "./search/FilterModal";
 import { SiteFilters } from "./search/SiteFilters";
+import { searchCache } from "../lib/cache";
 import PropTypes from "prop-types";
 import { cn } from "../lib/utils";
 
@@ -78,9 +80,19 @@ const SearchComponent = ({ language = "en" }) => {
 
   const initialLoadDoneRef = useRef(false);
   const resultsContainerRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
+      // Cancel previous request if still running
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
       setLoading(true);
       try {
         const regularSites = selectedSites;
@@ -90,12 +102,34 @@ const SearchComponent = ({ language = "en" }) => {
           ...(includeDorar ? ["dorar.net"] : []),
         ];
 
+        // Check cache first
+        const cacheKey = {
+          query: searchQuery,
+          sites: regularSites,
+          special: specialSitesToSearch,
+          start,
+        };
+        const cachedResults = searchCache.get(cacheKey);
+
+        if (cachedResults && isNewSearch) {
+          setSearchResults(cachedResults);
+          setHasMore(cachedResults.length >= resultsPerPage);
+          setStartIndex(start + resultsPerPage);
+          setLoading(false);
+          toast(t.searchResultsDisclaimer, {
+            duration: 5000,
+            closeButton: true,
+          });
+          return;
+        }
+
         let allResults = [];
 
         // Search special sites in parallel
         const specialSearches = specialSitesToSearch.map(async (specialSite) => {
           const response = await fetch(
-            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`
+            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`,
+            { signal }
           );
           const data = await response.json();
 
@@ -117,7 +151,8 @@ const SearchComponent = ({ language = "en" }) => {
             .join(" OR ");
 
           const regularResponse = await fetch(
-            `/api/search?q=${encodeURIComponent(`(${regularSiteQuery}) ${searchQuery}`)}&start=${start}`
+            `/api/search?q=${encodeURIComponent(`(${regularSiteQuery}) ${searchQuery}`)}&start=${start}`,
+            { signal }
           );
           const regularData = await regularResponse.json();
 
@@ -147,8 +182,14 @@ const SearchComponent = ({ language = "en" }) => {
         });
 
         setSearchResults((prev) => {
-          if (isNewSearch) return allResults;
-          return [...prev, ...allResults];
+          const newResults = isNewSearch ? allResults : [...prev, ...allResults];
+
+          // Cache the results for new searches only
+          if (isNewSearch && allResults.length > 0) {
+            searchCache.set(cacheKey, allResults);
+          }
+
+          return newResults;
         });
 
         setHasMore(allResults.length >= resultsPerPage);
@@ -161,10 +202,15 @@ const SearchComponent = ({ language = "en" }) => {
           });
         }
       } catch (error) {
+        // Don't show error if request was cancelled
+        if (error.name === 'AbortError') {
+          return;
+        }
         console.error("Search failed:", error);
         toast.error("Search failed: " + error.message);
       } finally {
         setLoading(false);
+        abortControllerRef.current = null;
       }
     },
     [
@@ -175,6 +221,19 @@ const SearchComponent = ({ language = "en" }) => {
       includeDorar,
       t,
     ],
+  );
+
+  // Debounced search for auto-search as you type (optional future feature)
+  const debouncedSearch = useDebouncedCallback(
+    () => {
+      if (searchQuery.trim()) {
+        setSearchResults([]);
+        setStartIndex(1);
+        setHasMore(true);
+        performSearch(1, true);
+      }
+    },
+    500 // 500ms delay
   );
 
   useEffect(() => {
@@ -189,6 +248,9 @@ const SearchComponent = ({ language = "en" }) => {
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+
+    // Cancel debounced search if user manually submits
+    debouncedSearch.cancel();
 
     setSearchResults([]);
     setStartIndex(1);

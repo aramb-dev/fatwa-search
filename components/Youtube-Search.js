@@ -319,7 +319,10 @@ const YoutubeSearch = ({ translations }) => {
                 exit="exit"
                 className="border rounded-lg overflow-hidden shadow-sm"
               >
-                <div className="relative w-full aspect-video cursor-pointer" onClick={() => setSelectedVideo(video)}>
+                <div
+                  className="relative w-full aspect-video cursor-pointer"
+                  onClick={() => setSelectedVideo(video)}
+                >
                   <Image
                     src={video.snippet.thumbnails.medium.url}
                     alt={video.snippet.title || "YouTube video thumbnail"}

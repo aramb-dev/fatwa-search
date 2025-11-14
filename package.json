@@ -15,7 +15,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.0.6",
     "lucide-react": "^0.515.0",
-    "next": "^15.5.0",
+    "next": "^16.0.3",
     "prop-types": "^15.8.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -30,12 +30,14 @@
     "build": "next build",
     "start": "next start",
     "test": "jest",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,css}\" \"components/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"*.md\""
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@netlify/plugin-nextjs": "^5.14.5",
+    "@types/bun": "latest",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.0",
@@ -49,9 +51,18 @@
   },
   "engines": {
     "node": ">=18.18.0 <=20.x",
-    "npm": ">=9"
+    "npm": ">=9",
+    "bun": ">=1.0.0"
   },
+  "packageManager": "bun@1.1.0",
   "config": {
     "loglevel": "warn"
+  },
+  "trustedDependencies": [
+    "unrs-resolver"
+  ],
+  "private": true,
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }

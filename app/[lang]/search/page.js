@@ -1,22 +1,18 @@
-"use client";
-
-// Removed experimental use() hook - not needed for simple param extraction
-import { Suspense } from "react";
+import PropTypes from "prop-types";
 import * as Tabs from "@radix-ui/react-tabs";
-import Search from "../../../components/Search";
-import { translations } from "../../../translations";
+import SearchClient from "./SearchClient";
 
-function SearchComponent({ params }) {
-  const { lang } = params;
-  return <Search language={lang} translations={translations[lang]} />;
-}
-
-export default function SearchPage({ params }) {
+export default async function SearchPage({ params }) {
+  const { lang } = await params;
   return (
     <Tabs.Content value="search">
-      <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
-        <SearchComponent params={params} />
-      </Suspense>
+      <SearchClient lang={lang} />
     </Tabs.Content>
   );
 }
+
+SearchPage.propTypes = {
+  params: PropTypes.shape({
+    lang: PropTypes.string,
+  }).isRequired,
+};

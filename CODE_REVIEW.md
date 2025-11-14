@@ -102,21 +102,42 @@ The following critical issues have been **FIXED** and committed to the codebase:
    - Added JSDoc documentation
    - Centralized utility functions for reusability
 
+### ✅ Accessibility Improvements
+
+15. **Added Comprehensive ARIA Labels**
+   - Added aria-labels to all interactive elements (buttons, switches, inputs)
+   - Context-aware labels that describe current state
+   - Site buttons now use role="checkbox" with aria-checked
+   - Screen reader support for all user interactions
+
+16. **Implemented Focus Management in Modals**
+   - Updated dialog component to use Radix UI's Portal and Content
+   - Automatic focus trapping when modals open
+   - Focus returns to trigger element on close
+   - Escape key closes modals
+   - DialogTitle and DialogDescription use proper Radix components for ARIA
+
+17. **Added Keyboard Navigation Support**
+   - Space/Enter keys now work for site selection
+   - Tab navigation through all interactive elements
+   - Added visible instructions for keyboard shortcuts
+   - Full keyboard accessibility without mouse required
+
 ### Files Modified
 
-- `components/Search.js` - Security, bug fixes, performance optimizations, component extraction (868 → 611 lines)
-- `components/Youtube-Search.js` - Bug fixes, modal management, performance optimizations, component extraction (495 → 319 lines)
+- `components/Search.js` - Security, bugs, performance, accessibility, ARIA labels (868 → 611 lines)
+- `components/Youtube-Search.js` - Bug fixes, modal management, performance optimizations (495 → 319 lines)
+- `components/search/SiteFilters.js` - Accessibility, keyboard navigation, ARIA labels
+- `components/ui/dialog.jsx` - **NEW** - Shared dialogs with focus management
+- `components/search/FilterModal.js` - Uses shared dialog components (-107 lines)
+- `components/search/SiteRequestModal.js` - Uses shared dialog components (-107 lines)
+- `components/search/FeedbackModal.js` - Uses shared dialog components (-107 lines)
+- `components/ErrorBoundary.js` - **NEW** - React error boundary component
 - `app/[lang]/layout.js` - Integrated ErrorBoundary component
 - `app/api/search/route.js` - **NEW** - Server-side search API
 - `app/api/youtube/route.js` - **NEW** - Server-side YouTube API
-- `lib/cache.js` - **NEW** - TTL-based caching system for search and YouTube results
+- `lib/cache.js` - **NEW** - TTL-based caching system
 - `lib/utils.js` - Added `isMobile()` utility function with JSDoc
-- `components/ErrorBoundary.js` - **NEW** - React error boundary component
-- `components/ui/dialog.jsx` - **NEW** - Shared dialog components
-- `components/search/FilterModal.js` - Updated to use shared dialog components (-107 lines)
-- `components/search/SiteRequestModal.js` - Updated to use shared dialog components (-107 lines)
-- `components/search/FeedbackModal.js` - Updated to use shared dialog components (-107 lines)
-- `components/search/SiteFilters.js` - Updated to use centralized `isMobile()` utility
 - `package.json` - Added `use-debounce` dependency
 - `.env.example` - Updated with secure environment variable configuration
 
@@ -665,39 +686,181 @@ module.exports = {
 
 ---
 
-## 6. Accessibility Issues ♿
+## 6. Accessibility Issues ♿ ~~(NOW FIXED ✅)~~
 
-### 6.1 Missing ARIA Labels
+### 6.1 Missing ARIA Labels ✅ FIXED
 
-**Issue:** Some interactive elements lack proper ARIA labels:
+**Severity:** Medium ~~(NOW RESOLVED)~~
+**Location:** ~~Multiple components~~ **NOW LABELED**
 
-- Filter button (Search.js:510)
-- Share button (Search.js:490)
-- Site selection buttons (Search.js:582)
+**Issue (FIXED):** Interactive elements lacked proper ARIA labels for screen readers.
 
-**Recommendation:** Add descriptive ARIA labels:
+**✅ SOLUTION IMPLEMENTED:**
 
+Added comprehensive ARIA labels to all interactive elements in `components/Search.js`:
+
+**Search Input:**
 ```javascript
+<Input
+  aria-label={t.searchPlaceholder || "Search Islamic scholars"}
+  type="search"
+  // ...
+/>
+```
+
+**Action Buttons:**
+```javascript
+// Share button
 <Button
-  aria-label={`Share search results for ${searchQuery}`}
+  aria-label={`${t.share || "Share"} search results for "${searchQuery}"`}
   onClick={handleShare}
 >
   <Share2 className="h-4 w-4" />
   {t.share}
 </Button>
+
+// Filter button
+<Button
+  aria-label={`${t.filter || "Filter"} results by site (${searchResults.length} results)`}
+  onClick={openFilterModal}
+>
+  <Filter className="h-4 w-4" />
+  {t.filter}
+</Button>
 ```
 
-### 6.2 Focus Management in Modals
+**Toggle Switches:**
+```javascript
+<Switch
+  aria-label={t.searchShamela || "Include Shamela in search"}
+  checked={includeShamela}
+  onCheckedChange={setIncludeShamela}
+/>
+```
 
-**Issue:** When modals open, focus is not properly managed. Users should be trapped inside the modal.
+**Site Selection Buttons** (in `components/search/SiteFilters.js`):
+```javascript
+<Button
+  role="checkbox"
+  aria-checked={selectedSites.includes(site)}
+  aria-label={`${selectedSites.includes(site) ? "Deselect" : "Select"} ${site} (${isShiftPressed ? "Shift+Click to multi-select" : "Click to select only this site"})`}
+  aria-pressed={selectedSites.length === sites.length}
+>
+  {site}
+</Button>
+```
 
-**Recommendation:** Use Radix UI's focus trap or react-focus-lock.
+**Benefits:**
+- Screen readers now properly announce button purposes
+- Users understand current selection state
+- Context-aware labels based on app state
+- Improved navigation for assistive technology users
 
-### 6.3 Keyboard Navigation
+### 6.2 Focus Management in Modals ✅ FIXED
 
-**Issue:** Site selection requires Shift+Click for multi-select, but no keyboard alternative exists.
+**Severity:** High ~~(NOW RESOLVED)~~
+**Location:** ~~components/ui/dialog.jsx~~ **NOW IMPLEMENTED**
 
-**Recommendation:** Add keyboard shortcuts documentation and implement Space/Enter for selection.
+**Issue (FIXED):** Modals didn't trap focus properly, allowing keyboard users to navigate outside the modal accidentally.
+
+**✅ SOLUTION IMPLEMENTED:**
+
+Updated `components/ui/dialog.jsx` to use Radix UI's built-in focus management:
+
+**Before (Custom Implementation):**
+```javascript
+// No focus trapping - just a motion div
+export const DialogContent = ({ children }) => (
+  <motion.div className="fixed inset-0">
+    {children}
+  </motion.div>
+);
+```
+
+**After (Radix UI with Focus Trapping):**
+```javascript
+export const DialogContent = ({ children, className, ...props }) => (
+  <RadixDialog.Portal>
+    <RadixDialog.Overlay asChild>
+      <motion.div className="fixed inset-0 bg-black/50" />
+    </RadixDialog.Overlay>
+    <RadixDialog.Content asChild>
+      <motion.div className={cn("focus:outline-none", className)} {...props}>
+        {children}
+      </motion.div>
+    </RadixDialog.Content>
+  </RadixDialog.Portal>
+);
+```
+
+**Also updated:**
+- DialogTitle now uses `RadixDialog.Title` for proper ARIA labeling
+- DialogDescription uses `RadixDialog.Description` for accessibility
+- Proper focus restoration when modal closes
+
+**Benefits:**
+- Focus is trapped inside modal when open
+- Tab navigation cycles through modal elements only
+- Escape key closes modal
+- Focus returns to trigger element on close
+- Screen readers properly announce modal title and description
+
+### 6.3 Keyboard Navigation ✅ FIXED
+
+**Severity:** Medium ~~(NOW RESOLVED)~~
+**Location:** ~~components/search/SiteFilters.js~~ **NOW IMPLEMENTED**
+
+**Issue (FIXED):** Site selection required mouse interaction (Shift+Click), with no keyboard alternative for multi-select.
+
+**✅ SOLUTION IMPLEMENTED:**
+
+Added comprehensive keyboard navigation in `components/search/SiteFilters.js`:
+
+**Keyboard Event Handler:**
+```javascript
+const handleSiteKeyDown = (e, site) => {
+  // Handle Space or Enter key for keyboard navigation
+  if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    if (isMobile()) {
+      if (isMobileSelecting) {
+        setSelectedSites((prev) =>
+          prev.includes(site)
+            ? prev.filter((s) => s !== site)
+            : [...prev, site]
+        );
+      } else {
+        setSelectedSites([site]);
+      }
+    } else {
+      toggleSite(site);
+    }
+  }
+};
+
+// Applied to all site buttons
+<Button
+  onKeyDown={(e) => handleSiteKeyDown(e, site)}
+  role="checkbox"
+  aria-checked={selectedSites.includes(site)}
+>
+  {site}
+</Button>
+```
+
+**Added User Instructions:**
+```javascript
+<span className="block text-xs mt-1">
+  Keyboard: Use Tab to navigate, Space/Enter to select, Shift+Click for multi-select
+</span>
+```
+
+**Benefits:**
+- Tab key navigates between site buttons
+- Space/Enter keys toggle site selection
+- Shift+Click still works for power users
+- Screen readers announce selection state
+- Full keyboard accessibility for site filtering
 
 ---
 
@@ -823,13 +986,15 @@ const performSearch = useCallback(async (start, isNewSearch = false) => {
 16. ⏳ Migrate to TypeScript for type safety
 17. ⏳ Add PropTypes to all components
 18. ⏳ Improve empty states with suggestions
-19. ⏳ Add ARIA labels to all interactive elements
-20. ⏳ Add JSDoc comments
-21. ⏳ Extract animation variants to shared constants
-22. ✅ **COMPLETED** - Move utility functions to lib/utils.js
-23. ✅ **COMPLETED** - Standardize modal patterns with shared components
-24. ⏳ Add offline support with service worker
-25. ⏳ Implement infinite scroll as alternative to "Load More"
+19. ✅ **COMPLETED** - Add ARIA labels to all interactive elements
+20. ✅ **COMPLETED** - Implement focus management in modals
+21. ✅ **COMPLETED** - Add keyboard navigation support
+22. ⏳ Add JSDoc comments
+23. ⏳ Extract animation variants to shared constants
+24. ✅ **COMPLETED** - Move utility functions to lib/utils.js
+25. ✅ **COMPLETED** - Standardize modal patterns with shared components
+26. ⏳ Add offline support with service worker
+27. ⏳ Implement infinite scroll as alternative to "Load More"
 
 ---
 

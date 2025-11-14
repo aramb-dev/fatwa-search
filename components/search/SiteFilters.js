@@ -23,10 +23,33 @@ export const SiteFilters = ({
     }
   };
 
+  const handleSiteKeyDown = (e, site) => {
+    // Handle Space or Enter key for keyboard navigation
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      if (isMobile()) {
+        if (isMobileSelecting) {
+          setSelectedSites((prev) =>
+            prev.includes(site)
+              ? prev.filter((s) => s !== site)
+              : [...prev, site]
+          );
+        } else {
+          setSelectedSites([site]);
+        }
+      } else {
+        toggleSite(site);
+      }
+    }
+  };
+
   return (
     <div className="space-y-2">
       <p className="text-sm text-gray-500 italic md:block hidden">
         {translations.selectTooltip}
+        <span className="block text-xs mt-1">
+          Keyboard: Use Tab to navigate, Space/Enter to select, Shift+Click for multi-select
+        </span>
       </p>
       <p className="text-sm text-gray-500 italic block md:hidden">
         Tap &ldquo;Select Sites&rdquo; to choose multiple sites, or tap
@@ -41,6 +64,8 @@ export const SiteFilters = ({
             variant="outline"
             size="sm"
             className="flex-shrink-0"
+            aria-label={isMobileSelecting ? "Done selecting sites" : "Select multiple sites"}
+            aria-pressed={isMobileSelecting}
           >
             {isMobileSelecting ? "Done" : "Select Sites"}
           </Button>
@@ -51,6 +76,7 @@ export const SiteFilters = ({
                 variant="outline"
                 size="sm"
                 className="flex-shrink-0"
+                aria-label={`Select all ${sites.length} sites`}
               >
                 Select All
               </Button>
@@ -59,6 +85,7 @@ export const SiteFilters = ({
                 variant="outline"
                 size="sm"
                 className="flex-shrink-0"
+                aria-label="Deselect all sites"
               >
                 Select None
               </Button>
@@ -78,6 +105,8 @@ export const SiteFilters = ({
             "md:block flex-shrink-0",
             isMobileSelecting ? "hidden" : "block"
           )}
+          aria-label={`Search all ${sites.length} sites`}
+          aria-pressed={selectedSites.length === sites.length}
         >
           All Sites
         </Button>
@@ -101,6 +130,7 @@ export const SiteFilters = ({
                 toggleSite(site);
               }
             }}
+            onKeyDown={(e) => handleSiteKeyDown(e, site)}
             className={cn(
               "transition-all duration-200 flex-shrink-0",
               selectedSites.includes(site)
@@ -110,6 +140,9 @@ export const SiteFilters = ({
             )}
             size="sm"
             type="button"
+            role="checkbox"
+            aria-checked={selectedSites.includes(site)}
+            aria-label={`${selectedSites.includes(site) ? "Deselect" : "Select"} ${site} (${isShiftPressed ? "Shift+Click to multi-select" : "Click to select only this site"})`}
           >
             {site}
           </Button>

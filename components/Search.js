@@ -374,6 +374,7 @@ const SearchComponent = ({ language = "en" }) => {
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
+              aria-label={t.requestSite || "Request to add a new site"}
             >
               <Plus className="h-4 w-4" />
               {t.requestSite}
@@ -385,6 +386,7 @@ const SearchComponent = ({ language = "en" }) => {
                   checked={includeShamela}
                   onCheckedChange={setIncludeShamela}
                   className="data-[state=checked]:bg-green-600"
+                  aria-label={t.searchShamela || "Include Shamela in search"}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -393,6 +395,7 @@ const SearchComponent = ({ language = "en" }) => {
                   checked={includeAlmaany}
                   onCheckedChange={setIncludeAlmaany}
                   className="data-[state=checked]:bg-green-600"
+                  aria-label={t.searchAlmaany || "Include Almaany in search"}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -401,6 +404,7 @@ const SearchComponent = ({ language = "en" }) => {
                   checked={includeDorar}
                   onCheckedChange={setIncludeDorar}
                   className="data-[state=checked]:bg-green-600"
+                  aria-label={t.searchDorar || "Include Dorar in search"}
                 />
               </div>
             </div>
@@ -414,6 +418,8 @@ const SearchComponent = ({ language = "en" }) => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
                 className="flex-grow"
+                aria-label={t.searchPlaceholder || "Search Islamic scholars"}
+                type="search"
               />
               <motion.div
                 variants={buttonVariants}
@@ -440,6 +446,7 @@ const SearchComponent = ({ language = "en" }) => {
                   variant="outline"
                   onClick={handleShare}
                   className="flex items-center gap-2"
+                  aria-label={`${t.share || "Share"} search results for "${searchQuery}"`}
                 >
                   <Share2 className="h-4 w-4" />
                   {t.share}
@@ -459,6 +466,7 @@ const SearchComponent = ({ language = "en" }) => {
                       variant="outline"
                       onClick={openFilterModal}
                       className="flex items-center gap-2"
+                      aria-label={`${t.filter || "Filter"} results by site (${searchResults.length} results)`}
                     >
                       <Filter className="h-4 w-4" />
                       {t.filter}
@@ -521,6 +529,7 @@ const SearchComponent = ({ language = "en" }) => {
                 disabled={loading}
                 variant="outline"
                 className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
+                aria-label={`${t.loadMore || "Load more"} search results (currently showing ${searchResults.length} results)`}
               >
                 {loading ? t.loading : t.loadMore}
               </Button>
@@ -528,6 +537,7 @@ const SearchComponent = ({ language = "en" }) => {
                 variant="outline"
                 onClick={openFeedbackModal}
                 className="shadow-lg bg-white hover:bg-gray-50"
+                aria-label={t.provideFeedback || "Provide feedback"}
               >
                 {t.provideFeedback}
               </Button>

@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Dialog as RadixDialog } from "@radix-ui/react-dialog";
+import * as RadixDialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import { cn } from "../../lib/utils";
 
@@ -40,39 +40,48 @@ const overlayVariants = {
 /**
  * Dialog root component - wraps the entire dialog
  */
-export const Dialog = RadixDialog;
+export const Dialog = RadixDialog.Root;
 
 /**
- * Dialog content component with animations
+ * Dialog content component with animations and proper focus management
+ * Uses Radix UI's Portal and Content for accessibility features like focus trapping
  */
 export const DialogContent = ({ children, className, ...props }) => (
-  <motion.div
-    initial="initial"
-    animate="animate"
-    exit="exit"
-    variants={overlayVariants}
-    className="fixed inset-0 z-50 flex items-center justify-center"
-  >
-    <div className="fixed inset-0 bg-black/50" />
-    <motion.div
-      variants={modalVariants}
-      className={cn(
-        "relative",
-        "w-full max-w-[670px]",
-        "min-h-[200px]",
-        "bg-white rounded-lg",
-        "p-6",
-        "shadow-lg",
-        "mx-4 sm:mx-auto",
-        "z-50",
-        "overflow-y-auto max-h-[90vh]",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  </motion.div>
+  <RadixDialog.Portal>
+    <RadixDialog.Overlay asChild>
+      <motion.div
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={overlayVariants}
+        className="fixed inset-0 z-50 bg-black/50"
+      />
+    </RadixDialog.Overlay>
+    <RadixDialog.Content asChild>
+      <motion.div
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        variants={modalVariants}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50",
+          "translate-x-[-50%] translate-y-[-50%]",
+          "w-full max-w-[670px]",
+          "min-h-[200px]",
+          "bg-white rounded-lg",
+          "p-6",
+          "shadow-lg",
+          "mx-4 sm:mx-auto",
+          "overflow-y-auto max-h-[90vh]",
+          "focus:outline-none",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </motion.div>
+    </RadixDialog.Content>
+  </RadixDialog.Portal>
 );
 
 DialogContent.propTypes = {
@@ -95,12 +104,15 @@ DialogHeader.propTypes = {
 };
 
 /**
- * Dialog title component
+ * Dialog title component with proper ARIA labeling
+ * Uses Radix UI's Title for proper accessibility announcements
  */
 export const DialogTitle = ({ children, className }) => (
-  <h2 className={cn("text-lg sm:text-xl font-semibold leading-none tracking-tight", className)}>
-    {children}
-  </h2>
+  <RadixDialog.Title asChild>
+    <h2 className={cn("text-lg sm:text-xl font-semibold leading-none tracking-tight", className)}>
+      {children}
+    </h2>
+  </RadixDialog.Title>
 );
 
 DialogTitle.propTypes = {
@@ -109,12 +121,15 @@ DialogTitle.propTypes = {
 };
 
 /**
- * Dialog description component
+ * Dialog description component with proper ARIA description
+ * Uses Radix UI's Description for accessibility
  */
 export const DialogDescription = ({ children, className }) => (
-  <p className={cn("text-sm text-gray-500", className)}>
-    {children}
-  </p>
+  <RadixDialog.Description asChild>
+    <p className={cn("text-sm text-gray-500", className)}>
+      {children}
+    </p>
+  </RadixDialog.Description>
 );
 
 DialogDescription.propTypes = {

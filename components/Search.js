@@ -613,23 +613,23 @@ const SearchComponent = ({ language = "en" }) => {
 
                 if (hasResults) {
                   return (
-                <motion.div
-                  className="space-y-4"
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  variants={resultsVariants}
-                >
-                  {filteredResults.map((result, index) => (
-                    <SearchResult
-                      key={result.link}
-                      result={result}
-                      index={index}
-                      isNewResult={
-                        index >= filteredResults.length - resultsPerPage
-                      }
-                    />
-                  ))}
+                    <motion.div
+                      className="space-y-4"
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      variants={resultsVariants}
+                    >
+                      {filteredResults.map((result, index) => (
+                        <SearchResult
+                          key={result.link}
+                          result={result}
+                          index={index}
+                          isNewResult={
+                            index >= filteredResults.length - resultsPerPage
+                          }
+                        />
+                      ))}
                     </motion.div>
                   );
                 }

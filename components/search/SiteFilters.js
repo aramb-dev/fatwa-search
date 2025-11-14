@@ -26,7 +26,9 @@ export const SiteFilters = ({
     if (isMobile()) {
       if (isMobileSelecting) {
         setSelectedSites((prev) =>
-          prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
+          prev.includes(site)
+            ? prev.filter((s) => s !== site)
+            : [...prev, site],
         );
       } else {
         setSelectedSites([site]);

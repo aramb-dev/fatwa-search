@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import PropTypes from "prop-types";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Youtube, Search as SearchIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -149,3 +150,8 @@ export default function LanguageLayoutClient({ children, lang }) {
     </div>
   );
 }
+
+LanguageLayoutClient.propTypes = {
+  children: PropTypes.node.isRequired,
+  lang: PropTypes.string.isRequired,
+};

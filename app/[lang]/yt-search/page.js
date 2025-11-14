@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import * as Tabs from "@radix-ui/react-tabs";
 import YtSearchClient from "./YtSearchClient";
 
@@ -9,3 +10,9 @@ export default async function YtSearchPage({ params }) {
     </Tabs.Content>
   );
 }
+
+YtSearchPage.propTypes = {
+  params: PropTypes.shape({
+    lang: PropTypes.string,
+  }).isRequired,
+};

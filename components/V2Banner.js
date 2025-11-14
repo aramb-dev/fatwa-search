@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -56,8 +57,8 @@ const V2Banner = ({ language = "en", translations }) => {
   const replaceVars = (text) => {
     if (!text) return "";
     return text
-      .replace(/\{\{newSite\}\}/g, t.newSite || "search.aramb.dev")
-      .replace(/\{\{oldSite\}\}/g, t.oldSite || "is-search.aramb.dev");
+      .replaceAll("{{newSite}}", t.newSite || "search.aramb.dev")
+      .replaceAll("{{oldSite}}", t.oldSite || "is-search.aramb.dev");
   };
 
   const bannerVariants = {
@@ -244,6 +245,32 @@ const V2Banner = ({ language = "en", translations }) => {
       )}
     </AnimatePresence>
   );
+};
+
+V2Banner.propTypes = {
+  language: PropTypes.string,
+  translations: PropTypes.shape({
+    v2Banner: PropTypes.shape({
+      title: PropTypes.string,
+      subtitle: PropTypes.string,
+      notice: PropTypes.string,
+      cta: PropTypes.string,
+      toggleMore: PropTypes.string,
+      toggleLess: PropTypes.string,
+      whatsNewHeading: PropTypes.string,
+      summary: PropTypes.string,
+      newSite: PropTypes.string,
+      oldSite: PropTypes.string,
+      features: PropTypes.arrayOf(
+        PropTypes.shape({
+          title: PropTypes.string,
+          description: PropTypes.string,
+          icon: PropTypes.string,
+          color: PropTypes.string,
+        })
+      ),
+    }),
+  }),
 };
 
 export default V2Banner;

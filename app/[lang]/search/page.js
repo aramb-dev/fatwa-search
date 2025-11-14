@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import * as Tabs from "@radix-ui/react-tabs";
 import SearchClient from "./SearchClient";
 
@@ -9,3 +10,9 @@ export default async function SearchPage({ params }) {
     </Tabs.Content>
   );
 }
+
+SearchPage.propTypes = {
+  params: PropTypes.shape({
+    lang: PropTypes.string,
+  }).isRequired,
+};

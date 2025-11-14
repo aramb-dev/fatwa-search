@@ -20,20 +20,65 @@ const V2Banner = () => {
 
   useEffect(() => {
     // Check if the banner has been dismissed
-    const dismissed = localStorage.getItem("v2-banner-dismissed");
-    if (!dismissed) {
+    try {
+      const dismissed = localStorage.getItem("v2-banner-dismissed");
+      if (!dismissed) {
+        setIsVisible(true);
+      }
+    } catch (error) {
+      console.error("Could not access localStorage:", error);
+      // Fallback: show banner if we can't check dismissal
       setIsVisible(true);
     }
   }, []);
 
   const handleDismiss = () => {
     setIsVisible(false);
-    localStorage.setItem("v2-banner-dismissed", "true");
+    try {
+      localStorage.setItem("v2-banner-dismissed", "true");
+    } catch (error) {
+      console.error("Could not write to localStorage:", error);
+    }
   };
 
-  const handleVisitNewSite = () => {
-    window.open("https://search.aramb.dev", "_blank");
-  };
+  const features = [
+    {
+      Icon: Lock,
+      color: "text-green-300",
+      title: "More Secure",
+      description: "Enterprise-level security with server-side API keys",
+    },
+    {
+      Icon: Zap,
+      color: "text-yellow-300",
+      title: "Blazing Fast",
+      description: "Up to 3x faster with smart caching and parallel searches",
+    },
+    {
+      Icon: Sparkles,
+      color: "text-pink-300",
+      title: "Better Experience",
+      description: "Beautiful animations, helpful guidance, and clearer errors",
+    },
+    {
+      Icon: Users,
+      color: "text-purple-300",
+      title: "More Accessible",
+      description: "Keyboard-friendly and screen reader ready",
+    },
+    {
+      Icon: Wrench,
+      color: "text-orange-300",
+      title: "More Reliable",
+      description: "Crash protection and cleaner, more stable codebase",
+    },
+    {
+      Icon: BookOpen,
+      color: "text-blue-300",
+      title: "For Developers",
+      description: "Complete docs and code comments for easy contributions",
+    },
+  ];
 
   const bannerVariants = {
     initial: { opacity: 0, y: -20 },
@@ -139,8 +184,10 @@ const V2Banner = () => {
 
               {/* CTA Button */}
               <div className="flex gap-3 mb-4">
-                <button
-                  onClick={handleVisitNewSite}
+                <a
+                  href="https://search.aramb.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={cn(
                     "flex-1 sm:flex-none",
                     "px-6 py-3 rounded-lg",
@@ -154,7 +201,7 @@ const V2Banner = () => {
                 >
                   Visit New Site
                   <ArrowRight className="h-4 w-4" />
-                </button>
+                </a>
 
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
@@ -186,100 +233,29 @@ const V2Banner = () => {
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                        {/* Feature 1 */}
-                        <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                          <div className="flex items-start gap-2">
-                            <Lock className="h-5 w-5 text-green-300 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <h4 className="font-semibold text-white text-sm mb-1">
-                                More Secure
-                              </h4>
-                              <p className="text-blue-100 text-xs">
-                                Enterprise-level security with server-side API
-                                keys
-                              </p>
+                        {features.map(({ Icon, color, title, description }) => (
+                          <div
+                            key={title}
+                            className="bg-white/10 rounded-lg p-3 backdrop-blur-sm"
+                          >
+                            <div className="flex items-start gap-2">
+                              <Icon
+                                className={cn(
+                                  "h-5 w-5 flex-shrink-0 mt-0.5",
+                                  color,
+                                )}
+                              />
+                              <div>
+                                <h4 className="font-semibold text-white text-sm mb-1">
+                                  {title}
+                                </h4>
+                                <p className="text-blue-100 text-xs">
+                                  {description}
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-
-                        {/* Feature 2 */}
-                        <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                          <div className="flex items-start gap-2">
-                            <Zap className="h-5 w-5 text-yellow-300 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <h4 className="font-semibold text-white text-sm mb-1">
-                                Blazing Fast
-                              </h4>
-                              <p className="text-blue-100 text-xs">
-                                Up to 3x faster with smart caching and parallel
-                                searches
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Feature 3 */}
-                        <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                          <div className="flex items-start gap-2">
-                            <Sparkles className="h-5 w-5 text-pink-300 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <h4 className="font-semibold text-white text-sm mb-1">
-                                Better Experience
-                              </h4>
-                              <p className="text-blue-100 text-xs">
-                                Beautiful animations, helpful guidance, and
-                                clearer errors
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Feature 4 */}
-                        <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                          <div className="flex items-start gap-2">
-                            <Users className="h-5 w-5 text-purple-300 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <h4 className="font-semibold text-white text-sm mb-1">
-                                More Accessible
-                              </h4>
-                              <p className="text-blue-100 text-xs">
-                                Keyboard-friendly and screen reader ready
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Feature 5 */}
-                        <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                          <div className="flex items-start gap-2">
-                            <Wrench className="h-5 w-5 text-orange-300 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <h4 className="font-semibold text-white text-sm mb-1">
-                                More Reliable
-                              </h4>
-                              <p className="text-blue-100 text-xs">
-                                Crash protection and cleaner, more stable
-                                codebase
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Feature 6 */}
-                        <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                          <div className="flex items-start gap-2">
-                            <BookOpen className="h-5 w-5 text-blue-300 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <h4 className="font-semibold text-white text-sm mb-1">
-                                For Developers
-                              </h4>
-                              <p className="text-blue-100 text-xs">
-                                Complete docs and code comments for easy
-                                contributions
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+                        ))}
                       </div>
 
                       <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">

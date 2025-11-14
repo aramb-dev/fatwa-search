@@ -99,25 +99,6 @@ const V2Banner = () => {
     },
   };
 
-  const contentVariants = {
-    collapsed: {
-      height: "auto",
-      opacity: 1,
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
-    },
-    expanded: {
-      height: "auto",
-      opacity: 1,
-      transition: {
-        duration: 0.4,
-        ease: "easeInOut",
-      },
-    },
-  };
-
   return (
     <AnimatePresence>
       {isVisible && (

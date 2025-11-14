@@ -1,6 +1,5 @@
 [build]
-  command = "bun run build"
-  publish = ".next"
+  command = "npm run build"
 
 # Next.js runtime for Netlify
 [[plugins]]
@@ -8,19 +7,6 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--legacy-peer-deps"
-
-# Production context settings
-[context.production]
-  command = "bun run build"
-
-# Deploy Preview context settings
-[context.deploy-preview]
-  command = "bun run build"
-
-# Branch deploy context settings
-[context.branch-deploy]
-  command = "bun run build"
 
 # Redirects and headers are handled by Next.js config
 # But you can add additional Netlify-specific rules here if needed

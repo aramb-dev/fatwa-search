@@ -8,6 +8,7 @@ import { Youtube, Search as SearchIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { translations } from "../../translations";
+import V2Banner from "../../components/V2Banner";
 
 const cn = (...args) => clsx(...args);
 
@@ -79,6 +80,9 @@ export default function LanguageLayout({ children, params }) {
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 px-4">
+      {/* V2 Migration Banner */}
+      <V2Banner />
+
       {/* Language toggle above tabs */}
       <div className="flex justify-center mb-4">
         <div className="inline-flex items-center rounded-lg border bg-white p-0.5 shadow-sm">

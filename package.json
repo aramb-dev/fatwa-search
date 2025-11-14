@@ -30,14 +30,14 @@
     "build": "next build",
     "start": "next start",
     "test": "jest",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "format": "prettier --write \"app/**/*.{js,jsx,ts,tsx,css}\" \"components/**/*.{js,jsx,ts,tsx}\" \"lib/**/*.{js,jsx,ts,tsx}\" \"*.md\""
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "autoprefixer": "^10.4.17",
-    "eslint": "^8.57.1",
+    "eslint": "^9",
     "eslint-config-next": "^15.5.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-jest": "^25.7.0",

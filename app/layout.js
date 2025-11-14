@@ -43,6 +43,17 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <Toaster />
+
+        {/* Netlify Forms - Hidden forms for detection at build time */}
+        <form name="site-request" netlify="true" hidden>
+          <input type="text" name="requested-site" />
+        </form>
+        <form name="feedback" netlify="true" hidden>
+          <textarea name="feedback"></textarea>
+        </form>
+        <form name="youtube-channel-request" netlify="true" hidden>
+          <input type="text" name="channel-url" />
+        </form>
       </body>
     </html>
   );

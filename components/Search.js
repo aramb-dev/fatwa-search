@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Switch } from "./ui/switch";
+import { Skeleton } from "./ui/skeleton";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
@@ -58,6 +59,38 @@ const SearchComponent = ({ language = "en" }) => {
   }
 
   const resultsPerPage = 10;
+
+  /**
+   * Provides user-friendly, actionable error messages based on error type
+   * @param {Error} error - The error object
+   * @returns {string} - User-friendly error message
+   */
+  const getErrorMessage = (error) => {
+    const errorMessage = error.message.toLowerCase();
+
+    // Network errors
+    if (errorMessage.includes('failed to fetch') || errorMessage.includes('network')) {
+      return "Network error. Please check your internet connection and try again.";
+    }
+
+    // Quota exceeded
+    if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+      return "Search quota exceeded. Please try again in a few minutes.";
+    }
+
+    // Timeout errors
+    if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
+      return "Search timed out. Please try again with different keywords.";
+    }
+
+    // Invalid query
+    if (errorMessage.includes('invalid') || errorMessage.includes('bad request')) {
+      return "Invalid search query. Please try different keywords.";
+    }
+
+    // Generic fallback with helpful suggestion
+    return `Search failed. Please try again or contact support if the problem persists.`;
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sites] = useState(DEFAULT_SITES);
@@ -207,7 +240,10 @@ const SearchComponent = ({ language = "en" }) => {
           return;
         }
         console.error("Search failed:", error);
-        toast.error("Search failed: " + error.message);
+        toast.error(getErrorMessage(error), {
+          duration: 7000,
+          closeButton: true,
+        });
       } finally {
         setLoading(false);
         abortControllerRef.current = null;
@@ -489,7 +525,24 @@ const SearchComponent = ({ language = "en" }) => {
 
           <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
             <AnimatePresence mode="wait">
-              {searchQuery && filteredResults.length > 0 ? (
+              {loading && searchQuery ? (
+                <motion.div
+                  className="space-y-4"
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  variants={resultsVariants}
+                >
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="p-4 border rounded-lg bg-white shadow-sm space-y-3">
+                      <Skeleton className="h-5 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-3 w-1/4" />
+                    </div>
+                  ))}
+                </motion.div>
+              ) : searchQuery && filteredResults.length > 0 ? (
                 <motion.div
                   className="space-y-4"
                   initial="initial"
@@ -514,9 +567,47 @@ const SearchComponent = ({ language = "en" }) => {
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  className="text-center text-gray-500"
+                  className="text-center py-12"
                 >
-                  {t.noResults}
+                  <div className="max-w-md mx-auto">
+                    <div className="mb-4">
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      {t.noResults}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Try adjusting your search or selecting different sites
+                    </p>
+                    <div className="space-y-2 text-left bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-700">Suggestions:</p>
+                      <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                        <li>Check your spelling</li>
+                        <li>Try different or more general keywords</li>
+                        <li>Select more sites to search</li>
+                        <li>
+                          <button
+                            onClick={openSiteRequestModal}
+                            className="text-blue-600 hover:underline"
+                          >
+                            Request a new site
+                          </button> to be added
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
                 </motion.div>
               ) : null}
             </AnimatePresence>

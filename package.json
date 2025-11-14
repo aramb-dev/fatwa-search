@@ -50,8 +50,10 @@
   },
   "engines": {
     "node": ">=18.18.0 <=20.x",
-    "npm": ">=9"
+    "npm": ">=9",
+    "bun": ">=1.0.0"
   },
+  "packageManager": "bun@1.1.0",
   "config": {
     "loglevel": "warn"
   },

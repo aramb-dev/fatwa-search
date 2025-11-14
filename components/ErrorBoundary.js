@@ -56,13 +56,13 @@ class ErrorBoundary extends React.Component {
               </p>
               <div className="mt-6 flex flex-col gap-2">
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={() => globalThis.location.reload()}
                   className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Refresh Page
                 </button>
                 <button
-                  onClick={() => (window.location.href = "/")}
+                  onClick={() => (globalThis.location.href = "/")}
                   className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Go to Home

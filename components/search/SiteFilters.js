@@ -13,12 +13,26 @@ export const SiteFilters = ({
   translations,
 }) => {
   const toggleSite = (site) => {
-    if (!isShiftPressed) {
-      setSelectedSites([site]);
-    } else {
+    if (isShiftPressed) {
       setSelectedSites((prev) =>
         prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
       );
+    } else {
+      setSelectedSites([site]);
+    }
+  };
+
+  const handleSiteClick = (site) => {
+    if (isMobile()) {
+      if (isMobileSelecting) {
+        setSelectedSites((prev) =>
+          prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
+        );
+      } else {
+        setSelectedSites([site]);
+      }
+    } else {
+      toggleSite(site);
     }
   };
 
@@ -26,19 +40,7 @@ export const SiteFilters = ({
     // Handle Space or Enter key for keyboard navigation
     if (e.key === " " || e.key === "Enter") {
       e.preventDefault();
-      if (isMobile()) {
-        if (isMobileSelecting) {
-          setSelectedSites((prev) =>
-            prev.includes(site)
-              ? prev.filter((s) => s !== site)
-              : [...prev, site],
-          );
-        } else {
-          setSelectedSites([site]);
-        }
-      } else {
-        toggleSite(site);
-      }
+      handleSiteClick(site);
     }
   };
 
@@ -119,21 +121,7 @@ export const SiteFilters = ({
         {sites.map((site) => (
           <Button
             key={site}
-            onClick={() => {
-              if (isMobile()) {
-                if (isMobileSelecting) {
-                  setSelectedSites((prev) =>
-                    prev.includes(site)
-                      ? prev.filter((s) => s !== site)
-                      : [...prev, site],
-                  );
-                } else {
-                  setSelectedSites([site]);
-                }
-              } else {
-                toggleSite(site);
-              }
-            }}
+            onClick={() => handleSiteClick(site)}
             onKeyDown={(e) => handleSiteKeyDown(e, site)}
             className={cn(
               "transition-all duration-200 flex-shrink-0",
@@ -144,6 +132,8 @@ export const SiteFilters = ({
             )}
             size="sm"
             type="button"
+            // Using role="checkbox" pattern for better semantics (WCAG compliant)
+            // eslint-disable-next-line jsx-a11y/role-supports-aria-props
             role="checkbox"
             aria-checked={selectedSites.includes(site)}
             aria-label={`${selectedSites.includes(site) ? "Deselect" : "Select"} ${site} (${isShiftPressed ? "Shift+Click to multi-select" : "Click to select only this site"})`}

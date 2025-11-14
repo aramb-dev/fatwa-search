@@ -22,9 +22,17 @@ export const VideoGrid = ({ videos, onVideoClick }) => {
             exit="exit"
             className="border rounded-lg overflow-hidden shadow-sm"
           >
-            <div
-              className="relative w-full aspect-video cursor-pointer"
+            <button
+              type="button"
+              className="relative w-full aspect-video cursor-pointer block"
               onClick={() => onVideoClick(video)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onVideoClick(video);
+                }
+              }}
+              aria-label={`Play video: ${video.snippet.title}`}
             >
               <Image
                 src={video.snippet.thumbnails.medium.url}
@@ -34,7 +42,7 @@ export const VideoGrid = ({ videos, onVideoClick }) => {
                 className="object-cover"
                 priority={false}
               />
-            </div>
+            </button>
             <div className="p-4">
               <h3 className="font-medium line-clamp-2">
                 {video.snippet.title}

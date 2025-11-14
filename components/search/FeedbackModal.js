@@ -1,15 +1,30 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { Button } from "../ui/button";
 
-export const FeedbackModal = ({ isOpen, onClose, feedback, setFeedback, onSubmit, translations }) => {
+export const FeedbackModal = ({
+  isOpen,
+  onClose,
+  feedback,
+  setFeedback,
+  onSubmit,
+  translations,
+}) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>{translations.provideFeedback}</DialogTitle>
-          <p className="text-sm text-gray-500">{translations.feedbackDescription}</p>
+          <p className="text-sm text-gray-500">
+            {translations.feedbackDescription}
+          </p>
         </DialogHeader>
         <div className="space-y-4">
           <textarea
@@ -23,10 +38,7 @@ export const FeedbackModal = ({ isOpen, onClose, feedback, setFeedback, onSubmit
           <Button variant="outline" onClick={onClose}>
             {translations.cancel}
           </Button>
-          <Button
-            onClick={onSubmit}
-            disabled={!feedback.trim()}
-          >
+          <Button onClick={onSubmit} disabled={!feedback.trim()}>
             {translations.feedbackSubmit}
           </Button>
         </DialogFooter>

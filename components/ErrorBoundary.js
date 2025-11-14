@@ -51,7 +51,8 @@ class ErrorBoundary extends React.Component {
                 Something went wrong
               </h2>
               <p className="mt-2 text-sm text-center text-gray-600">
-                We encountered an unexpected error. Please try refreshing the page.
+                We encountered an unexpected error. Please try refreshing the
+                page.
               </p>
               <div className="mt-6 flex flex-col gap-2">
                 <button

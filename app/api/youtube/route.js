@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 /**
  * YouTube Data API Route Handler
@@ -17,39 +17,40 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q');
-    const channelId = searchParams.get('channelId');
-    const maxResults = searchParams.get('maxResults') || '5';
+    const query = searchParams.get("q");
+    const channelId = searchParams.get("channelId");
+    const maxResults = searchParams.get("maxResults") || "5";
 
     // Validate required parameters
     if (!query) {
       return NextResponse.json(
-        { error: 'Query parameter is required' },
-        { status: 400 }
+        { error: "Query parameter is required" },
+        { status: 400 },
       );
     }
 
     if (!channelId) {
       return NextResponse.json(
-        { error: 'Channel ID is required' },
-        { status: 400 }
+        { error: "Channel ID is required" },
+        { status: 400 },
       );
     }
 
     // Check if API credentials are configured
     // Support both new (YOUTUBE_API_KEY) and legacy (REACT_APP_*) variable names
-    const apiKey = process.env.YOUTUBE_API_KEY || process.env.REACT_APP_YOUTUBE_API_KEY;
+    const apiKey =
+      process.env.YOUTUBE_API_KEY || process.env.REACT_APP_YOUTUBE_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'YouTube API credentials are not configured' },
-        { status: 500 }
+        { error: "YouTube API credentials are not configured" },
+        { status: 500 },
       );
     }
 
     // Make request to YouTube Data API
     const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-      query
+      query,
     )}&key=${apiKey}&type=video&maxResults=${maxResults}&channelId=${channelId}`;
 
     const response = await fetch(apiUrl);
@@ -62,18 +63,15 @@ export async function GET(request) {
         data.error.code === 403 &&
         data.error.errors?.some(
           (err) =>
-            err.reason === 'quotaExceeded' || err.message?.includes('quota')
+            err.reason === "quotaExceeded" || err.message?.includes("quota"),
         )
       ) {
-        return NextResponse.json(
-          { error: 'QUOTA_EXCEEDED' },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "QUOTA_EXCEEDED" }, { status: 403 });
       }
 
       return NextResponse.json(
-        { error: data.error.message || 'YouTube API error' },
-        { status: data.error.code || 500 }
+        { error: data.error.message || "YouTube API error" },
+        { status: data.error.code || 500 },
       );
     }
 
@@ -82,10 +80,10 @@ export async function GET(request) {
       items: data.items || [],
     });
   } catch (error) {
-    console.error('YouTube API error:', error);
+    console.error("YouTube API error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

@@ -69,22 +69,28 @@ const SearchComponent = ({ language = "en" }) => {
     const errorMessage = error.message.toLowerCase();
 
     // Network errors
-    if (errorMessage.includes('failed to fetch') || errorMessage.includes('network')) {
+    if (
+      errorMessage.includes("failed to fetch") ||
+      errorMessage.includes("network")
+    ) {
       return "Network error. Please check your internet connection and try again.";
     }
 
     // Quota exceeded
-    if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+    if (errorMessage.includes("quota") || errorMessage.includes("limit")) {
       return "Search quota exceeded. Please try again in a few minutes.";
     }
 
     // Timeout errors
-    if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
+    if (errorMessage.includes("timeout") || errorMessage.includes("aborted")) {
       return "Search timed out. Please try again with different keywords.";
     }
 
     // Invalid query
-    if (errorMessage.includes('invalid') || errorMessage.includes('bad request')) {
+    if (
+      errorMessage.includes("invalid") ||
+      errorMessage.includes("bad request")
+    ) {
       return "Invalid search query. Please try different keywords.";
     }
 
@@ -166,20 +172,22 @@ const SearchComponent = ({ language = "en" }) => {
         let allResults = [];
 
         // Search special sites in parallel
-        const specialSearches = specialSitesToSearch.map(async (specialSite) => {
-          const response = await fetch(
-            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`,
-            { signal }
-          );
-          const data = await response.json();
+        const specialSearches = specialSitesToSearch.map(
+          async (specialSite) => {
+            const response = await fetch(
+              `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`,
+              { signal },
+            );
+            const data = await response.json();
 
-          if (data.error) {
-            console.error(`Search error for ${specialSite}:`, data.error);
-            return [];
-          }
+            if (data.error) {
+              console.error(`Search error for ${specialSite}:`, data.error);
+              return [];
+            }
 
-          return data.items || [];
-        });
+            return data.items || [];
+          },
+        );
 
         const specialResults = await Promise.all(specialSearches);
         allResults = specialResults.flat();
@@ -192,12 +200,12 @@ const SearchComponent = ({ language = "en" }) => {
 
           const regularResponse = await fetch(
             `/api/search?q=${encodeURIComponent(`(${regularSiteQuery}) ${searchQuery}`)}&start=${start}`,
-            { signal }
+            { signal },
           );
           const regularData = await regularResponse.json();
 
           if (regularData.error) {
-            console.error('Search error:', regularData.error);
+            console.error("Search error:", regularData.error);
             throw new Error(regularData.error);
           }
 
@@ -222,7 +230,9 @@ const SearchComponent = ({ language = "en" }) => {
         });
 
         setSearchResults((prev) => {
-          const newResults = isNewSearch ? allResults : [...prev, ...allResults];
+          const newResults = isNewSearch
+            ? allResults
+            : [...prev, ...allResults];
 
           // Cache the results for new searches only
           if (isNewSearch && allResults.length > 0) {
@@ -243,7 +253,7 @@ const SearchComponent = ({ language = "en" }) => {
         }
       } catch (error) {
         // Don't show error if request was cancelled
-        if (error.name === 'AbortError') {
+        if (error.name === "AbortError") {
           return;
         }
         console.error("Search failed:", error);
@@ -281,7 +291,7 @@ const SearchComponent = ({ language = "en" }) => {
         performSearch(1, true);
       }
     },
-    500 // 500ms delay
+    500, // 500ms delay
   );
 
   useEffect(() => {
@@ -580,7 +590,10 @@ const SearchComponent = ({ language = "en" }) => {
                   variants={resultsVariants}
                 >
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="p-4 border rounded-lg bg-white shadow-sm space-y-3">
+                    <div
+                      key={i}
+                      className="p-4 border rounded-lg bg-white shadow-sm space-y-3"
+                    >
                       <Skeleton className="h-5 w-3/4" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-5/6" />
@@ -638,7 +651,9 @@ const SearchComponent = ({ language = "en" }) => {
                       Try adjusting your search or selecting different sites
                     </p>
                     <div className="space-y-2 text-left bg-gray-50 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-700">Suggestions:</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Suggestions:
+                      </p>
                       <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
                         <li>Check your spelling</li>
                         <li>Try different or more general keywords</li>
@@ -649,7 +664,8 @@ const SearchComponent = ({ language = "en" }) => {
                             className="text-blue-600 hover:underline"
                           >
                             Request a new site
-                          </button> to be added
+                          </button>{" "}
+                          to be added
                         </li>
                       </ul>
                     </div>

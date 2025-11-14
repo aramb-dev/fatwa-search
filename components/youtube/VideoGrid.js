@@ -65,7 +65,7 @@ VideoGrid.propTypes = {
           }).isRequired,
         }).isRequired,
       }).isRequired,
-    })
+    }),
   ).isRequired,
   onVideoClick: PropTypes.func.isRequired,
 };

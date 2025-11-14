@@ -1,16 +1,31 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
-export const SiteRequestModal = ({ isOpen, onClose, siteInput, setSiteInput, onSubmit, translations }) => {
+export const SiteRequestModal = ({
+  isOpen,
+  onClose,
+  siteInput,
+  setSiteInput,
+  onSubmit,
+  translations,
+}) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
           <DialogTitle>{translations.requestNewSite}</DialogTitle>
-          <p className="text-sm text-gray-500">{translations.enterSiteDomain}</p>
+          <p className="text-sm text-gray-500">
+            {translations.enterSiteDomain}
+          </p>
         </DialogHeader>
         <div className="space-y-4">
           <Input

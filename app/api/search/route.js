@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 /**
  * Google Custom Search API Route Handler
@@ -17,27 +17,29 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q');
-    const site = searchParams.get('site');
-    const start = searchParams.get('start') || '1';
+    const query = searchParams.get("q");
+    const site = searchParams.get("site");
+    const start = searchParams.get("start") || "1";
 
     // Validate required parameters
     if (!query) {
       return NextResponse.json(
-        { error: 'Query parameter is required' },
-        { status: 400 }
+        { error: "Query parameter is required" },
+        { status: 400 },
       );
     }
 
     // Check if API credentials are configured
     // Support both new (GOOGLE_API_KEY) and legacy (REACT_APP_*) variable names
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY;
-    const searchEngineId = process.env.SEARCH_ENGINE_ID || process.env.REACT_APP_SEARCH_ENGINE_ID;
+    const apiKey =
+      process.env.GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY;
+    const searchEngineId =
+      process.env.SEARCH_ENGINE_ID || process.env.REACT_APP_SEARCH_ENGINE_ID;
 
     if (!apiKey || !searchEngineId) {
       return NextResponse.json(
-        { error: 'Search API credentials are not configured' },
-        { status: 500 }
+        { error: "Search API credentials are not configured" },
+        { status: 500 },
       );
     }
 
@@ -53,8 +55,8 @@ export async function GET(request) {
     // Check for API errors
     if (data.error) {
       return NextResponse.json(
-        { error: data.error.message || 'Search API error' },
-        { status: data.error.code || 500 }
+        { error: data.error.message || "Search API error" },
+        { status: data.error.code || 500 },
       );
     }
 
@@ -64,10 +66,10 @@ export async function GET(request) {
       searchInformation: data.searchInformation,
     });
   } catch (error) {
-    console.error('Search API error:', error);
+    console.error("Search API error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }

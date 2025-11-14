@@ -106,7 +106,7 @@ const YoutubeSearch = ({ translations }) => {
         const searches = channelsToSearch.map(async (channelId) => {
           const response = await fetch(
             `/api/youtube?q=${encodeURIComponent(currentQuery)}&channelId=${channelId}&maxResults=5`,
-            { signal }
+            { signal },
           );
           const data = await response.json();
 
@@ -114,7 +114,10 @@ const YoutubeSearch = ({ translations }) => {
             if (data.error === "QUOTA_EXCEEDED") {
               throw new Error("QUOTA_EXCEEDED");
             }
-            console.error(`YouTube search error for channel ${channelId}:`, data.error);
+            console.error(
+              `YouTube search error for channel ${channelId}:`,
+              data.error,
+            );
             return [];
           }
 
@@ -128,7 +131,9 @@ const YoutubeSearch = ({ translations }) => {
         );
 
         setResults((prev) => {
-          const finalResults = isNewSearch ? newResults : [...prev, ...newResults];
+          const finalResults = isNewSearch
+            ? newResults
+            : [...prev, ...newResults];
 
           // Cache the results for new searches only
           if (isNewSearch && newResults.length > 0) {
@@ -144,7 +149,7 @@ const YoutubeSearch = ({ translations }) => {
         }
       } catch (error) {
         // Don't show error if request was cancelled
-        if (error.name === 'AbortError') {
+        if (error.name === "AbortError") {
           return;
         }
         toast.error(
@@ -175,7 +180,7 @@ const YoutubeSearch = ({ translations }) => {
         performYoutubeSearch(true);
       }
     },
-    500 // 500ms delay
+    500, // 500ms delay
   );
 
   // Handle URL params and initial search

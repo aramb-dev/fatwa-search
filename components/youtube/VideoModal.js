@@ -18,27 +18,19 @@ export const VideoModal = ({ video, onClose, translations }) => {
       >
         <div className="fixed inset-4 md:inset-10 bg-white rounded-lg z-50 flex flex-col">
           <div className="p-4 border-b flex items-center justify-between">
-            <h2 className="font-medium truncate pr-4">
-              {video.snippet.title}
-            </h2>
+            <h2 className="font-medium truncate pr-4">{video.snippet.title}</h2>
             <div className="flex gap-2">
               <a
                 href={`https://youtube.com/watch?v=${video.id.videoId}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
+                <Button variant="outline" className="flex items-center gap-2">
                   <Youtube className="h-4 w-4" />
                   {translations.viewOnYoutube}
                 </Button>
               </a>
-              <Button
-                variant="outline"
-                onClick={onClose}
-              >
+              <Button variant="outline" onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>
             </div>

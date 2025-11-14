@@ -74,7 +74,7 @@ export const DialogContent = ({ children, className, ...props }) => (
           "mx-4 sm:mx-auto",
           "overflow-y-auto max-h-[90vh]",
           "focus:outline-none",
-          className
+          className,
         )}
         {...props}
       >
@@ -93,7 +93,12 @@ DialogContent.propTypes = {
  * Dialog header component
  */
 export const DialogHeader = ({ children, className }) => (
-  <div className={cn("flex flex-col space-y-2 sm:space-y-3 mb-4 sm:mb-6", className)}>
+  <div
+    className={cn(
+      "flex flex-col space-y-2 sm:space-y-3 mb-4 sm:mb-6",
+      className,
+    )}
+  >
     {children}
   </div>
 );
@@ -109,7 +114,12 @@ DialogHeader.propTypes = {
  */
 export const DialogTitle = ({ children, className }) => (
   <RadixDialog.Title asChild>
-    <h2 className={cn("text-lg sm:text-xl font-semibold leading-none tracking-tight", className)}>
+    <h2
+      className={cn(
+        "text-lg sm:text-xl font-semibold leading-none tracking-tight",
+        className,
+      )}
+    >
       {children}
     </h2>
   </RadixDialog.Title>
@@ -126,9 +136,7 @@ DialogTitle.propTypes = {
  */
 export const DialogDescription = ({ children, className }) => (
   <RadixDialog.Description asChild>
-    <p className={cn("text-sm text-gray-500", className)}>
-      {children}
-    </p>
+    <p className={cn("text-sm text-gray-500", className)}>{children}</p>
   </RadixDialog.Description>
 );
 
@@ -146,7 +154,7 @@ export const DialogFooter = ({ children, className }) => (
       "mt-4 pt-4 sm:mt-6 sm:pt-6",
       "border-t flex flex-col-reverse sm:flex-row gap-2 sm:gap-4",
       "sm:justify-end",
-      className
+      className,
     )}
   >
     {children}

@@ -12,13 +12,12 @@ export const SiteFilters = ({
   setIsMobileSelecting,
   translations,
 }) => {
-
   const toggleSite = (site) => {
     if (!isShiftPressed) {
       setSelectedSites([site]);
     } else {
       setSelectedSites((prev) =>
-        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site]
+        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
       );
     }
   };
@@ -32,7 +31,7 @@ export const SiteFilters = ({
           setSelectedSites((prev) =>
             prev.includes(site)
               ? prev.filter((s) => s !== site)
-              : [...prev, site]
+              : [...prev, site],
           );
         } else {
           setSelectedSites([site]);
@@ -48,7 +47,8 @@ export const SiteFilters = ({
       <p className="text-sm text-gray-500 italic md:block hidden">
         {translations.selectTooltip}
         <span className="block text-xs mt-1">
-          Keyboard: Use Tab to navigate, Space/Enter to select, Shift+Click for multi-select
+          Keyboard: Use Tab to navigate, Space/Enter to select, Shift+Click for
+          multi-select
         </span>
       </p>
       <p className="text-sm text-gray-500 italic block md:hidden">
@@ -64,7 +64,11 @@ export const SiteFilters = ({
             variant="outline"
             size="sm"
             className="flex-shrink-0"
-            aria-label={isMobileSelecting ? "Done selecting sites" : "Select multiple sites"}
+            aria-label={
+              isMobileSelecting
+                ? "Done selecting sites"
+                : "Select multiple sites"
+            }
             aria-pressed={isMobileSelecting}
           >
             {isMobileSelecting ? "Done" : "Select Sites"}
@@ -103,7 +107,7 @@ export const SiteFilters = ({
           type="button"
           className={cn(
             "md:block flex-shrink-0",
-            isMobileSelecting ? "hidden" : "block"
+            isMobileSelecting ? "hidden" : "block",
           )}
           aria-label={`Search all ${sites.length} sites`}
           aria-pressed={selectedSites.length === sites.length}
@@ -121,7 +125,7 @@ export const SiteFilters = ({
                   setSelectedSites((prev) =>
                     prev.includes(site)
                       ? prev.filter((s) => s !== site)
-                      : [...prev, site]
+                      : [...prev, site],
                   );
                 } else {
                   setSelectedSites([site]);
@@ -136,7 +140,7 @@ export const SiteFilters = ({
               selectedSites.includes(site)
                 ? "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600"
                 : "bg-white text-gray-700 hover:bg-gray-100",
-              !isMobileSelecting && "md:block"
+              !isMobileSelecting && "md:block",
             )}
             size="sm"
             type="button"

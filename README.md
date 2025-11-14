@@ -134,6 +134,7 @@ NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 
 **Important Security Notes:**
+
 - API keys are now **server-side only** and protected from client exposure
 - The app supports legacy `REACT_APP_*` prefixed variables for backward compatibility
 - Never commit `.env.local` to version control
@@ -228,6 +229,7 @@ The application supports multiple languages (English, Arabic, Urdu). To add or m
    - All translations are in `translations.js`
 
 2. **Add a New Translation:**
+
    ```javascript
    export const translations = {
      en: {
@@ -252,6 +254,7 @@ The application supports multiple languages (English, Arabic, Urdu). To add or m
    - Add the new language to the routing configuration
 
 4. **Using Translations in Components:**
+
    ```javascript
    import { translations } from "../translations";
 

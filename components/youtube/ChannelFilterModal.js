@@ -10,9 +10,16 @@ const modalVariants = {
   exit: { opacity: 0, scale: 0.95 },
 };
 
-export const ChannelFilterModal = ({ isOpen, onClose, results, channelFilters, setChannelFilters, translations }) => {
+export const ChannelFilterModal = ({
+  isOpen,
+  onClose,
+  results,
+  channelFilters,
+  setChannelFilters,
+  translations,
+}) => {
   const uniqueChannels = Array.from(
-    new Set(results.map((r) => r.snippet.channelId))
+    new Set(results.map((r) => r.snippet.channelId)),
   );
 
   const handleToggleChannel = (channelId, isChecked) => {
@@ -42,13 +49,10 @@ export const ChannelFilterModal = ({ isOpen, onClose, results, channelFilters, s
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {uniqueChannels.map((channelId) => {
               const channel = results.find(
-                (r) => r.snippet.channelId === channelId
+                (r) => r.snippet.channelId === channelId,
               );
               return (
-                <div
-                  key={channelId}
-                  className="flex items-center space-x-2"
-                >
+                <div key={channelId} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     id={channelId}
@@ -66,15 +70,10 @@ export const ChannelFilterModal = ({ isOpen, onClose, results, channelFilters, s
             })}
           </div>
           <div className="flex justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setChannelFilters([])}
-            >
+            <Button variant="outline" onClick={() => setChannelFilters([])}>
               {translations.clearFilters}
             </Button>
-            <Button onClick={onClose}>
-              {translations.close}
-            </Button>
+            <Button onClick={onClose}>{translations.close}</Button>
           </div>
         </div>
       </motion.div>

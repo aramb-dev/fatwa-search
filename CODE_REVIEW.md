@@ -73,111 +73,124 @@ The following critical issues have been **FIXED** and committed to the codebase:
    - Uses `use-debounce` library for optimal performance
 
 10. **Implemented Result Caching**
-   - Created `lib/cache.js` with TTL-based caching system
-   - 5-minute cache for both search and YouTube results
-   - Automatic cleanup of expired entries every minute
-   - Significantly reduces redundant API calls for repeated searches
+
+- Created `lib/cache.js` with TTL-based caching system
+- 5-minute cache for both search and YouTube results
+- Automatic cleanup of expired entries every minute
+- Significantly reduces redundant API calls for repeated searches
 
 11. **Added Request Cancellation**
-   - Implemented AbortController for in-flight request cancellation
-   - Prevents race conditions when users quickly change search terms
-   - Properly handles AbortError without showing false errors to users
+
+- Implemented AbortController for in-flight request cancellation
+- Prevents race conditions when users quickly change search terms
+- Properly handles AbortError without showing false errors to users
 
 ### ✅ Architecture & Design Improvements
 
 12. **Added React Error Boundaries**
-   - Created `components/ErrorBoundary.js` to catch component errors gracefully
-   - Integrated into app layout to prevent entire app crashes
-   - User-friendly error recovery with "Refresh Page" and "Go to Home" buttons
-   - Detailed error info in development mode only
+
+- Created `components/ErrorBoundary.js` to catch component errors gracefully
+- Integrated into app layout to prevent entire app crashes
+- User-friendly error recovery with "Refresh Page" and "Go to Home" buttons
+- Detailed error info in development mode only
 
 13. **Standardized Modal Patterns**
-   - Created `components/ui/dialog.jsx` with reusable dialog components
-   - Removed 321 lines of duplicated code across 3 modal files
-   - Consistent styling and behavior across all modals
-   - Single source of truth for modal components
+
+- Created `components/ui/dialog.jsx` with reusable dialog components
+- Removed 321 lines of duplicated code across 3 modal files
+- Consistent styling and behavior across all modals
+- Single source of truth for modal components
 
 14. **Organized Utility Functions**
-   - Moved `isMobile()` function to `lib/utils.js`
-   - Added JSDoc documentation
-   - Centralized utility functions for reusability
+
+- Moved `isMobile()` function to `lib/utils.js`
+- Added JSDoc documentation
+- Centralized utility functions for reusability
 
 ### ✅ Accessibility Improvements
 
 15. **Added Comprehensive ARIA Labels**
-   - Added aria-labels to all interactive elements (buttons, switches, inputs)
-   - Context-aware labels that describe current state
-   - Site buttons now use role="checkbox" with aria-checked
-   - Screen reader support for all user interactions
+
+- Added aria-labels to all interactive elements (buttons, switches, inputs)
+- Context-aware labels that describe current state
+- Site buttons now use role="checkbox" with aria-checked
+- Screen reader support for all user interactions
 
 16. **Implemented Focus Management in Modals**
-   - Updated dialog component to use Radix UI's Portal and Content
-   - Automatic focus trapping when modals open
-   - Focus returns to trigger element on close
-   - Escape key closes modals
-   - DialogTitle and DialogDescription use proper Radix components for ARIA
+
+- Updated dialog component to use Radix UI's Portal and Content
+- Automatic focus trapping when modals open
+- Focus returns to trigger element on close
+- Escape key closes modals
+- DialogTitle and DialogDescription use proper Radix components for ARIA
 
 17. **Added Keyboard Navigation Support**
-   - Space/Enter keys now work for site selection
-   - Tab navigation through all interactive elements
-   - Added visible instructions for keyboard shortcuts
-   - Full keyboard accessibility without mouse required
+
+- Space/Enter keys now work for site selection
+- Tab navigation through all interactive elements
+- Added visible instructions for keyboard shortcuts
+- Full keyboard accessibility without mouse required
 
 ### ✅ UX Improvements
 
 18. **Added Loading Skeleton Screens**
-   - Created `components/ui/skeleton.jsx` for loading states
-   - Shows 5 skeleton cards matching actual result structure
-   - Animate-pulse effect for visual feedback
-   - Improved perceived performance
+
+- Created `components/ui/skeleton.jsx` for loading states
+- Shows 5 skeleton cards matching actual result structure
+- Animate-pulse effect for visual feedback
+- Improved perceived performance
 
 19. **Enhanced Empty States**
-   - Visual icon for better engagement
-   - Helpful suggestions when no results found
-   - Actionable tips (check spelling, try different keywords, etc.)
-   - Direct link to request new sites
+
+- Visual icon for better engagement
+- Helpful suggestions when no results found
+- Actionable tips (check spelling, try different keywords, etc.)
+- Direct link to request new sites
 
 20. **Improved Error Messages**
-   - Created intelligent error handler with context-specific messages
-   - Network errors → "Check your internet connection"
-   - Quota exceeded → "Try again in a few minutes"
-   - Timeout → "Try different keywords"
-   - Longer toast duration (7s) with close button
+
+- Created intelligent error handler with context-specific messages
+- Network errors → "Check your internet connection"
+- Quota exceeded → "Try again in a few minutes"
+- Timeout → "Try different keywords"
+- Longer toast duration (7s) with close button
 
 ### ✅ Documentation Improvements
 
 21. **Added Comprehensive JSDoc Comments**
-   - Added JSDoc to all functions in `components/Search.js`:
-     - `performSearch` - Main search function with caching and parallel searches
-     - `debouncedSearch` - Debounced search callback
-     - `handleSearch` - Form submission handler
-     - `openModal`, `closeModal` - Modal management functions
-     - `handleSiteRequest`, `handleFeedbackSubmit` - Form handlers
-     - `handleShare` - Share functionality
-     - `getErrorMessage` - Error message formatter (already documented)
-   - Added JSDoc to all functions in `components/Youtube-Search.js`:
-     - `performYoutubeSearch` - Main YouTube search function
-     - `debouncedSearch` - Debounced search callback
-     - `handleChannelRequest` - Channel request form handler
-     - `handleSearch` - Form submission handler
-     - `handleShare` - Share functionality
-   - Added JSDoc to API routes:
-     - `app/api/search/route.js` - Google Custom Search API handler
-     - `app/api/youtube/route.js` - YouTube Data API handler
-   - Enhanced JSDoc in utility files:
-     - `lib/utils.js` - Added detailed JSDoc to `cn()` function
-     - `lib/cache.js` - Enhanced all method documentation with parameter types
+
+- Added JSDoc to all functions in `components/Search.js`:
+  - `performSearch` - Main search function with caching and parallel searches
+  - `debouncedSearch` - Debounced search callback
+  - `handleSearch` - Form submission handler
+  - `openModal`, `closeModal` - Modal management functions
+  - `handleSiteRequest`, `handleFeedbackSubmit` - Form handlers
+  - `handleShare` - Share functionality
+  - `getErrorMessage` - Error message formatter (already documented)
+- Added JSDoc to all functions in `components/Youtube-Search.js`:
+  - `performYoutubeSearch` - Main YouTube search function
+  - `debouncedSearch` - Debounced search callback
+  - `handleChannelRequest` - Channel request form handler
+  - `handleSearch` - Form submission handler
+  - `handleShare` - Share functionality
+- Added JSDoc to API routes:
+  - `app/api/search/route.js` - Google Custom Search API handler
+  - `app/api/youtube/route.js` - YouTube Data API handler
+- Enhanced JSDoc in utility files:
+  - `lib/utils.js` - Added detailed JSDoc to `cn()` function
+  - `lib/cache.js` - Enhanced all method documentation with parameter types
 
 22. **Expanded README.md with Developer Guide**
-   - Added "Developer Guide" section with comprehensive instructions:
-     - **How to Add New Scholar Sites**: Step-by-step guide with code examples
-     - **How to Add New YouTube Channels**: Channel ID extraction and implementation
-     - **Translation Workflow**: Complete guide for adding/modifying translations and RTL support
-   - Updated Environment Variables section:
-     - Corrected to show server-side only API keys (removed `NEXT_PUBLIC_` prefix)
-     - Added security notes about API key protection
-     - Documented backward compatibility with legacy variable names
-   - All documentation includes code examples and testing instructions
+
+- Added "Developer Guide" section with comprehensive instructions:
+  - **How to Add New Scholar Sites**: Step-by-step guide with code examples
+  - **How to Add New YouTube Channels**: Channel ID extraction and implementation
+  - **Translation Workflow**: Complete guide for adding/modifying translations and RTL support
+- Updated Environment Variables section:
+  - Corrected to show server-side only API keys (removed `NEXT_PUBLIC_` prefix)
+  - Added security notes about API key protection
+  - Documented backward compatibility with legacy variable names
+- All documentation includes code examples and testing instructions
 
 ### Files Modified
 
@@ -203,12 +216,14 @@ The following critical issues have been **FIXED** and committed to the codebase:
 ### New Components Created (Component Extraction)
 
 **Search Components:**
+
 - `components/search/FeedbackModal.js` - Extracted feedback form modal
 - `components/search/SiteRequestModal.js` - Extracted site request modal
 - `components/search/FilterModal.js` - Extracted results filter modal
 - `components/search/SiteFilters.js` - Extracted site selection UI
 
 **YouTube Components:**
+
 - `components/youtube/VideoGrid.js` - Extracted video grid display
 - `components/youtube/VideoModal.js` - Extracted video player modal
 - `components/youtube/ChannelRequestModal.js` - Extracted channel request modal
@@ -221,10 +236,12 @@ The following critical issues have been **FIXED** and committed to the codebase:
 ### 1.1 Security Vulnerabilities ✅ FIXED
 
 #### API Keys Exposed to Client ✅ FIXED
+
 **Severity:** Critical ~~(NOW RESOLVED)~~
 **Location:** ~~All API calls in components~~ **Now in /app/api/ routes**
 
 **Issue (RESOLVED):**
+
 ```javascript
 // OLD CODE (components/Search.js:186-190) - REPLACED
 const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
@@ -233,6 +250,7 @@ const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
 ```
 
 **Problem (FIXED):** Using `NEXT_PUBLIC_` prefix exposes API keys in the client bundle, making them visible to anyone. This allows:
+
 - API quota theft ❌
 - Unauthorized usage ❌
 - Potential billing fraud ❌
@@ -242,23 +260,27 @@ const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
 Created Next.js API routes to handle all Google API calls server-side:
 
 **New Files:**
+
 - `app/api/search/route.js` - Google Custom Search proxy
 - `app/api/youtube/route.js` - YouTube Data API proxy
 
 **Updated Components:**
+
 ```javascript
 // NEW CODE - components/Search.js now uses secure API route
 const response = await fetch(
-  `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`
+  `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`,
 );
 ```
 
 **Environment Variables Changed:**
+
 - ❌ `NEXT_PUBLIC_GOOGLE_API_KEY` → ✅ `GOOGLE_API_KEY` (server-only)
 - ❌ `NEXT_PUBLIC_SEARCH_ENGINE_ID` → ✅ `SEARCH_ENGINE_ID` (server-only)
 - ❌ `NEXT_PUBLIC_YOUTUBE_API_KEY` → ✅ `YOUTUBE_API_KEY` (server-only)
 
 #### No Input Sanitization
+
 **Severity:** High
 **Location:** components/Search.js:336-356, components/Youtube-Search.js:162-217
 
@@ -269,37 +291,44 @@ const response = await fetch(
 ### 1.2 Code Bugs ✅ ALL FIXED
 
 #### Unused State Variable ✅ FIXED
+
 **Severity:** Medium ~~(NOW RESOLVED)~~
 **Location:** ~~components/Search.js:149~~ **REMOVED**
 
 **Problem (FIXED):**
+
 ```javascript
 // OLD CODE - Line 149 (REMOVED)
 const [setIsModalOpen] = useState(false);
 ```
 
 **✅ SOLUTION IMPLEMENTED:**
+
 - Removed the unused state variable entirely
 - Cleaned up state management in Search component
 
 #### Duplicate useEffect Hooks ✅ FIXED
+
 **Severity:** Medium ~~(NOW RESOLVED)~~
 **Location:** ~~components/Youtube-Search.js:138-160~~ **CONSOLIDATED**
 
 **Problem (FIXED):** Two useEffect hooks handled URL params with similar logic, causing potential race conditions and duplicate searches.
 
 **✅ SOLUTION IMPLEMENTED:**
+
 - Removed duplicate useEffect hook (lines 154-160)
 - Consolidated URL parameter handling into single useEffect
 - Eliminated race conditions and duplicate API calls
 
 #### Conflicting Modal States ✅ FIXED
+
 **Severity:** Medium ~~(NOW RESOLVED)~~
 **Location:** ~~components/Youtube-Search.js~~ **REFACTORED**
 
 **Problem (FIXED):** Both "Scholar Request" modal and "Channel Request" modal checked the same state variable `showRequestModal`, meaning both modals rendered simultaneously.
 
 **✅ SOLUTION IMPLEMENTED:**
+
 - Removed `showRequestModal` state variable
 - Removed unused `scholarRequest` state
 - Consolidated modal management using `activeModal` pattern (matching Search.js)
@@ -314,6 +343,7 @@ const [setIsModalOpen] = useState(false);
 **Issue (RESOLVED):** Components were too large and violated Single Responsibility Principle.
 
 **Old Sizes:**
+
 - `components/Search.js`: 868 lines
 - `components/Youtube-Search.js`: 495 lines
 
@@ -322,18 +352,21 @@ const [setIsModalOpen] = useState(false);
 Created focused, reusable components following Single Responsibility Principle:
 
 **Search Component Extraction:**
+
 1. `FeedbackModal.js` (140 lines) - Handles user feedback submission
 2. `SiteRequestModal.js` (140 lines) - Handles new site requests
 3. `FilterModal.js` (155 lines) - Handles result filtering by site
 4. `SiteFilters.js` (130 lines) - Site selection UI with mobile/desktop support
 
 **YouTube Component Extraction:**
+
 1. `VideoGrid.js` (65 lines) - Video display grid with thumbnails
 2. `VideoModal.js` (60 lines) - Video player modal
 3. `ChannelRequestModal.js` (55 lines) - Channel submission form
 4. `ChannelFilterModal.js` (100 lines) - Channel filtering UI
 
 **Results:**
+
 - ✅ Search.js: 868 → 611 lines (-30% reduction)
 - ✅ Youtube-Search.js: 495 → 319 lines (-36% reduction)
 - ✅ Created 8 new focused, reusable components
@@ -361,6 +394,7 @@ if (!siteInput.trim()) {
 ```
 
 **Other hardcoded strings:**
+
 - Line 378: "Thank you for your feedback!"
 - Line 380: "Failed to submit feedback"
 - Line 526-527: "Tap &ldquo;Select Sites&rdquo;..." (mobile instruction)
@@ -373,16 +407,24 @@ if (!siteInput.trim()) {
 **Location:** ~~components/Search.js~~ **CLEANED**
 
 **Old Code (REMOVED):**
+
 ```javascript
 // Lines 195, 197, 223-227 - ALL REMOVED
 console.log(`Searching ${specialSite}:`, specialData);
 console.warn(`No results found for ${specialSite}`);
 console.log("Special sites to search:", specialSitesToSearch);
-console.log("Before sorting:", allResults.map((r) => r.link));
-console.log("After sorting:", allResults.map((r) => r.link));
+console.log(
+  "Before sorting:",
+  allResults.map((r) => r.link),
+);
+console.log(
+  "After sorting:",
+  allResults.map((r) => r.link),
+);
 ```
 
 **✅ SOLUTION IMPLEMENTED:**
+
 - Removed all 5 console statements from Search.js
 - Production code is now clean of debugging logs
 
@@ -414,17 +456,14 @@ console.log("After sorting:", allResults.map((r) => r.link));
 Added debouncing with `use-debounce` library in both Search.js and Youtube-Search.js:
 
 ```javascript
-import { useDebouncedCallback } from 'use-debounce';
+import { useDebouncedCallback } from "use-debounce";
 
 // Debounced search for auto-search as you type (500ms delay)
-const debouncedSearch = useDebouncedCallback(
-  () => {
-    if (searchQuery.trim()) {
-      performSearch(1, true);
-    }
-  },
-  500
-);
+const debouncedSearch = useDebouncedCallback(() => {
+  if (searchQuery.trim()) {
+    performSearch(1, true);
+  }
+}, 500);
 
 // Cancel debounced search if user manually submits
 const handleSearch = async (e) => {
@@ -435,6 +474,7 @@ const handleSearch = async (e) => {
 ```
 
 **Benefits:**
+
 - Prevents excessive API calls during rapid user input
 - Ready for auto-search functionality
 - Cancels debounced search on manual submit
@@ -453,7 +493,8 @@ Created `lib/cache.js` with TTL-based caching system:
 ```javascript
 // lib/cache.js
 class SimpleCache {
-  constructor(ttl = 5 * 60 * 1000) { // 5 minutes
+  constructor(ttl = 5 * 60 * 1000) {
+    // 5 minutes
     this.cache = new Map();
     this.ttl = ttl;
     setInterval(() => this.cleanup(), 60 * 1000); // Cleanup every minute
@@ -502,6 +543,7 @@ if (isNewSearch && allResults.length > 0) {
 ```
 
 **Benefits:**
+
 - 5-minute TTL reduces redundant API calls
 - Automatic cleanup prevents memory leaks
 - Instant results for repeated searches
@@ -521,32 +563,36 @@ Implemented AbortController for request cancellation in both Search.js and Youtu
 ```javascript
 const abortControllerRef = useRef(null);
 
-const performSearch = useCallback(async (start, isNewSearch = false) => {
-  // Cancel previous request if still running
-  if (abortControllerRef.current) {
-    abortControllerRef.current.abort();
-  }
-
-  // Create new AbortController for this request
-  abortControllerRef.current = new AbortController();
-  const signal = abortControllerRef.current.signal;
-
-  try {
-    const response = await fetch(url, { signal });
-    // ... handle response
-  } catch (error) {
-    // Don't show error if request was cancelled
-    if (error.name === 'AbortError') {
-      return;
+const performSearch = useCallback(
+  async (start, isNewSearch = false) => {
+    // Cancel previous request if still running
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-    // handle other errors
-  } finally {
-    abortControllerRef.current = null;
-  }
-}, [dependencies]);
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    try {
+      const response = await fetch(url, { signal });
+      // ... handle response
+    } catch (error) {
+      // Don't show error if request was cancelled
+      if (error.name === "AbortError") {
+        return;
+      }
+      // handle other errors
+    } finally {
+      abortControllerRef.current = null;
+    }
+  },
+  [dependencies],
+);
 ```
 
 **Benefits:**
+
 - Prevents race conditions when users quickly change searches
 - Cancels in-flight requests before starting new ones
 - Properly handles AbortError without false error messages
@@ -559,6 +605,7 @@ const performSearch = useCallback(async (start, isNewSearch = false) => {
 **Issue (FIXED):** Special sites were searched sequentially in a for loop instead of in parallel.
 
 **Old Code (REPLACED):**
+
 ```javascript
 // Sequential searches - SLOW
 for (const specialSite of specialSitesToSearch) {
@@ -568,10 +615,13 @@ for (const specialSite of specialSitesToSearch) {
 ```
 
 **✅ SOLUTION IMPLEMENTED:**
+
 ```javascript
 // NEW CODE - Parallel searches - FAST
 const specialSearches = specialSitesToSearch.map(async (specialSite) => {
-  const response = await fetch(`/api/search?q=...&site=${specialSite}&start=${start}`);
+  const response = await fetch(
+    `/api/search?q=...&site=${specialSite}&start=${start}`,
+  );
   const data = await response.json();
   return data.items || [];
 });
@@ -598,6 +648,7 @@ allResults = specialResults.flat();
 Created comprehensive ErrorBoundary component with user-friendly fallback UI:
 
 **New File: `components/ErrorBoundary.js`**
+
 ```javascript
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -624,12 +675,14 @@ class ErrorBoundary extends React.Component {
 ```
 
 **Integrated into app layout:**
+
 - Wrapped main content in `app/[lang]/layout.js`
 - Provides graceful error handling with "Refresh Page" and "Go to Home" buttons
 - Shows detailed error info in development mode only
 - Prevents entire app from crashing due to component errors
 
 **Benefits:**
+
 - Prevents complete app crashes
 - User-friendly error recovery options
 - Better debugging in development
@@ -638,7 +691,7 @@ class ErrorBoundary extends React.Component {
 ### 4.2 Inconsistent Modal Patterns ✅ FIXED
 
 **Severity:** Low ~~(NOW RESOLVED)~~
-**Location:** ~~components/search/*.js modals~~ **NOW STANDARDIZED**
+**Location:** ~~components/search/\*.js modals~~ **NOW STANDARDIZED**
 
 **Issue (FIXED):** Custom modal components (CustomDialogContent, DialogHeader, CustomDialogTitle, DialogFooter) were defined inline in each modal file, causing code duplication and inconsistent patterns.
 
@@ -647,6 +700,7 @@ class ErrorBoundary extends React.Component {
 Created shared dialog component library in `components/ui/dialog.jsx`:
 
 **New File: `components/ui/dialog.jsx`**
+
 - Exports standardized Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 - Uses Radix UI Dialog primitives
 - Includes Framer Motion animations
@@ -654,11 +708,13 @@ Created shared dialog component library in `components/ui/dialog.jsx`:
 - PropTypes validation for type safety
 
 **Updated all modal files to use shared components:**
+
 - `components/search/FilterModal.js` - Removed 107 lines of duplicated code
 - `components/search/SiteRequestModal.js` - Removed 107 lines of duplicated code
 - `components/search/FeedbackModal.js` - Removed 107 lines of duplicated code
 
 **Benefits:**
+
 - 321 lines of code eliminated through DRY principle
 - Consistent modal behavior across application
 - Single source of truth for modal styling
@@ -683,18 +739,20 @@ Moved utility function to `lib/utils.js`:
  * @returns {boolean} True if viewport width is <= 768px
  */
 export const isMobile = () => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
   return window.innerWidth <= 768;
 };
 ```
 
 **Updated imports:**
+
 ```javascript
 // components/search/SiteFilters.js
 import { cn, isMobile } from "../../lib/utils";
 ```
 
 **Benefits:**
+
 - Centralized utility functions
 - Reusable across entire application
 - JSDoc documentation for better IDE support
@@ -710,6 +768,7 @@ import { cn, isMobile } from "../../lib/utils";
 **Issue:** Testing libraries are installed (@testing-library/react, jest-dom) but no test files exist.
 
 **Recommendation:** Add tests for:
+
 - Search component behavior
 - Modal interactions
 - API error handling
@@ -717,6 +776,7 @@ import { cn, isMobile } from "../../lib/utils";
 - Site filtering logic
 
 Example structure:
+
 ```
 __tests__/
   components/
@@ -735,10 +795,10 @@ __tests__/
 ```javascript
 // jest.config.js
 module.exports = {
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testEnvironment: "jsdom",
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
+    "^@/(.*)$": "<rootDir>/$1",
   },
 };
 ```
@@ -759,6 +819,7 @@ module.exports = {
 Added comprehensive ARIA labels to all interactive elements in `components/Search.js`:
 
 **Search Input:**
+
 ```javascript
 <Input
   aria-label={t.searchPlaceholder || "Search Islamic scholars"}
@@ -768,6 +829,7 @@ Added comprehensive ARIA labels to all interactive elements in `components/Searc
 ```
 
 **Action Buttons:**
+
 ```javascript
 // Share button
 <Button
@@ -789,6 +851,7 @@ Added comprehensive ARIA labels to all interactive elements in `components/Searc
 ```
 
 **Toggle Switches:**
+
 ```javascript
 <Switch
   aria-label={t.searchShamela || "Include Shamela in search"}
@@ -798,6 +861,7 @@ Added comprehensive ARIA labels to all interactive elements in `components/Searc
 ```
 
 **Site Selection Buttons** (in `components/search/SiteFilters.js`):
+
 ```javascript
 <Button
   role="checkbox"
@@ -810,6 +874,7 @@ Added comprehensive ARIA labels to all interactive elements in `components/Searc
 ```
 
 **Benefits:**
+
 - Screen readers now properly announce button purposes
 - Users understand current selection state
 - Context-aware labels based on app state
@@ -827,16 +892,16 @@ Added comprehensive ARIA labels to all interactive elements in `components/Searc
 Updated `components/ui/dialog.jsx` to use Radix UI's built-in focus management:
 
 **Before (Custom Implementation):**
+
 ```javascript
 // No focus trapping - just a motion div
 export const DialogContent = ({ children }) => (
-  <motion.div className="fixed inset-0">
-    {children}
-  </motion.div>
+  <motion.div className="fixed inset-0">{children}</motion.div>
 );
 ```
 
 **After (Radix UI with Focus Trapping):**
+
 ```javascript
 export const DialogContent = ({ children, className, ...props }) => (
   <RadixDialog.Portal>
@@ -853,11 +918,13 @@ export const DialogContent = ({ children, className, ...props }) => (
 ```
 
 **Also updated:**
+
 - DialogTitle now uses `RadixDialog.Title` for proper ARIA labeling
 - DialogDescription uses `RadixDialog.Description` for accessibility
 - Proper focus restoration when modal closes
 
 **Benefits:**
+
 - Focus is trapped inside modal when open
 - Tab navigation cycles through modal elements only
 - Escape key closes modal
@@ -876,6 +943,7 @@ export const DialogContent = ({ children, className, ...props }) => (
 Added comprehensive keyboard navigation in `components/search/SiteFilters.js`:
 
 **Keyboard Event Handler:**
+
 ```javascript
 const handleSiteKeyDown = (e, site) => {
   // Handle Space or Enter key for keyboard navigation
@@ -886,7 +954,7 @@ const handleSiteKeyDown = (e, site) => {
         setSelectedSites((prev) =>
           prev.includes(site)
             ? prev.filter((s) => s !== site)
-            : [...prev, site]
+            : [...prev, site],
         );
       } else {
         setSelectedSites([site]);
@@ -904,17 +972,20 @@ const handleSiteKeyDown = (e, site) => {
   aria-checked={selectedSites.includes(site)}
 >
   {site}
-</Button>
+</Button>;
 ```
 
 **Added User Instructions:**
+
 ```javascript
 <span className="block text-xs mt-1">
-  Keyboard: Use Tab to navigate, Space/Enter to select, Shift+Click for multi-select
+  Keyboard: Use Tab to navigate, Space/Enter to select, Shift+Click for
+  multi-select
 </span>
 ```
 
 **Benefits:**
+
 - Tab key navigates between site buttons
 - Space/Enter keys toggle site selection
 - Shift+Click still works for power users
@@ -937,14 +1008,12 @@ const handleSiteKeyDown = (e, site) => {
 Created skeleton component and added loading skeletons to Search component:
 
 **New File: `components/ui/skeleton.jsx`**
+
 ```javascript
 function Skeleton({ className, ...props }) {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded-md bg-gray-200",
-        className
-      )}
+      className={cn("animate-pulse rounded-md bg-gray-200", className)}
       {...props}
     />
   );
@@ -952,6 +1021,7 @@ function Skeleton({ className, ...props }) {
 ```
 
 **Updated `components/Search.js` with skeleton loaders:**
+
 ```javascript
 {loading && searchQuery ? (
   <motion.div className="space-y-4">
@@ -970,6 +1040,7 @@ function Skeleton({ className, ...props }) {
 ```
 
 **Benefits:**
+
 - Improved perceived performance
 - Clear visual feedback during loading
 - Matches the structure of actual search results
@@ -988,6 +1059,7 @@ function Skeleton({ className, ...props }) {
 Created comprehensive empty state with helpful suggestions:
 
 **Updated `components/Search.js` with enhanced empty state:**
+
 ```javascript
 <div className="text-center py-12">
   <div className="max-w-md mx-auto">
@@ -999,9 +1071,7 @@ Created comprehensive empty state with helpful suggestions:
     </div>
 
     {/* Title */}
-    <h3 className="text-lg font-medium text-gray-900 mb-2">
-      {t.noResults}
-    </h3>
+    <h3 className="text-lg font-medium text-gray-900 mb-2">{t.noResults}</h3>
 
     {/* Description */}
     <p className="text-sm text-gray-600 mb-6">
@@ -1016,9 +1086,8 @@ Created comprehensive empty state with helpful suggestions:
         <li>Try different or more general keywords</li>
         <li>Select more sites to search</li>
         <li>
-          <button onClick={openSiteRequestModal}>
-            Request a new site
-          </button> to be added
+          <button onClick={openSiteRequestModal}>Request a new site</button> to
+          be added
         </li>
       </ul>
     </div>
@@ -1027,6 +1096,7 @@ Created comprehensive empty state with helpful suggestions:
 ```
 
 **Benefits:**
+
 - Visual icon for better engagement
 - Clear, empathetic messaging
 - Actionable suggestions to help users
@@ -1041,6 +1111,7 @@ Created comprehensive empty state with helpful suggestions:
 **Issue (FIXED):** Generic error messages didn't help users understand what went wrong or what to do next.
 
 **Old Code (REPLACED):**
+
 ```javascript
 toast.error("Search failed: " + error.message);
 ```
@@ -1050,6 +1121,7 @@ toast.error("Search failed: " + error.message);
 Created intelligent error message handler with specific, actionable messages:
 
 **New error handler in `components/Search.js`:**
+
 ```javascript
 /**
  * Provides user-friendly, actionable error messages based on error type
@@ -1060,22 +1132,28 @@ const getErrorMessage = (error) => {
   const errorMessage = error.message.toLowerCase();
 
   // Network errors
-  if (errorMessage.includes('failed to fetch') || errorMessage.includes('network')) {
+  if (
+    errorMessage.includes("failed to fetch") ||
+    errorMessage.includes("network")
+  ) {
     return "Network error. Please check your internet connection and try again.";
   }
 
   // Quota exceeded
-  if (errorMessage.includes('quota') || errorMessage.includes('limit')) {
+  if (errorMessage.includes("quota") || errorMessage.includes("limit")) {
     return "Search quota exceeded. Please try again in a few minutes.";
   }
 
   // Timeout errors
-  if (errorMessage.includes('timeout') || errorMessage.includes('aborted')) {
+  if (errorMessage.includes("timeout") || errorMessage.includes("aborted")) {
     return "Search timed out. Please try again with different keywords.";
   }
 
   // Invalid query
-  if (errorMessage.includes('invalid') || errorMessage.includes('bad request')) {
+  if (
+    errorMessage.includes("invalid") ||
+    errorMessage.includes("bad request")
+  ) {
     return "Invalid search query. Please try different keywords.";
   }
 
@@ -1091,6 +1169,7 @@ toast.error(getErrorMessage(error), {
 ```
 
 **Benefits:**
+
 - Context-specific error messages
 - Clear, actionable guidance for users
 - Distinguishes between different error types:
@@ -1112,6 +1191,7 @@ toast.error(getErrorMessage(error), {
 **Status:** ✅ **FIXED**
 
 **Implementation:**
+
 - Added comprehensive JSDoc comments to all functions in `components/Search.js`:
   - `performSearch()`, `debouncedSearch()`, `handleSearch()`, `openModal()`, `closeModal()`
   - `handleSiteRequest()`, `handleFeedbackSubmit()`, `handleShare()`
@@ -1126,6 +1206,7 @@ toast.error(getErrorMessage(error), {
   - `lib/cache.js` - Added parameter types and return types to all methods
 
 All functions now have proper JSDoc annotations including:
+
 - Function description
 - Parameter types and descriptions
 - Return types
@@ -1231,19 +1312,19 @@ All documentation includes code examples and testing instructions.
 
 ### Component Complexity
 
-| File | Lines | Complexity | Recommendation |
-|------|-------|------------|----------------|
-| Search.js | 886 | High | Split into 5-6 components |
-| Youtube-Search.js | 575 | High | Split into 4-5 components |
-| layout.js ([lang]) | 151 | Medium | Acceptable |
+| File               | Lines | Complexity | Recommendation            |
+| ------------------ | ----- | ---------- | ------------------------- |
+| Search.js          | 886   | High       | Split into 5-6 components |
+| Youtube-Search.js  | 575   | High       | Split into 4-5 components |
+| layout.js ([lang]) | 151   | Medium     | Acceptable                |
 
 ### Test Coverage
 
-| Category | Current | Target |
-|----------|---------|--------|
-| Unit Tests | 0% | 70%+ |
-| Integration Tests | 0% | 50%+ |
-| E2E Tests | 0% | 30%+ |
+| Category          | Current | Target |
+| ----------------- | ------- | ------ |
+| Unit Tests        | 0%      | 70%+   |
+| Integration Tests | 0%      | 50%+   |
+| E2E Tests         | 0%      | 30%+   |
 
 ### Bundle Analysis Recommendations
 

@@ -1,11 +1,24 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { Button } from "../ui/button";
 
-export const FilterModal = ({ isOpen, onClose, searchResults, siteFilters, setSiteFilters, translations }) => {
+export const FilterModal = ({
+  isOpen,
+  onClose,
+  searchResults,
+  siteFilters,
+  setSiteFilters,
+  translations,
+}) => {
   const uniqueSites = Array.from(
-    new Set(searchResults.map((result) => new URL(result.link).hostname))
+    new Set(searchResults.map((result) => new URL(result.link).hostname)),
   );
 
   const handleToggleSite = (site, isChecked) => {
@@ -22,7 +35,9 @@ export const FilterModal = ({ isOpen, onClose, searchResults, siteFilters, setSi
         <DialogHeader>
           <DialogTitle>{translations.filterResults}</DialogTitle>
           <p className="text-sm text-gray-500">{translations.filterBySite}</p>
-          <p className="text-xs text-gray-400 italic">{translations.loadMoreTip}</p>
+          <p className="text-xs text-gray-400 italic">
+            {translations.loadMoreTip}
+          </p>
         </DialogHeader>
         <div className="space-y-4">
           {uniqueSites.map((site) => (

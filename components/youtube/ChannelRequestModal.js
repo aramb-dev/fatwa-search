@@ -11,7 +11,14 @@ const modalVariants = {
   exit: { opacity: 0, scale: 0.95 },
 };
 
-export const ChannelRequestModal = ({ isOpen, onClose, channelRequest, setChannelRequest, onSubmit, translations }) => {
+export const ChannelRequestModal = ({
+  isOpen,
+  onClose,
+  channelRequest,
+  setChannelRequest,
+  onSubmit,
+  translations,
+}) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <motion.div
@@ -35,15 +42,10 @@ export const ChannelRequestModal = ({ isOpen, onClose, channelRequest, setChanne
             className="mb-4"
           />
           <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-            >
+            <Button variant="outline" onClick={onClose}>
               {translations.cancel}
             </Button>
-            <Button onClick={onSubmit}>
-              {translations.submitRequest}
-            </Button>
+            <Button onClick={onSubmit}>{translations.submitRequest}</Button>
           </div>
         </div>
       </motion.div>

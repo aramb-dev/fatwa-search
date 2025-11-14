@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * YouTube Data API Route Handler
+ * Protects API keys by executing YouTube searches server-side
+ *
+ * Query Parameters:
+ * @param {string} q - Search query (required)
+ * @param {string} channelId - YouTube channel ID to search within (required)
+ * @param {string} maxResults - Maximum number of results to return (default: 5)
+ *
+ * @returns {NextResponse} JSON response with video results or error
+ *
+ * @example
+ * GET /api/youtube?q=tawheed&channelId=UCFjzJYgxHjk44AFoEwwgPjg&maxResults=5
+ */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);

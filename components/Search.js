@@ -115,6 +115,13 @@ const SearchComponent = ({ language = "en" }) => {
   const resultsContainerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
+  /**
+   * Performs a search across configured scholar websites
+   * Handles caching, parallel searches, request cancellation, and result sorting
+   * @param {number} start - The starting index for pagination
+   * @param {boolean} isNewSearch - Whether this is a new search or loading more results
+   * @returns {Promise<void>}
+   */
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
       // Cancel previous request if still running
@@ -259,7 +266,12 @@ const SearchComponent = ({ language = "en" }) => {
     ],
   );
 
-  // Debounced search for auto-search as you type (optional future feature)
+  /**
+   * Debounced search callback for auto-search as user types
+   * Waits 500ms after user stops typing before performing search
+   * Prevents excessive API calls during rapid user input
+   * @returns {void}
+   */
   const debouncedSearch = useDebouncedCallback(
     () => {
       if (searchQuery.trim()) {
@@ -281,6 +293,12 @@ const SearchComponent = ({ language = "en" }) => {
     }
   }, [searchParams, performSearch]);
 
+  /**
+   * Handles search form submission
+   * Cancels any pending debounced searches and performs immediate search
+   * @param {Event} e - Form submission event
+   * @returns {Promise<void>}
+   */
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -294,16 +312,28 @@ const SearchComponent = ({ language = "en" }) => {
     await performSearch(1, true);
   };
 
+  /**
+   * Opens a modal by setting the active modal state
+   * @param {string} modalName - The name of the modal to open ("feedback", "filter", "siteRequest")
+   * @returns {void}
+   */
   const openModal = (modalName) => {
     setActiveModal(modalName);
   };
 
+  /**
+   * Closes any open modal by clearing the active modal state
+   * @returns {void}
+   */
   const closeModal = () => {
     setActiveModal(null);
   };
 
+  /** Opens the feedback modal */
   const openFeedbackModal = () => openModal("feedback");
+  /** Opens the filter modal */
   const openFilterModal = () => openModal("filter");
+  /** Opens the site request modal */
   const openSiteRequestModal = () => openModal("siteRequest");
 
   useEffect(() => {
@@ -319,6 +349,11 @@ const SearchComponent = ({ language = "en" }) => {
     };
   }, []);
 
+  /**
+   * Handles site request form submission via Netlify Forms
+   * Validates input and submits new scholar site request
+   * @returns {Promise<void>}
+   */
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
       toast.error(t.pleaseEnterSite);
@@ -343,6 +378,11 @@ const SearchComponent = ({ language = "en" }) => {
     }
   };
 
+  /**
+   * Handles feedback form submission via Netlify Forms
+   * Validates input and submits user feedback
+   * @returns {Promise<void>}
+   */
   const handleFeedbackSubmit = async () => {
     if (!feedback.trim()) {
       toast.error("Please enter your feedback");
@@ -368,6 +408,12 @@ const SearchComponent = ({ language = "en" }) => {
     }
   };
 
+  /**
+   * Handles sharing search results
+   * Uses Web Share API if available, falls back to clipboard copy
+   * @param {Event} e - Click event
+   * @returns {void}
+   */
   const handleShare = (e) => {
     e.preventDefault();
     e.stopPropagation();

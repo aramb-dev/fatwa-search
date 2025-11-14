@@ -123,16 +123,23 @@ rabee.net/*
 Create a `.env.local` file in the root directory (or configure these in Netlify's UI):
 
 ```env
-NEXT_PUBLIC_GOOGLE_API_KEY=your_api_key_here
-NEXT_PUBLIC_SEARCH_ENGINE_ID=your_search_engine_id_here
-NEXT_PUBLIC_YOUTUBE_API_KEY=your_api_key_here # can reuse same Google API key
+# Google API Keys (Server-side only - NOT prefixed with NEXT_PUBLIC_)
+GOOGLE_API_KEY=your_api_key_here
+SEARCH_ENGINE_ID=your_search_engine_id_here
+YOUTUBE_API_KEY=your_api_key_here # can reuse same Google API key
+
+# Analytics (Client-side - prefixed with NEXT_PUBLIC_)
 NEXT_PUBLIC_CLARITY_ID=optional_ms_clarity_project_id
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ```
 
-All public variables must start with `NEXT_PUBLIC_` to be available to the client bundle.
+**Important Security Notes:**
+- API keys are now **server-side only** and protected from client exposure
+- The app supports legacy `REACT_APP_*` prefixed variables for backward compatibility
+- Never commit `.env.local` to version control
+- For production, set these variables in your hosting platform's environment settings
 
-Netlify setup:
+**Netlify Setup:**
 
 - Build command: `npm run build`
 - Publish directory: `.next`
@@ -146,6 +153,124 @@ Netlify setup:
 3. Watch videos directly in the app or open them on YouTube
 4. Share interesting search results with others
 5. Request new scholars or channels to be added to the platform
+
+## Developer Guide
+
+### How to Add New Scholar Sites
+
+To add a new scholar website to the search functionality:
+
+1. **Update the Google Custom Search Engine:**
+   - Go to [Programmable Search Engine](https://programmablesearchengine.google.com/)
+   - Select your search engine
+   - Navigate to "Setup" → "Sites to search"
+   - Add the new site domain (e.g., `newscholar.com/*`)
+   - Save changes
+
+2. **Update the Application Code:**
+   - Open `components/Search.js`
+   - Locate the `DEFAULT_SITES` array (around line 40)
+   - Add the new site domain to the array:
+     ```javascript
+     export const DEFAULT_SITES = [
+       "binothaimeen.net",
+       "alfawzan.af.org.sa",
+       // ... existing sites
+       "newscholar.com", // Add your new site here
+     ];
+     ```
+
+3. **Update the README (Optional):**
+   - Add the new site to the "Verified Sites" list in the Features section
+
+4. **Test the Changes:**
+   - Run the development server: `npm run dev`
+   - Perform a search and verify the new site appears in results
+   - Test with multi-site selection to ensure proper filtering
+
+### How to Add New YouTube Channels
+
+To add a new Islamic scholar's YouTube channel:
+
+1. **Get the Channel ID:**
+   - Visit the YouTube channel
+   - Click "About" tab
+   - Click "Share channel" → "Copy channel ID"
+   - The ID looks like: `UCFjzJYgxHjk44AFoEwwgPjg`
+
+2. **Update the Application Code:**
+   - Open `components/Youtube-Search.js`
+   - Locate the `CHANNELS` array (around line 16)
+   - Add the new channel ID to the array:
+     ```javascript
+     const CHANNELS = [
+       "UCFjzJYgxHjk44AFoEwwgPjg",
+       "UCi7vzSJrU3beV_6Sdgpowng",
+       // ... existing channels
+       "UCNewChannelIDHere", // Add your new channel ID here
+     ];
+     ```
+
+3. **Update the README (Optional):**
+   - Add the new channel to the "Verified Channels" list in the Features section
+   - Include the channel name and link
+
+4. **Test the Changes:**
+   - Run the development server: `npm run dev`
+   - Navigate to the YouTube search tab
+   - Perform a search and verify videos from the new channel appear in results
+
+### Translation Workflow
+
+The application supports multiple languages (English, Arabic, Urdu). To add or modify translations:
+
+1. **Translation File Location:**
+   - All translations are in `translations.js`
+
+2. **Add a New Translation:**
+   ```javascript
+   export const translations = {
+     en: {
+       searchPlaceholder: "Search...",
+       // ... other English translations
+     },
+     ar: {
+       searchPlaceholder: "بحث...",
+       // ... other Arabic translations
+     },
+     ur: {
+       searchPlaceholder: "تلاش کریں...",
+       // ... other Urdu translations
+     },
+   };
+   ```
+
+3. **Add a New Language:**
+   - Add a new language object to the `translations` export
+   - Translate all keys from the English version
+   - Update the language switcher in `app/[lang]/layout.js` to include the new language option
+   - Add the new language to the routing configuration
+
+4. **Using Translations in Components:**
+   ```javascript
+   import { translations } from "../translations";
+
+   const MyComponent = ({ language = "en" }) => {
+     const t = translations[language];
+     return <p>{t.searchPlaceholder}</p>;
+   };
+   ```
+
+5. **RTL (Right-to-Left) Support:**
+   - The app automatically handles RTL for Arabic and Urdu
+   - RTL is configured in `app/[lang]/layout.js`
+   - Use logical CSS properties (e.g., `margin-inline-start` instead of `margin-left`) for new styles
+
+6. **Testing Translations:**
+   - Switch languages using the language selector in the UI
+   - Verify all UI elements display correctly
+   - Check RTL layout for Arabic and Urdu
+   - Ensure no text is hardcoded (all should use translation keys)
 
 ## Technology Stack
 

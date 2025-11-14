@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * Google Custom Search API Route Handler
+ * Protects API keys by executing searches server-side
+ *
+ * Query Parameters:
+ * @param {string} q - Search query (required)
+ * @param {string} site - Site to restrict search to (optional)
+ * @param {string} start - Starting index for pagination (default: 1)
+ *
+ * @returns {NextResponse} JSON response with search results or error
+ *
+ * @example
+ * GET /api/search?q=islamic+rulings&site=binbaz.org.sa&start=1
+ */
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);

@@ -144,6 +144,41 @@ The following critical issues have been **FIXED** and committed to the codebase:
    - Timeout → "Try different keywords"
    - Longer toast duration (7s) with close button
 
+### ✅ Documentation Improvements
+
+21. **Added Comprehensive JSDoc Comments**
+   - Added JSDoc to all functions in `components/Search.js`:
+     - `performSearch` - Main search function with caching and parallel searches
+     - `debouncedSearch` - Debounced search callback
+     - `handleSearch` - Form submission handler
+     - `openModal`, `closeModal` - Modal management functions
+     - `handleSiteRequest`, `handleFeedbackSubmit` - Form handlers
+     - `handleShare` - Share functionality
+     - `getErrorMessage` - Error message formatter (already documented)
+   - Added JSDoc to all functions in `components/Youtube-Search.js`:
+     - `performYoutubeSearch` - Main YouTube search function
+     - `debouncedSearch` - Debounced search callback
+     - `handleChannelRequest` - Channel request form handler
+     - `handleSearch` - Form submission handler
+     - `handleShare` - Share functionality
+   - Added JSDoc to API routes:
+     - `app/api/search/route.js` - Google Custom Search API handler
+     - `app/api/youtube/route.js` - YouTube Data API handler
+   - Enhanced JSDoc in utility files:
+     - `lib/utils.js` - Added detailed JSDoc to `cn()` function
+     - `lib/cache.js` - Enhanced all method documentation with parameter types
+
+22. **Expanded README.md with Developer Guide**
+   - Added "Developer Guide" section with comprehensive instructions:
+     - **How to Add New Scholar Sites**: Step-by-step guide with code examples
+     - **How to Add New YouTube Channels**: Channel ID extraction and implementation
+     - **Translation Workflow**: Complete guide for adding/modifying translations and RTL support
+   - Updated Environment Variables section:
+     - Corrected to show server-side only API keys (removed `NEXT_PUBLIC_` prefix)
+     - Added security notes about API key protection
+     - Documented backward compatibility with legacy variable names
+   - All documentation includes code examples and testing instructions
+
 ### Files Modified
 
 - `components/Search.js` - Security, bugs, performance, accessibility, UX improvements (868 → 611 lines)
@@ -158,10 +193,12 @@ The following critical issues have been **FIXED** and committed to the codebase:
 - `app/[lang]/layout.js` - Integrated ErrorBoundary component
 - `app/api/search/route.js` - **NEW** - Server-side search API
 - `app/api/youtube/route.js` - **NEW** - Server-side YouTube API
-- `lib/cache.js` - **NEW** - TTL-based caching system
-- `lib/utils.js` - Added `isMobile()` utility function with JSDoc
+- `lib/cache.js` - **NEW** - TTL-based caching system with enhanced JSDoc
+- `lib/utils.js` - Added `isMobile()` utility function and enhanced JSDoc for `cn()`
 - `package.json` - Added `use-debounce` dependency
 - `.env.example` - Updated with secure environment variable configuration
+- `README.md` - Added Developer Guide with comprehensive documentation
+- `CODE_REVIEW.md` - Updated with all completed fixes and improvements
 
 ### New Components Created (Component Extraction)
 
@@ -1066,35 +1103,70 @@ toast.error(getErrorMessage(error), {
 
 ---
 
-## 8. Documentation Issues 📚
+## 8. Documentation Issues 📚 ~~(NOW FIXED ✅)~~
 
-### 8.1 Missing JSDoc Comments
+### 8.1 Missing JSDoc Comments ✅ FIXED
 
 **Issue:** Functions lack documentation explaining parameters and behavior.
 
-**Recommendation:** Add JSDoc:
+**Status:** ✅ **FIXED**
 
-```javascript
-/**
- * Performs a search across configured scholar websites
- * @param {number} start - The starting index for pagination
- * @param {boolean} isNewSearch - Whether this is a new search or loading more results
- * @returns {Promise<void>}
- */
-const performSearch = useCallback(async (start, isNewSearch = false) => {
-  // ...
-}, [dependencies]);
-```
+**Implementation:**
+- Added comprehensive JSDoc comments to all functions in `components/Search.js`:
+  - `performSearch()`, `debouncedSearch()`, `handleSearch()`, `openModal()`, `closeModal()`
+  - `handleSiteRequest()`, `handleFeedbackSubmit()`, `handleShare()`
+- Added comprehensive JSDoc comments to all functions in `components/Youtube-Search.js`:
+  - `performYoutubeSearch()`, `debouncedSearch()`, `handleChannelRequest()`
+  - `handleSearch()`, `handleShare()`
+- Added detailed JSDoc to API route handlers:
+  - `app/api/search/route.js` - Documented query parameters, return types, and usage examples
+  - `app/api/youtube/route.js` - Documented query parameters, return types, and usage examples
+- Enhanced JSDoc in utility files:
+  - `lib/utils.js` - Added detailed documentation for `cn()` function with examples
+  - `lib/cache.js` - Added parameter types and return types to all methods
 
-### 8.2 Component Documentation
+All functions now have proper JSDoc annotations including:
+- Function description
+- Parameter types and descriptions
+- Return types
+- Usage examples where applicable
+
+### 8.2 Component Documentation ✅ FIXED
 
 **Issue:** Complex components lack usage examples.
 
-**Recommendation:** Add README sections explaining:
-- How to add new scholar sites
-- How to add new YouTube channels
-- Translation workflow
-- Environment variable setup
+**Status:** ✅ **FIXED**
+
+**Implementation:**
+Added comprehensive "Developer Guide" section to `README.md` with:
+
+1. **How to Add New Scholar Sites** - Complete step-by-step guide:
+   - Updating Google Custom Search Engine
+   - Modifying `DEFAULT_SITES` array in `components/Search.js`
+   - Testing procedures
+   - Code examples
+
+2. **How to Add New YouTube Channels** - Complete step-by-step guide:
+   - How to extract YouTube channel IDs
+   - Modifying `CHANNELS` array in `components/Youtube-Search.js`
+   - Testing procedures
+   - Code examples
+
+3. **Translation Workflow** - Comprehensive internationalization guide:
+   - Translation file structure
+   - Adding new translations
+   - Adding new languages
+   - Using translations in components
+   - RTL (Right-to-Left) support
+   - Testing procedures
+
+4. **Environment Variable Setup** - Updated and expanded:
+   - Corrected to show server-side only API keys (removed incorrect `NEXT_PUBLIC_` prefix)
+   - Added security notes about API key protection
+   - Documented backward compatibility with legacy variable names
+   - Netlify deployment instructions
+
+All documentation includes code examples and testing instructions.
 
 ---
 

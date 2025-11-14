@@ -56,7 +56,12 @@ const YoutubeSearch = ({ translations }) => {
   const abortControllerRef = useRef(null);
   const resultsPerPage = 10;
 
-  // Dedicated search function
+  /**
+   * Performs a YouTube search across configured scholar channels
+   * Handles caching, parallel searches, request cancellation, and result sorting
+   * @param {boolean} isNewSearch - Whether this is a new search or loading more results
+   * @returns {Promise<void>}
+   */
   const performYoutubeSearch = useCallback(
     async (isNewSearch = false) => {
       const currentQuery = searchQuery.trim();
@@ -155,7 +160,12 @@ const YoutubeSearch = ({ translations }) => {
     [searchQuery, startIndex],
   );
 
-  // Debounced search for auto-search as you type (optional future feature)
+  /**
+   * Debounced search callback for auto-search as user types
+   * Waits 500ms after user stops typing before performing search
+   * Prevents excessive API calls during rapid user input
+   * @returns {void}
+   */
   const debouncedSearch = useDebouncedCallback(
     () => {
       if (searchQuery.trim()) {
@@ -184,6 +194,11 @@ const YoutubeSearch = ({ translations }) => {
     }
   }, [searchParams, performYoutubeSearch]);
 
+  /**
+   * Handles YouTube channel request form submission via Netlify Forms
+   * Validates input URL format and submits new channel request
+   * @returns {Promise<void>}
+   */
   const handleChannelRequest = async () => {
     if (!channelRequest.trim()) {
       toast.error("Please enter a YouTube channel URL");
@@ -223,7 +238,12 @@ const YoutubeSearch = ({ translations }) => {
     return channelFilters.includes(result.snippet.channelId);
   });
 
-  // Add handleSearch function for new searches
+  /**
+   * Handles YouTube search form submission
+   * Cancels any pending debounced searches and performs immediate search
+   * @param {Event} e - Form submission event
+   * @returns {Promise<void>}
+   */
   const handleSearch = async (e) => {
     e.preventDefault();
 
@@ -235,6 +255,12 @@ const YoutubeSearch = ({ translations }) => {
     await performYoutubeSearch(true);
   };
 
+  /**
+   * Handles sharing YouTube search results
+   * Uses Web Share API if available, falls back to clipboard copy
+   * @param {Event} e - Click event
+   * @returns {void}
+   */
   const handleShare = (e) => {
     e.preventDefault();
     e.stopPropagation();

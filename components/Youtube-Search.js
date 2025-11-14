@@ -1,25 +1,16 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import Image from "next/image";
-import { Youtube, X, Filter, Share2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Dialog } from "@radix-ui/react-dialog";
+import { Youtube, Filter, Share2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
-
-// Animation variants
-const cardVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-};
-
-const modalVariants = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1 },
-  exit: { opacity: 0, scale: 0.95 },
-};
+import { useDebouncedCallback } from "use-debounce";
+import { AnimatePresence } from "framer-motion";
+import { VideoGrid } from "./youtube/VideoGrid";
+import { VideoModal } from "./youtube/VideoModal";
+import { ChannelRequestModal } from "./youtube/ChannelRequestModal";
+import { ChannelFilterModal } from "./youtube/ChannelFilterModal";
+import { youtubeCache } from "../lib/cache";
 
 // Default channels array
 const CHANNELS = [
@@ -52,8 +43,6 @@ const YoutubeSearch = ({ translations }) => {
   const [results, setResults] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [scholarRequest, setScholarRequest] = useState("");
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [channelRequest, setChannelRequest] = useState("");
   const [hasMore, setHasMore] = useState(true);
   const [startIndex, setStartIndex] = useState(0);
@@ -64,13 +53,28 @@ const YoutubeSearch = ({ translations }) => {
   // Refs
   const initialLoadDoneRef = useRef(false);
   const previousSearchRef = useRef("");
+  const abortControllerRef = useRef(null);
   const resultsPerPage = 10;
 
-  // Dedicated search function
+  /**
+   * Performs a YouTube search across configured scholar channels
+   * Handles caching, parallel searches, request cancellation, and result sorting
+   * @param {boolean} isNewSearch - Whether this is a new search or loading more results
+   * @returns {Promise<void>}
+   */
   const performYoutubeSearch = useCallback(
     async (isNewSearch = false) => {
       const currentQuery = searchQuery.trim();
       if (!currentQuery) return;
+
+      // Cancel previous request if still running
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
 
       setLoading(true);
       if (isNewSearch) {
@@ -84,24 +88,37 @@ const YoutubeSearch = ({ translations }) => {
           isNewSearch ? resultsPerPage : startIndex + resultsPerPage,
         );
 
+        // Check cache first
+        const cacheKey = {
+          query: currentQuery,
+          channels: channelsToSearch,
+          startIndex: isNewSearch ? 0 : startIndex,
+        };
+        const cachedResults = youtubeCache.get(cacheKey);
+
+        if (cachedResults && isNewSearch) {
+          setResults(cachedResults);
+          setHasMore(startIndex + resultsPerPage < CHANNELS.length);
+          setLoading(false);
+          return;
+        }
+
         const searches = channelsToSearch.map(async (channelId) => {
           const response = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-              currentQuery,
-            )}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}&type=video&maxResults=5&channelId=${channelId}`,
+            `/api/youtube?q=${encodeURIComponent(currentQuery)}&channelId=${channelId}&maxResults=5`,
+            { signal },
           );
           const data = await response.json();
 
-          if (data.error?.code === 403) {
-            if (
-              data.error.errors?.some(
-                (err) =>
-                  err.reason === "quotaExceeded" ||
-                  err.message?.includes("quota"),
-              )
-            ) {
+          if (data.error) {
+            if (data.error === "QUOTA_EXCEEDED") {
               throw new Error("QUOTA_EXCEEDED");
             }
+            console.error(
+              `YouTube search error for channel ${channelId}:`,
+              data.error,
+            );
+            return [];
           }
 
           return data.items || [];
@@ -113,15 +130,28 @@ const YoutubeSearch = ({ translations }) => {
             new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt),
         );
 
-        setResults((prev) =>
-          isNewSearch ? newResults : [...prev, ...newResults],
-        );
+        setResults((prev) => {
+          const finalResults = isNewSearch
+            ? newResults
+            : [...prev, ...newResults];
+
+          // Cache the results for new searches only
+          if (isNewSearch && newResults.length > 0) {
+            youtubeCache.set(cacheKey, newResults);
+          }
+
+          return finalResults;
+        });
+
         setHasMore(startIndex + resultsPerPage < CHANNELS.length);
         if (!isNewSearch) {
           setStartIndex((prev) => prev + resultsPerPage);
         }
       } catch (error) {
-        console.error("YouTube search failed:", error);
+        // Don't show error if request was cancelled
+        if (error.name === "AbortError") {
+          return;
+        }
         toast.error(
           error.message === "QUOTA_EXCEEDED"
             ? "API quota exceeded. Please try again later."
@@ -129,9 +159,28 @@ const YoutubeSearch = ({ translations }) => {
         );
       } finally {
         setLoading(false);
+        abortControllerRef.current = null;
       }
     },
     [searchQuery, startIndex],
+  );
+
+  /**
+   * Debounced search callback for auto-search as user types
+   * Waits 500ms after user stops typing before performing search
+   * Prevents excessive API calls during rapid user input
+   * @returns {void}
+   */
+  const debouncedSearch = useDebouncedCallback(
+    () => {
+      if (searchQuery.trim()) {
+        setResults([]);
+        setStartIndex(0);
+        setHasMore(true);
+        performYoutubeSearch(true);
+      }
+    },
+    500, // 500ms delay
   );
 
   // Handle URL params and initial search
@@ -150,39 +199,11 @@ const YoutubeSearch = ({ translations }) => {
     }
   }, [searchParams, performYoutubeSearch]);
 
-  // Add this new effect to handle direct URL access
-  useEffect(() => {
-    const queryParam = searchParams?.get("q");
-    if (queryParam && window.location.pathname === "/yt-search") {
-      setSearchQuery(queryParam);
-      performYoutubeSearch(true);
-    }
-  }, [searchParams, performYoutubeSearch]); // Include required dependencies
-
-  const handleScholarRequest = async () => {
-    if (!scholarRequest.trim()) {
-      toast.error("Please enter a scholar's name");
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("scholar-request", scholarRequest);
-
-      await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(formData).toString(),
-      });
-
-      toast.success("Scholar request submitted successfully!");
-      setScholarRequest("");
-      setShowRequestModal(false);
-    } catch (error) {
-      toast.error("Failed to submit scholar request");
-    }
-  };
-
+  /**
+   * Handles YouTube channel request form submission via Netlify Forms
+   * Validates input URL format and submits new channel request
+   * @returns {Promise<void>}
+   */
   const handleChannelRequest = async () => {
     if (!channelRequest.trim()) {
       toast.error("Please enter a YouTube channel URL");
@@ -210,7 +231,7 @@ const YoutubeSearch = ({ translations }) => {
 
       toast.success("Channel request submitted successfully!");
       setChannelRequest("");
-      setShowRequestModal(false);
+      setActiveModal(null);
     } catch (error) {
       toast.error("Failed to submit channel request");
     }
@@ -222,14 +243,29 @@ const YoutubeSearch = ({ translations }) => {
     return channelFilters.includes(result.snippet.channelId);
   });
 
-  // Add handleSearch function for new searches
+  /**
+   * Handles YouTube search form submission
+   * Cancels any pending debounced searches and performs immediate search
+   * @param {Event} e - Form submission event
+   * @returns {Promise<void>}
+   */
   const handleSearch = async (e) => {
     e.preventDefault();
+
+    // Cancel debounced search if user manually submits
+    debouncedSearch.cancel();
+
     setStartIndex(0);
     setHasMore(true);
     await performYoutubeSearch(true);
   };
 
+  /**
+   * Handles sharing YouTube search results
+   * Uses Web Share API if available, falls back to clipboard copy
+   * @param {Event} e - Click event
+   * @returns {void}
+   */
   const handleShare = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -277,7 +313,6 @@ const YoutubeSearch = ({ translations }) => {
             {loading ? translations.searching : translations.searchAction}
           </Button>
 
-          {/* Add Share Button */}
           {searchQuery && (
             <Button
               variant="outline"
@@ -291,7 +326,7 @@ const YoutubeSearch = ({ translations }) => {
 
           <Button
             variant="outline"
-            onClick={() => setShowRequestModal(true)}
+            onClick={() => setActiveModal("channel")}
             className="flex items-center gap-2"
           >
             {translations.requestChannel}
@@ -308,172 +343,31 @@ const YoutubeSearch = ({ translations }) => {
           )}
         </form>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence>
-            {filteredResults.map((video) => (
-              <motion.div
-                key={video.id.videoId}
-                variants={cardVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="border rounded-lg overflow-hidden shadow-sm"
-              >
-                <div className="relative w-full aspect-video cursor-pointer" onClick={() => setSelectedVideo(video)}>
-                  <Image
-                    src={video.snippet.thumbnails.medium.url}
-                    alt={video.snippet.title || "YouTube video thumbnail"}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-cover"
-                    priority={false}
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium line-clamp-2">
-                    {video.snippet.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {video.snippet.channelTitle}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        <VideoGrid videos={filteredResults} onVideoClick={setSelectedVideo} />
 
-        {/* Video Modal */}
         <AnimatePresence>
           {selectedVideo && (
-            <Dialog open={true} onOpenChange={() => setSelectedVideo(null)}>
-              <motion.div
-                className="fixed inset-0 bg-black/50 z-50"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <div className="fixed inset-4 md:inset-10 bg-white rounded-lg z-50 flex flex-col">
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <h2 className="font-medium truncate pr-4">
-                      {selectedVideo.snippet.title}
-                    </h2>
-                    <div className="flex gap-2">
-                      <a
-                        href={`https://youtube.com/watch?v=${selectedVideo.id.videoId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button
-                          variant="outline"
-                          className="flex items-center gap-2"
-                        >
-                          <Youtube className="h-4 w-4" />
-                          {translations.viewOnYoutube}
-                        </Button>
-                      </a>
-                      <Button
-                        variant="outline"
-                        onClick={() => setSelectedVideo(null)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex-1 relative">
-                    <iframe
-                      src={`https://www.youtube.com/embed/${selectedVideo.id.videoId}`}
-                      className="absolute inset-0 w-full h-full"
-                      frameBorder="0"
-                      allowFullScreen
-                      title={selectedVideo.snippet.title}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            </Dialog>
+            <VideoModal
+              video={selectedVideo}
+              onClose={() => setSelectedVideo(null)}
+              translations={translations}
+            />
           )}
         </AnimatePresence>
 
-        {/* Scholar Request Modal */}
         <AnimatePresence>
-          {showRequestModal && (
-            <Dialog open={true} onOpenChange={() => setShowRequestModal(false)}>
-              <motion.div
-                className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
-                variants={modalVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                  <h2 className="text-lg font-medium mb-4">
-                    {translations.requestScholar}
-                  </h2>
-                  <Input
-                    value={scholarRequest}
-                    onChange={(e) => setScholarRequest(e.target.value)}
-                    placeholder={translations.enterScholarName}
-                    className="mb-4"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowRequestModal(false)}
-                    >
-                      {translations.enterScholarName}
-                    </Button>
-                    <Button onClick={handleScholarRequest}>
-                      {translations.submitRequest}
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </Dialog>
+          {activeModal === "channel" && (
+            <ChannelRequestModal
+              isOpen={true}
+              onClose={() => setActiveModal(null)}
+              channelRequest={channelRequest}
+              setChannelRequest={setChannelRequest}
+              onSubmit={handleChannelRequest}
+              translations={translations}
+            />
           )}
         </AnimatePresence>
 
-        {/* Channel Request Modal */}
-        <AnimatePresence>
-          {showRequestModal && (
-            <Dialog open={true} onOpenChange={() => setShowRequestModal(false)}>
-              <motion.div
-                className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
-                variants={modalVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                  <h2 className="text-lg font-medium mb-4">
-                    {translations.requestChannel}
-                  </h2>
-                  <p className="text-sm text-gray-500 mb-4">
-                    {translations.pasteYoutubeLink}
-                  </p>
-                  <Input
-                    value={channelRequest}
-                    onChange={(e) => setChannelRequest(e.target.value)}
-                    placeholder="https://youtube.com/channel/..."
-                    className="mb-4"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowRequestModal(false)}
-                    >
-                      {translations.cancel}
-                    </Button>
-                    <Button onClick={handleChannelRequest}>
-                      {translations.submitRequest}
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </Dialog>
-          )}
-        </AnimatePresence>
-
-        {/* Add Load More and Feedback buttons */}
         {results.length > 0 && hasMore && !loading && (
           <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
             <Button
@@ -494,77 +388,16 @@ const YoutubeSearch = ({ translations }) => {
           </div>
         )}
 
-        {/* Add Filter Modal */}
         <AnimatePresence>
           {activeModal === "filter" && (
-            <Dialog open={true} onOpenChange={() => setActiveModal(null)}>
-              <motion.div
-                className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
-                variants={modalVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                  <h2 className="text-lg font-medium mb-4">
-                    {translations.filterResults}
-                  </h2>
-                  <p className="text-sm text-gray-500 mb-4">
-                    {translations.filterByChannel}
-                  </p>
-                  <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                    {Array.from(
-                      new Set(results.map((r) => r.snippet.channelId)),
-                    ).map((channelId) => {
-                      const channel = results.find(
-                        (r) => r.snippet.channelId === channelId,
-                      );
-                      return (
-                        <div
-                          key={channelId}
-                          className="flex items-center space-x-2"
-                        >
-                          <input
-                            type="checkbox"
-                            id={channelId}
-                            checked={channelFilters.includes(channelId)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setChannelFilters([
-                                  ...channelFilters,
-                                  channelId,
-                                ]);
-                              } else {
-                                setChannelFilters(
-                                  channelFilters.filter(
-                                    (id) => id !== channelId,
-                                  ),
-                                );
-                              }
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <label htmlFor={channelId}>
-                            {channel?.snippet.channelTitle}
-                          </label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-end gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setChannelFilters([])}
-                    >
-                      {translations.clearFilters}
-                    </Button>
-                    <Button onClick={() => setActiveModal(null)}>
-                      {translations.close}
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            </Dialog>
+            <ChannelFilterModal
+              isOpen={true}
+              onClose={() => setActiveModal(null)}
+              results={results}
+              channelFilters={channelFilters}
+              setChannelFilters={setChannelFilters}
+              translations={translations}
+            />
           )}
         </AnimatePresence>
       </div>

@@ -8,6 +8,7 @@ import { Youtube, Search as SearchIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { translations } from "../../translations";
+import ErrorBoundary from "../../components/ErrorBoundary";
 
 const cn = (...args) => clsx(...args);
 
@@ -133,17 +134,19 @@ export default function LanguageLayout({ children, params }) {
           </Tabs.List>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${language}-${activeTab}`}
-            variants={tabContentVariants}
-            initial="exit"
-            animate="enter"
-            exit="exit"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        <ErrorBoundary>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${language}-${activeTab}`}
+              variants={tabContentVariants}
+              initial="exit"
+              animate="enter"
+              exit="exit"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </ErrorBoundary>
       </Tabs.Root>
     </div>
   );

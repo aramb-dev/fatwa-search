@@ -1,17 +1,23 @@
 import React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
-import PropTypes from "prop-types";
-import { cn } from "../lib/utils";
 import { Search, Plus, Filter, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Dialog, DialogOverlay } from "@radix-ui/react-dialog";
 import { Switch } from "./ui/switch";
+import { Skeleton } from "./ui/skeleton";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
 import { translations } from "../translations";
+import { FeedbackModal } from "./search/FeedbackModal";
+import { SiteRequestModal } from "./search/SiteRequestModal";
+import { FilterModal } from "./search/FilterModal";
+import { SiteFilters } from "./search/SiteFilters";
+import { searchCache } from "../lib/cache";
+import PropTypes from "prop-types";
+import { cn } from "../lib/utils";
 
 const buttonVariants = {
   hover: { scale: 1.05 },
@@ -30,91 +36,6 @@ const filterVariants = {
   animate: { opacity: 1, x: 0 },
   exit: { opacity: 0, x: 20 },
 };
-
-const modalVariants = {
-  initial: {
-    opacity: 0,
-    scale: 0.95,
-    y: 20,
-  },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      damping: 25,
-      stiffness: 400,
-    },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    y: 20,
-    transition: {
-      duration: 0.2,
-    },
-  },
-};
-
-const overlayVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-};
-
-const CustomDialogContent = ({ children, ...props }) => (
-  <motion.div
-    initial="initial"
-    animate="animate"
-    exit="exit"
-    variants={overlayVariants}
-    className="fixed inset-0 z-50 flex items-center justify-center"
-  >
-    <DialogOverlay className="fixed inset-0 bg-black/50" />
-    <motion.div
-      variants={modalVariants}
-      className={cn(
-        "relative",
-        "w-full max-w-[670px]",
-        "min-h-[200px]",
-        "bg-white rounded-lg",
-        "p-6",
-        "shadow-lg",
-        "mx-4 sm:mx-auto",
-        "z-50",
-        "overflow-y-auto max-h-[90vh]",
-      )}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  </motion.div>
-);
-
-const DialogHeader = ({ children }) => (
-  <div className="flex flex-col space-y-2 sm:space-y-3 mb-4 sm:mb-6">
-    {children}
-  </div>
-);
-
-const CustomDialogTitle = ({ children }) => (
-  <h2 className="text-lg sm:text-xl font-semibold leading-none tracking-tight">
-    {children}
-  </h2>
-);
-
-const DialogFooter = ({ children }) => (
-  <div
-    className={cn(
-      "mt-4 pt-4 sm:mt-6 sm:pt-6",
-      "border-t flex flex-col-reverse sm:flex-row gap-2 sm:gap-4",
-      "sm:justify-end",
-    )}
-  >
-    {children}
-  </div>
-);
 
 export const DEFAULT_SITES = [
   "binothaimeen.net",
@@ -139,6 +60,44 @@ const SearchComponent = ({ language = "en" }) => {
 
   const resultsPerPage = 10;
 
+  /**
+   * Provides user-friendly, actionable error messages based on error type
+   * @param {Error} error - The error object
+   * @returns {string} - User-friendly error message
+   */
+  const getErrorMessage = (error) => {
+    const errorMessage = error.message.toLowerCase();
+
+    // Network errors
+    if (
+      errorMessage.includes("failed to fetch") ||
+      errorMessage.includes("network")
+    ) {
+      return "Network error. Please check your internet connection and try again.";
+    }
+
+    // Quota exceeded
+    if (errorMessage.includes("quota") || errorMessage.includes("limit")) {
+      return "Search quota exceeded. Please try again in a few minutes.";
+    }
+
+    // Timeout errors
+    if (errorMessage.includes("timeout") || errorMessage.includes("aborted")) {
+      return "Search timed out. Please try again with different keywords.";
+    }
+
+    // Invalid query
+    if (
+      errorMessage.includes("invalid") ||
+      errorMessage.includes("bad request")
+    ) {
+      return "Invalid search query. Please try different keywords.";
+    }
+
+    // Generic fallback with helpful suggestion
+    return `Search failed. Please try again or contact support if the problem persists.`;
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [sites] = useState(DEFAULT_SITES);
   const [includeShamela, setIncludeShamela] = useState(false);
@@ -146,7 +105,6 @@ const SearchComponent = ({ language = "en" }) => {
   const [includeDorar, setIncludeDorar] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [setIsModalOpen] = useState(false);
   const [siteInput, setSiteInput] = useState("");
   const [startIndex, setStartIndex] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -161,18 +119,28 @@ const SearchComponent = ({ language = "en" }) => {
 
   const initialLoadDoneRef = useRef(false);
   const resultsContainerRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
+  /**
+   * Performs a search across configured scholar websites
+   * Handles caching, parallel searches, request cancellation, and result sorting
+   * @param {number} start - The starting index for pagination
+   * @param {boolean} isNewSearch - Whether this is a new search or loading more results
+   * @returns {Promise<void>}
+   */
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
+      // Cancel previous request if still running
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
       setLoading(true);
       try {
-        if (
-          !process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
-          !process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID
-        ) {
-          throw new Error("Search API credentials are not properly configured");
-        }
-
         const regularSites = selectedSites;
         const specialSitesToSearch = [
           ...(includeShamela ? ["shamela.ws"] : []),
@@ -180,51 +148,72 @@ const SearchComponent = ({ language = "en" }) => {
           ...(includeDorar ? ["dorar.net"] : []),
         ];
 
-        let allResults = [];
+        // Check cache first
+        const cacheKey = {
+          query: searchQuery,
+          sites: regularSites,
+          special: specialSitesToSearch,
+          start,
+        };
+        const cachedResults = searchCache.get(cacheKey);
 
-        for (const specialSite of specialSitesToSearch) {
-          const specialSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
-            process.env.NEXT_PUBLIC_GOOGLE_API_KEY
-          }&cx=${process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
-            `site:${specialSite} ${searchQuery}`,
-          )}&start=${start}`;
-
-          const specialResponse = await fetch(specialSearchUrl);
-          const specialData = await specialResponse.json();
-
-          console.log(`Searching ${specialSite}:`, specialData);
-          if (!specialData.items) {
-            console.warn(`No results found for ${specialSite}`);
-          }
-
-          if (specialData.items) {
-            allResults = [...allResults, ...specialData.items];
-          }
+        if (cachedResults && isNewSearch) {
+          setSearchResults(cachedResults);
+          setHasMore(cachedResults.length >= resultsPerPage);
+          setStartIndex(start + resultsPerPage);
+          setLoading(false);
+          toast(t.searchResultsDisclaimer, {
+            duration: 5000,
+            closeButton: true,
+          });
+          return;
         }
 
+        let allResults = [];
+
+        // Search special sites in parallel
+        const specialSearches = specialSitesToSearch.map(
+          async (specialSite) => {
+            const response = await fetch(
+              `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`,
+              { signal },
+            );
+            const data = await response.json();
+
+            if (data.error) {
+              console.error(`Search error for ${specialSite}:`, data.error);
+              return [];
+            }
+
+            return data.items || [];
+          },
+        );
+
+        const specialResults = await Promise.all(specialSearches);
+        allResults = specialResults.flat();
+
+        // Search regular sites
         if (regularSites.length > 0) {
           const regularSiteQuery = regularSites
             .map((site) => `site:${site}`)
             .join(" OR ");
-          const regularSearchUrl = `https://www.googleapis.com/customsearch/v1?key=${
-            process.env.NEXT_PUBLIC_GOOGLE_API_KEY
-          }&cx=${process.env.NEXT_PUBLIC_SEARCH_ENGINE_ID}&q=${encodeURIComponent(
-            `(${regularSiteQuery}) ${searchQuery}`,
-          )}&start=${start}`;
 
-          const regularResponse = await fetch(regularSearchUrl);
+          const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`;
+          const regularResponse = await fetch(
+            `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}`,
+            { signal },
+          );
           const regularData = await regularResponse.json();
+
+          if (regularData.error) {
+            console.error("Search error:", regularData.error);
+            throw new Error(regularData.error);
+          }
 
           if (regularData.items) {
             allResults = [...allResults, ...regularData.items];
           }
         }
-
-        console.log("Special sites to search:", specialSitesToSearch);
-        console.log(
-          "Before sorting:",
-          allResults.map((r) => r.link),
-        );
 
         allResults.sort((a, b) => {
           const aIsDorar = a.link.includes("dorar.net");
@@ -241,14 +230,17 @@ const SearchComponent = ({ language = "en" }) => {
           return bIsSpecial - aIsSpecial;
         });
 
-        console.log(
-          "After sorting:",
-          allResults.map((r) => r.link),
-        );
-
         setSearchResults((prev) => {
-          if (isNewSearch) return allResults;
-          return [...prev, ...allResults];
+          const newResults = isNewSearch
+            ? allResults
+            : [...prev, ...allResults];
+
+          // Cache the results for new searches only
+          if (isNewSearch && allResults.length > 0) {
+            searchCache.set(cacheKey, allResults);
+          }
+
+          return newResults;
         });
 
         setHasMore(allResults.length >= resultsPerPage);
@@ -261,10 +253,18 @@ const SearchComponent = ({ language = "en" }) => {
           });
         }
       } catch (error) {
+        // Don't show error if request was cancelled
+        if (error.name === "AbortError") {
+          return;
+        }
         console.error("Search failed:", error);
-        toast.error("Search failed: " + error.message);
+        toast.error(getErrorMessage(error), {
+          duration: 7000,
+          closeButton: true,
+        });
       } finally {
         setLoading(false);
+        abortControllerRef.current = null;
       }
     },
     [
@@ -274,7 +274,25 @@ const SearchComponent = ({ language = "en" }) => {
       includeAlmaany,
       includeDorar,
       t,
-    ], // Removed translations, added t
+    ],
+  );
+
+  /**
+   * Debounced search callback for auto-search as user types
+   * Waits 500ms after user stops typing before performing search
+   * Prevents excessive API calls during rapid user input
+   * @returns {void}
+   */
+  const debouncedSearch = useDebouncedCallback(
+    () => {
+      if (searchQuery.trim()) {
+        setSearchResults([]);
+        setStartIndex(1);
+        setHasMore(true);
+        performSearch(1, true);
+      }
+    },
+    500, // 500ms delay
   );
 
   useEffect(() => {
@@ -286,9 +304,18 @@ const SearchComponent = ({ language = "en" }) => {
     }
   }, [searchParams, performSearch]);
 
+  /**
+   * Handles search form submission
+   * Cancels any pending debounced searches and performs immediate search
+   * @param {Event} e - Form submission event
+   * @returns {Promise<void>}
+   */
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+
+    // Cancel debounced search if user manually submits
+    debouncedSearch.cancel();
 
     setSearchResults([]);
     setStartIndex(1);
@@ -296,16 +323,28 @@ const SearchComponent = ({ language = "en" }) => {
     await performSearch(1, true);
   };
 
+  /**
+   * Opens a modal by setting the active modal state
+   * @param {string} modalName - The name of the modal to open ("feedback", "filter", "siteRequest")
+   * @returns {void}
+   */
   const openModal = (modalName) => {
     setActiveModal(modalName);
   };
 
+  /**
+   * Closes any open modal by clearing the active modal state
+   * @returns {void}
+   */
   const closeModal = () => {
     setActiveModal(null);
   };
 
+  /** Opens the feedback modal */
   const openFeedbackModal = () => openModal("feedback");
+  /** Opens the filter modal */
   const openFilterModal = () => openModal("filter");
+  /** Opens the site request modal */
   const openSiteRequestModal = () => openModal("siteRequest");
 
   useEffect(() => {
@@ -321,16 +360,11 @@ const SearchComponent = ({ language = "en" }) => {
     };
   }, []);
 
-  const toggleSite = (site) => {
-    if (!isShiftPressed) {
-      setSelectedSites([site]);
-    } else {
-      setSelectedSites((prev) =>
-        prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
-      );
-    }
-  };
-
+  /**
+   * Handles site request form submission via Netlify Forms
+   * Validates input and submits new scholar site request
+   * @returns {Promise<void>}
+   */
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
       toast.error(t.pleaseEnterSite);
@@ -347,16 +381,19 @@ const SearchComponent = ({ language = "en" }) => {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(formData).toString(),
       });
-      setIsModalOpen(false);
       setSiteInput("");
+      closeModal();
       toast.success(t.requestSubmitted);
     } catch (error) {
       toast.error(t.requestFailed);
     }
   };
 
-  const isMobile = () => window.innerWidth <= 768;
-
+  /**
+   * Handles feedback form submission via Netlify Forms
+   * Validates input and submits user feedback
+   * @returns {Promise<void>}
+   */
   const handleFeedbackSubmit = async () => {
     if (!feedback.trim()) {
       toast.error("Please enter your feedback");
@@ -375,12 +412,19 @@ const SearchComponent = ({ language = "en" }) => {
       });
       setShowFeedback(false);
       setFeedback("");
+      closeModal();
       toast.success("Thank you for your feedback!");
     } catch (error) {
       toast.error("Failed to submit feedback");
     }
   };
 
+  /**
+   * Handles sharing search results
+   * Uses Web Share API if available, falls back to clipboard copy
+   * @param {Event} e - Click event
+   * @returns {void}
+   */
   const handleShare = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -423,6 +467,7 @@ const SearchComponent = ({ language = "en" }) => {
               variant="outline"
               size="sm"
               className="flex items-center gap-2"
+              aria-label={t.requestSite || "Request to add a new site"}
             >
               <Plus className="h-4 w-4" />
               {t.requestSite}
@@ -434,6 +479,7 @@ const SearchComponent = ({ language = "en" }) => {
                   checked={includeShamela}
                   onCheckedChange={setIncludeShamela}
                   className="data-[state=checked]:bg-green-600"
+                  aria-label={t.searchShamela || "Include Shamela in search"}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -442,6 +488,7 @@ const SearchComponent = ({ language = "en" }) => {
                   checked={includeAlmaany}
                   onCheckedChange={setIncludeAlmaany}
                   className="data-[state=checked]:bg-green-600"
+                  aria-label={t.searchAlmaany || "Include Almaany in search"}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -450,6 +497,7 @@ const SearchComponent = ({ language = "en" }) => {
                   checked={includeDorar}
                   onCheckedChange={setIncludeDorar}
                   className="data-[state=checked]:bg-green-600"
+                  aria-label={t.searchDorar || "Include Dorar in search"}
                 />
               </div>
             </div>
@@ -461,8 +509,10 @@ const SearchComponent = ({ language = "en" }) => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchPlaceholder} // Changed this line
+                placeholder={t.searchPlaceholder}
                 className="flex-grow"
+                aria-label={t.searchPlaceholder || "Search Islamic scholars"}
+                type="search"
               />
               <motion.div
                 variants={buttonVariants}
@@ -484,12 +534,12 @@ const SearchComponent = ({ language = "en" }) => {
                 </Button>
               </motion.div>
 
-              {}
               {searchQuery && (
                 <Button
                   variant="outline"
                   onClick={handleShare}
                   className="flex items-center gap-2"
+                  aria-label={`${t.share || "Share"} search results for "${searchQuery}"`}
                 >
                   <Share2 className="h-4 w-4" />
                   {t.share}
@@ -509,6 +559,7 @@ const SearchComponent = ({ language = "en" }) => {
                       variant="outline"
                       onClick={openFilterModal}
                       className="flex items-center gap-2"
+                      aria-label={`${t.filter || "Filter"} results by site (${searchResults.length} results)`}
                     >
                       <Filter className="h-4 w-4" />
                       {t.filter}
@@ -517,140 +568,132 @@ const SearchComponent = ({ language = "en" }) => {
                 )}
               </AnimatePresence>
             </motion.div>
-            {}
-            <div className="space-y-2">
-              <p className="text-sm text-gray-500 italic md:block hidden">
-                {t.selectTooltip}
-              </p>
-              <p className="text-sm text-gray-500 italic block md:hidden">
-                Tap &ldquo;Select Sites&rdquo; to choose multiple sites, or tap
-                individual sites to search one at a time
-              </p>
 
-              <div className="flex flex-wrap gap-2 relative w-full">
-                {}
-                <div className="md:hidden w-full flex flex-wrap gap-2 mb-2">
-                  <Button
-                    onClick={() => setIsMobileSelecting(!isMobileSelecting)}
-                    variant="outline"
-                    size="sm"
-                    className="flex-shrink-0"
-                  >
-                    {isMobileSelecting ? "Done" : "Select Sites"}
-                  </Button>
-                  {isMobileSelecting && (
-                    <>
-                      <Button
-                        onClick={() => setSelectedSites(sites)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-shrink-0"
-                      >
-                        Select All
-                      </Button>
-                      <Button
-                        onClick={() => setSelectedSites([])}
-                        variant="outline"
-                        size="sm"
-                        className="flex-shrink-0"
-                      >
-                        Select None
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                {}
-                <Button
-                  onClick={() => setSelectedSites(sites)}
-                  variant={
-                    selectedSites.length === sites.length
-                      ? "default"
-                      : "outline"
-                  }
-                  size="sm"
-                  type="button"
-                  className={cn(
-                    "md:block flex-shrink-0",
-                    isMobileSelecting ? "hidden" : "block",
-                  )}
-                >
-                  All Sites
-                </Button>
-
-                {}
-                {sites.map((site) => (
-                  <Button
-                    key={site}
-                    onClick={() => {
-                      if (isMobile()) {
-                        if (isMobileSelecting) {
-                          setSelectedSites((prev) =>
-                            prev.includes(site)
-                              ? prev.filter((s) => s !== site)
-                              : [...prev, site],
-                          );
-                        } else {
-                          setSelectedSites([site]);
-                        }
-                      } else {
-                        toggleSite(site);
-                      }
-                    }}
-                    className={cn(
-                      "transition-all duration-200 flex-shrink-0",
-                      selectedSites.includes(site)
-                        ? "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600"
-                        : "bg-white text-gray-700 hover:bg-gray-100",
-                      !isMobileSelecting && "md:block",
-                    )}
-                    size="sm"
-                    type="button"
-                  >
-                    {site}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <SiteFilters
+              sites={sites}
+              selectedSites={selectedSites}
+              setSelectedSites={setSelectedSites}
+              isShiftPressed={isShiftPressed}
+              isMobileSelecting={isMobileSelecting}
+              setIsMobileSelecting={setIsMobileSelecting}
+              translations={t}
+            />
           </form>
 
-          {}
           <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
             <AnimatePresence mode="wait">
-              {searchQuery && filteredResults.length > 0 ? (
-                <motion.div
-                  className="space-y-4"
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  variants={resultsVariants}
-                >
-                  {filteredResults.map((result, index) => (
-                    <SearchResult
-                      key={result.link}
-                      result={result}
-                      index={index}
-                      isNewResult={
-                        index >= filteredResults.length - resultsPerPage
-                      }
-                    />
-                  ))}
-                </motion.div>
-              ) : searchQuery && !loading ? (
-                <motion.div
-                  variants={resultsVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="text-center text-gray-500"
-                >
-                  {t.noResults}
-                </motion.div>
-              ) : null}
+              {(() => {
+                const isLoading = loading && searchQuery;
+                const hasResults = searchQuery && filteredResults.length > 0;
+                const showEmptyState = searchQuery && !loading;
+
+                if (isLoading) {
+                  return (
+                    <motion.div
+                      className="space-y-4"
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      variants={resultsVariants}
+                    >
+                      {[...new Array(5)].map((_, i) => (
+                        <div
+                          key={`skeleton-${i}`}
+                          className="p-4 border rounded-lg bg-white shadow-sm space-y-3"
+                        >
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-5/6" />
+                          <Skeleton className="h-3 w-1/4" />
+                        </div>
+                      ))}
+                    </motion.div>
+                  );
+                }
+
+                if (hasResults) {
+                  return (
+                    <motion.div
+                      className="space-y-4"
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      variants={resultsVariants}
+                    >
+                      {filteredResults.map((result, index) => (
+                        <SearchResult
+                          key={result.link}
+                          result={result}
+                          index={index}
+                          isNewResult={
+                            index >= filteredResults.length - resultsPerPage
+                          }
+                        />
+                      ))}
+                    </motion.div>
+                  );
+                }
+
+                if (showEmptyState) {
+                  return (
+                    <motion.div
+                      variants={resultsVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      className="text-center py-12"
+                    >
+                      <div className="max-w-md mx-auto">
+                        <div className="mb-4">
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          {t.noResults}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-6">
+                          Try adjusting your search or selecting different sites
+                        </p>
+                        <div className="space-y-2 text-left bg-gray-50 p-4 rounded-lg">
+                          <p className="text-sm font-medium text-gray-700">
+                            Suggestions:
+                          </p>
+                          <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                            <li>Check your spelling</li>
+                            <li>Try different or more general keywords</li>
+                            <li>Select more sites to search</li>
+                            <li>
+                              <button
+                                onClick={openSiteRequestModal}
+                                className="text-blue-600 hover:underline"
+                              >
+                                Request a new site
+                              </button>{" "}
+                              to be added
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                }
+
+                return null;
+              })()}
             </AnimatePresence>
           </div>
 
-          {}
           {hasMore && searchResults.length > 0 && (
             <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
               <Button
@@ -658,6 +701,7 @@ const SearchComponent = ({ language = "en" }) => {
                 disabled={loading}
                 variant="outline"
                 className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
+                aria-label={`${t.loadMore || "Load more"} search results (currently showing ${searchResults.length} results)`}
               >
                 {loading ? t.loading : t.loadMore}
               </Button>
@@ -665,13 +709,13 @@ const SearchComponent = ({ language = "en" }) => {
                 variant="outline"
                 onClick={openFeedbackModal}
                 className="shadow-lg bg-white hover:bg-gray-50"
+                aria-label={t.provideFeedback || "Provide feedback"}
               >
                 {t.provideFeedback}
               </Button>
             </div>
           )}
 
-          {}
           <div className="mt-8 border-t pt-8">
             <div className="flex flex-col items-center space-y-4">
               <Button
@@ -715,7 +759,6 @@ const SearchComponent = ({ language = "en" }) => {
             </div>
           </div>
 
-          {}
           <div className="mt-4 text-center text-sm text-gray-500">
             {t.createdBy}{" "}
             <a
@@ -739,108 +782,34 @@ const SearchComponent = ({ language = "en" }) => {
         </CardContent>
       </Card>
 
-      {}
       <AnimatePresence mode="wait">
-        {}
-        {activeModal === "feedback" && (
-          <Dialog open={true} onOpenChange={closeModal}>
-            <CustomDialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader>
-                <CustomDialogTitle>{t.provideFeedback}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">{t.feedbackDescription}</p>
-              </DialogHeader>
-              <div className="space-y-4">
-                <textarea
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  placeholder={t.feedbackPlaceholder}
-                  className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
-                />
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={closeModal}>
-                  {t.cancel}
-                </Button>
-                <Button
-                  onClick={handleFeedbackSubmit}
-                  disabled={!feedback.trim()}
-                >
-                  {t.feedbackSubmit}
-                </Button>
-              </DialogFooter>
-            </CustomDialogContent>
-          </Dialog>
-        )}
+        <FeedbackModal
+          isOpen={activeModal === "feedback"}
+          onClose={closeModal}
+          feedback={feedback}
+          setFeedback={setFeedback}
+          onSubmit={handleFeedbackSubmit}
+          translations={t}
+        />
 
-        {}
-        {activeModal === "siteRequest" && (
-          <Dialog open={true} onOpenChange={closeModal}>
-            <CustomDialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader>
-                <CustomDialogTitle>{t.requestNewSite}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">{t.enterSiteDomain}</p>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  value={siteInput}
-                  onChange={(e) => setSiteInput(e.target.value)}
-                  placeholder={t.siteUrlPlaceholder}
-                  className="w-full"
-                />
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={closeModal}>
-                  {t.cancel}
-                </Button>
-                <Button onClick={handleSiteRequest}>{t.submitRequest}</Button>
-              </DialogFooter>
-            </CustomDialogContent>
-          </Dialog>
-        )}
+        <SiteRequestModal
+          isOpen={activeModal === "siteRequest"}
+          onClose={closeModal}
+          siteInput={siteInput}
+          setSiteInput={setSiteInput}
+          onSubmit={handleSiteRequest}
+          translations={t}
+        />
 
-        {/* Filter Modal */}
-        {activeModal === "filter" && searchResults.length > 0 && (
-          <Dialog open={true} onOpenChange={closeModal}>
-            <CustomDialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader>
-                <CustomDialogTitle>{t.filterResults}</CustomDialogTitle>
-                <p className="text-sm text-gray-500">{t.filterBySite}</p>
-                <p className="text-xs text-gray-400 italic">{t.loadMoreTip}</p>
-              </DialogHeader>
-              <div className="space-y-4">
-                {Array.from(
-                  new Set(
-                    searchResults.map(
-                      (result) => new URL(result.link).hostname,
-                    ),
-                  ),
-                ).map((site) => (
-                  <div key={site} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={site}
-                      checked={siteFilters.includes(site)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSiteFilters([...siteFilters, site]);
-                        } else {
-                          setSiteFilters(siteFilters.filter((s) => s !== site));
-                        }
-                      }}
-                      className="rounded border-gray-300"
-                    />
-                    <label htmlFor={site}>{site}</label>
-                  </div>
-                ))}
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSiteFilters([])}>
-                  {t.clearFilters}
-                </Button>
-                <Button onClick={closeModal}>{t.close}</Button>
-              </DialogFooter>
-            </CustomDialogContent>
-          </Dialog>
+        {searchResults.length > 0 && (
+          <FilterModal
+            isOpen={activeModal === "filter"}
+            onClose={closeModal}
+            searchResults={searchResults}
+            siteFilters={siteFilters}
+            setSiteFilters={setSiteFilters}
+            translations={t}
+          />
         )}
       </AnimatePresence>
     </>

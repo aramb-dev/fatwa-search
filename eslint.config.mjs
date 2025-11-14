@@ -1,4 +1,3 @@
-import { defineConfig } from "eslint/config";
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import globals from "globals";
 import path from "node:path";
@@ -14,34 +13,36 @@ const compat = new FlatCompat({
     allConfig: js.configs.all
 });
 
-export default defineConfig([{
-    extends: [...nextCoreWebVitals, ...compat.extends("plugin:prettier/recommended")],
+export default [
+    ...nextCoreWebVitals,
+    ...compat.extends("plugin:prettier/recommended"),
+    {
+        languageOptions: {
+            globals: {
+                ...globals.browser,
+                ...globals.node,
+                ...globals.jest,
+            },
 
-    languageOptions: {
-        globals: {
-            ...globals.browser,
-            ...globals.node,
-            ...globals.jest,
-        },
+            ecmaVersion: "latest",
+            sourceType: "module",
 
-        ecmaVersion: "latest",
-        sourceType: "module",
-
-        parserOptions: {
-            ecmaFeatures: {
-                jsx: true,
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true,
+                },
             },
         },
-    },
 
-    settings: {
-        react: {
-            version: "detect",
+        settings: {
+            react: {
+                version: "detect",
+            },
+        },
+
+        rules: {
+            "react/prop-types": "off",
+            "react/react-in-jsx-scope": "off",
         },
     },
-
-    rules: {
-        "react/prop-types": "off",
-        "react/react-in-jsx-scope": "off",
-    },
-}]);
+];

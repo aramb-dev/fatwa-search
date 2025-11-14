@@ -36,6 +36,8 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@netlify/plugin-nextjs": "^5.14.5",
+    "@types/bun": "latest",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.0",
@@ -45,8 +47,7 @@
     "eslint-plugin-react": "^7.34.1",
     "postcss": "^8.4.33",
     "prettier": "^3.5.3",
-    "tailwindcss": "^3.4.1",
-    "@types/bun": "latest"
+    "tailwindcss": "^3.4.1"
   },
   "engines": {
     "node": ">=18.18.0 <=20.x",

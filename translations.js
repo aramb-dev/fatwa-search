@@ -56,6 +56,63 @@ export const translations = {
     requestScholar: "Request Scholar",
     enterScholarName: "Enter scholar's name",
     pasteYoutubeLink: "Paste the YouTube channel URL you'd like to add",
+    v2Banner: {
+      title: "🎉 We're Moving to a New Home!",
+      subtitle: "Fatwa Search v2 is now live at {{newSite}}",
+      notice:
+        "⚠️ Important: {{oldSite}} will be deprecated soon. Please update your bookmarks to {{newSite}}",
+      cta: "Visit New Site",
+      toggleMore: "What's New?",
+      toggleLess: "Show Less",
+      whatsNewHeading: "What's New in V2",
+      summary:
+        "✨ The Result? A faster, more reliable, and more accessible Islamic knowledge search experience for everyone.",
+      newSite: "search.aramb.dev",
+      oldSite: "is-search.aramb.dev",
+      features: [
+        {
+          title: "More Secure",
+          description:
+            "Enterprise-level security with server-side API keys",
+          icon: "lock",
+          color: "text-green-300",
+        },
+        {
+          title: "Blazing Fast",
+          description:
+            "Up to 3x faster with smart caching and parallel searches",
+          icon: "zap",
+          color: "text-yellow-300",
+        },
+        {
+          title: "Better Experience",
+          description:
+            "Beautiful animations, helpful guidance, and clearer errors",
+          icon: "sparkles",
+          color: "text-pink-300",
+        },
+        {
+          title: "More Accessible",
+          description: "Keyboard-friendly and screen reader ready",
+          icon: "users",
+          color: "text-purple-300",
+        },
+        {
+          title: "More Reliable",
+          description:
+            "Crash protection and cleaner, more stable codebase",
+          icon: "wrench",
+          color: "text-orange-300",
+        },
+        {
+          title: "For Developers",
+          description:
+            "Complete docs and code comments for easy contributions",
+          icon: "book",
+          color: "text-blue-300",
+        },
+      ],
+    },
   },
   ar: {
     search: "بحث",
@@ -113,5 +170,57 @@ export const translations = {
     requestScholar: "طلب إضافة شيخ",
     enterScholarName: "أدخل اسم الشيخ",
     pasteYoutubeLink: "الصق رابط قناة اليوتيوب التي تريد إضافتها",
+    v2Banner: {
+      title: "🎉 ننتقل إلى منزل جديد!",
+      subtitle: "إصدار Fatwa Search v2 متاح الآن على {{newSite}}",
+      notice:
+        "⚠️ مهم: سيتم إيقاف {{oldSite}} قريباً. رجاءً حدّث العلامات المرجعية إلى {{newSite}}",
+      cta: "زيارة الموقع الجديد",
+      toggleMore: "ما الجديد؟",
+      toggleLess: "إخفاء التفاصيل",
+      whatsNewHeading: "ما الجديد في الإصدار الثاني",
+      summary:
+        "✨ النتيجة: تجربة أسرع وأكثر استقراراً وسهلة الوصول للبحث في العلوم الإسلامية للجميع.",
+      newSite: "search.aramb.dev",
+      oldSite: "is-search.aramb.dev",
+      features: [
+        {
+          title: "أكثر أماناً",
+          description: "أمان بمستوى المؤسسات مع مفاتيح واجهات الخوادم",
+          icon: "lock",
+          color: "text-green-300",
+        },
+        {
+          title: "سرعة خاطفة",
+          description: "حتى 3 مرات أسرع مع التخزين الذكي المؤقت والبحث المتوازي",
+          icon: "zap",
+          color: "text-yellow-300",
+        },
+        {
+          title: "تجربة أفضل",
+          description: "رسوميات جميلة، إرشاد أوضح، وأخطاء أكثر وضوحاً",
+          icon: "sparkles",
+          color: "text-pink-300",
+        },
+        {
+          title: "أوسع وصولاً",
+          description: "ملائمة للوحة المفاتيح وقارئات الشاشة",
+          icon: "users",
+          color: "text-purple-300",
+        },
+        {
+          title: "أكثر استقراراً",
+          description: "حماية من الأعطال وقاعدة شفرة أنظف وأكثر ثباتاً",
+          icon: "wrench",
+          color: "text-orange-300",
+        },
+        {
+          title: "للمطورين",
+          description: "توثيق كامل وتعليقات كود لتسهيل المساهمة",
+          icon: "book",
+          color: "text-blue-300",
+        },
+      ],
+    },
   },
 };

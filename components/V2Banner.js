@@ -14,9 +14,20 @@ import {
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
-const V2Banner = () => {
+const iconMap = {
+  lock: Lock,
+  zap: Zap,
+  sparkles: Sparkles,
+  users: Users,
+  wrench: Wrench,
+  book: BookOpen,
+};
+
+const V2Banner = ({ language = "en", translations }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const t = translations?.v2Banner || {};
 
   useEffect(() => {
     // Check if the banner has been dismissed
@@ -41,44 +52,13 @@ const V2Banner = () => {
     }
   };
 
-  const features = [
-    {
-      Icon: Lock,
-      color: "text-green-300",
-      title: "More Secure",
-      description: "Enterprise-level security with server-side API keys",
-    },
-    {
-      Icon: Zap,
-      color: "text-yellow-300",
-      title: "Blazing Fast",
-      description: "Up to 3x faster with smart caching and parallel searches",
-    },
-    {
-      Icon: Sparkles,
-      color: "text-pink-300",
-      title: "Better Experience",
-      description: "Beautiful animations, helpful guidance, and clearer errors",
-    },
-    {
-      Icon: Users,
-      color: "text-purple-300",
-      title: "More Accessible",
-      description: "Keyboard-friendly and screen reader ready",
-    },
-    {
-      Icon: Wrench,
-      color: "text-orange-300",
-      title: "More Reliable",
-      description: "Crash protection and cleaner, more stable codebase",
-    },
-    {
-      Icon: BookOpen,
-      color: "text-blue-300",
-      title: "For Developers",
-      description: "Complete docs and code comments for easy contributions",
-    },
-  ];
+  // Replace template variables
+  const replaceVars = (text) => {
+    if (!text) return "";
+    return text
+      .replace(/\{\{newSite\}\}/g, t.newSite || "search.aramb.dev")
+      .replace(/\{\{oldSite\}\}/g, t.oldSite || "is-search.aramb.dev");
+  };
 
   const bannerVariants = {
     initial: { opacity: 0, y: -20 },
@@ -142,13 +122,17 @@ const V2Banner = () => {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold text-white mb-1">
-                    🎉 We&apos;re Moving to a New Home!
+                    {t.title || "🎉 We're Moving to a New Home!"}
                   </h2>
                   <p className="text-blue-100 text-sm">
-                    Fatwa Search v2 is now live at{" "}
-                    <span className="font-bold text-white bg-white/20 px-2 py-0.5 rounded">
-                      search.aramb.dev
-                    </span>
+                    {replaceVars(t.subtitle) || (
+                      <>
+                        Fatwa Search v2 is now live at{" "}
+                        <span className="font-bold text-white bg-white/20 px-2 py-0.5 rounded">
+                          search.aramb.dev
+                        </span>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -156,17 +140,15 @@ const V2Banner = () => {
               {/* Migration notice */}
               <div className="bg-yellow-400/20 border border-yellow-300/30 rounded-lg p-3 mb-4">
                 <p className="text-white text-sm font-medium">
-                  ⚠️ <span className="font-bold">Important:</span>{" "}
-                  is-search.aramb.dev will be deprecated soon. Please update
-                  your bookmarks to{" "}
-                  <span className="font-semibold">search.aramb.dev</span>
+                  {replaceVars(t.notice) ||
+                    "⚠️ Important: is-search.aramb.dev will be deprecated soon. Please update your bookmarks to search.aramb.dev"}
                 </p>
               </div>
 
               {/* CTA Button */}
               <div className="flex gap-3 mb-4">
                 <a
-                  href="https://search.aramb.dev"
+                  href={`https://${t.newSite || "search.aramb.dev"}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={cn(
@@ -180,7 +162,7 @@ const V2Banner = () => {
                     "flex items-center justify-center gap-2",
                   )}
                 >
-                  Visit New Site
+                  {t.cta || "Visit New Site"}
                   <ArrowRight className="h-4 w-4" />
                 </a>
 
@@ -194,7 +176,9 @@ const V2Banner = () => {
                     "focus:outline-none focus:ring-2 focus:ring-white/50",
                   )}
                 >
-                  {isExpanded ? "Show Less" : "What's New?"}
+                  {isExpanded
+                    ? t.toggleLess || "Show Less"
+                    : t.toggleMore || "What's New?"}
                 </button>
               </div>
 
@@ -210,40 +194,44 @@ const V2Banner = () => {
                   >
                     <div className="pt-4 border-t border-white/20">
                       <h3 className="text-lg font-bold text-white mb-3">
-                        What&apos;s New in V2
+                        {t.whatsNewHeading || "What's New in V2"}
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                        {features.map(({ Icon, color, title, description }) => (
-                          <div
-                            key={title}
-                            className="bg-white/10 rounded-lg p-3 backdrop-blur-sm"
-                          >
-                            <div className="flex items-start gap-2">
-                              <Icon
-                                className={cn(
-                                  "h-5 w-5 flex-shrink-0 mt-0.5",
-                                  color,
-                                )}
-                              />
-                              <div>
-                                <h4 className="font-semibold text-white text-sm mb-1">
-                                  {title}
-                                </h4>
-                                <p className="text-blue-100 text-xs">
-                                  {description}
-                                </p>
+                        {(t.features || []).map(
+                          ({ icon, color, title, description }) => {
+                            const Icon = iconMap[icon] || Sparkles;
+                            return (
+                              <div
+                                key={title}
+                                className="bg-white/10 rounded-lg p-3 backdrop-blur-sm"
+                              >
+                                <div className="flex items-start gap-2">
+                                  <Icon
+                                    className={cn(
+                                      "h-5 w-5 flex-shrink-0 mt-0.5",
+                                      color,
+                                    )}
+                                  />
+                                  <div>
+                                    <h4 className="font-semibold text-white text-sm mb-1">
+                                      {title}
+                                    </h4>
+                                    <p className="text-blue-100 text-xs">
+                                      {description}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        ))}
+                            );
+                          },
+                        )}
                       </div>
 
                       <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
                         <p className="text-white text-sm font-medium text-center">
-                          ✨ The Result? A faster, more reliable, and more
-                          accessible Islamic knowledge search experience for
-                          everyone.
+                          {t.summary ||
+                            "✨ The Result? A faster, more reliable, and more accessible Islamic knowledge search experience for everyone."}
                         </p>
                       </div>
                     </div>

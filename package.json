@@ -45,7 +45,8 @@
     "eslint-plugin-react": "^7.34.1",
     "postcss": "^8.4.33",
     "prettier": "^3.5.3",
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^3.4.1",
+    "@types/bun": "latest"
   },
   "engines": {
     "node": ">=18.18.0 <=20.x",
@@ -53,5 +54,12 @@
   },
   "config": {
     "loglevel": "warn"
+  },
+  "trustedDependencies": [
+    "unrs-resolver"
+  ],
+  "private": true,
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }

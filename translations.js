@@ -2,11 +2,10 @@ export const translations = {
   en: {
     search: "Search",
     youtubeSearch: "YouTube Search",
-    searchLabel: "Fatwa Search",
-    searchDescription: "Search the Mashayikh sites for your keyword",
-    searchPlaceholder: "Enter your search query...",
-    arabicTip:
-      "Putting your keywords in Arabic is more effective as these are Arabic sites",
+    searchLabel: "Ilm Search",
+    searchDescription: "Authentic Islamic Knowledge",
+    searchPlaceholder: "Search Islamic knowledge...",
+    arabicTip: "",
     requestSite: "Request Site",
     searchShamela: "Search Shamela.ws",
     searchAlmaany: "Search Almaany.com",

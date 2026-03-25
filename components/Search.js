@@ -1,6 +1,6 @@
 import React from "react"
 import { useState, useCallback, useEffect, useRef } from "react"
-import { Search, Plus, Share2, Check, X } from "lucide-react"
+import { Search, Plus, Share2 } from "lucide-react"
 import { Skeleton } from "./ui/skeleton"
 import { Button } from "./ui/button"
 import { Toaster, toast } from "sonner"
@@ -11,6 +11,7 @@ import { translations } from "../translations"
 import { FeedbackModal } from "./search/FeedbackModal"
 import { SiteRequestModal } from "./search/SiteRequestModal"
 import { FilterModal } from "./search/FilterModal"
+import { SitePickerModal } from "./search/SitePickerModal"
 import { searchCache } from "../lib/cache"
 import PropTypes from "prop-types"
 import { cn } from "../lib/utils"
@@ -41,6 +42,58 @@ export const DEFAULT_SITES = [
   "rabee.net",
 ]
 
+export const ENGLISH_SITES = [
+  "islamtees.wordpress.com",
+  "bakkah.net",
+  "greatrewards.abdurrahman.org",
+  "authentic-dua.com",
+  "thenoblequran.com",
+  "sunnah.com",
+  "salaf.com",
+  "aqidah.com",
+  "tawhidfirst.com",
+  "abovethethrone.com",
+  "manhaj.com",
+  "salafis.com",
+  "piousmuslim.com",
+  "ibntaymiyyah.com",
+  "themadkhalis.com",
+  "wahhabis.com",
+  "sahihalbukhari.com",
+  "sahihmuslim.com",
+  "nawawis40hadith.com",
+  "fatwaislam.com",
+  "learnaboutislam.co.uk",
+  "salafisounds.com",
+  "sunnahaudio.com",
+  "sunnahradio.net",
+  "troid.org",
+  "bidah.com",
+  "islamagainstextremism.com",
+  "kharijites.com",
+  "takfiris.com",
+  "mutazilah.com",
+  "asharis.com",
+  "maturidis.com",
+  "sayyidqutb.com",
+  "ikhwanis.com",
+  "barelwis.com",
+  "shariah.ws",
+  "dajjaal.com",
+  "aboutatheism.net",
+  "islamjesus.ws",
+  "islammoses.com",
+  "islaam.ca",
+  "prophetmuhammad.name",
+  "abukhadeejah.com",
+  "embodyislam.org",
+  "knowledgeofislamblog.wordpress.com",
+  "miraathpubs.net",
+  "mpubs.org",
+  "dusunnah.com",
+  "quran.com",
+]
+
 const resultsVariants = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
@@ -69,8 +122,11 @@ const SearchComponent = ({ language = "en" }) => {
     return "Search failed. Please try again or contact support if the problem persists."
   }
 
+  const isEnglish = language === "en"
+  const sitesForLanguage = isEnglish ? ENGLISH_SITES : DEFAULT_SITES
+
   const [searchQuery, setSearchQuery] = useState("")
-  const [sites] = useState(DEFAULT_SITES)
+  const [sites] = useState(sitesForLanguage)
   const [includeShamela, setIncludeShamela] = useState(false)
   const [includeAlmaany, setIncludeAlmaany] = useState(false)
   const [includeDorar, setIncludeDorar] = useState(false)
@@ -79,27 +135,14 @@ const SearchComponent = ({ language = "en" }) => {
   const [siteInput, setSiteInput] = useState("")
   const [startIndex, setStartIndex] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [selectedSites, setSelectedSites] = useState(DEFAULT_SITES)
+  const [selectedSites, setSelectedSites] = useState(sitesForLanguage)
   const [siteFilters, setSiteFilters] = useState([])
   const [activeModal, setActiveModal] = useState(null)
-  const [showSiteMenu, setShowSiteMenu] = useState(false)
   const [feedback, setFeedback] = useState("")
   const [searchParams] = useSearchParams()
 
   const initialLoadDoneRef = useRef(false)
   const abortControllerRef = useRef(null)
-  const siteMenuRef = useRef(null)
-
-  // Close site menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (siteMenuRef.current && !siteMenuRef.current.contains(e.target)) {
-        setShowSiteMenu(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
 
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
@@ -134,7 +177,7 @@ const SearchComponent = ({ language = "en" }) => {
 
         const specialSearches = specialSitesToSearch.map(async (specialSite) => {
           const response = await fetch(
-            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`,
+            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}&lang=${language}`,
             { signal },
           )
           const data = await response.json()
@@ -152,7 +195,7 @@ const SearchComponent = ({ language = "en" }) => {
           const regularSiteQuery = regularSites.map((site) => `site:${site}`).join(" OR ")
           const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`
           const regularResponse = await fetch(
-            `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}`,
+            `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
             { signal },
           )
           const regularData = await regularResponse.json()
@@ -309,15 +352,6 @@ const SearchComponent = ({ language = "en" }) => {
   const isLoading = loading && searchQuery
   const showEmptyState = searchQuery && !loading && !hasResults
 
-  // Count active site selections for the + button badge
-  const totalActiveSites =
-    selectedSites.length +
-    (includeShamela ? 1 : 0) +
-    (includeAlmaany ? 1 : 0) +
-    (includeDorar ? 1 : 0)
-  const allSitesActive =
-    selectedSites.length === sites.length && !includeShamela && !includeAlmaany && !includeDorar
-
   return (
     <>
       <Toaster position="top-center" />
@@ -339,200 +373,61 @@ const SearchComponent = ({ language = "en" }) => {
         {/* Sticky search bar */}
         <div className={cn("sticky top-4 z-20", searchQuery && "pt-4")}>
           <form onSubmit={handleSearch}>
-            <div className="relative" ref={siteMenuRef}>
-              {/* Input row */}
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-md px-3 py-2">
-                {/* + Sites button */}
+            {/* Input row */}
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-md px-3 py-2">
+              {/* + Sites button */}
+              <button
+                type="button"
+                onClick={() => openModal("sitePicker")}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center flex-shrink-0 transition-colors"
+                aria-label="Select sites to search"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+
+              {/* Query input */}
+              <input
+                value={searchQuery}
+                onChange={handleQueryChange}
+                placeholder={t.searchPlaceholder || "Ask anything"}
+                className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400 text-base min-w-0"
+                aria-label={t.searchPlaceholder}
+                type="search"
+                autoFocus
+              />
+
+              {/* Share button */}
+              {searchQuery && (
                 <button
                   type="button"
-                  onClick={() => setShowSiteMenu((v) => !v)}
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                    showSiteMenu ? "bg-gray-900 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700",
-                  )}
-                  aria-label="Select sites to search"
-                  aria-expanded={showSiteMenu}
+                  onClick={handleShare}
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  aria-label={t.share || "Share"}
                 >
-                  {showSiteMenu ? (
-                    <X className="w-4 h-4" />
-                  ) : (
-                    <Plus className="w-4 h-4" />
-                  )}
+                  <Share2 className="w-4 h-4" />
                 </button>
+              )}
 
-                {/* Query input */}
-                <input
-                  value={searchQuery}
-                  onChange={handleQueryChange}
-                  placeholder={t.searchPlaceholder || "Ask anything"}
-                  className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400 text-base min-w-0"
-                  aria-label={t.searchPlaceholder}
-                  type="search"
-                  autoFocus
-                />
-
-                {/* Share button (when query exists) */}
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={handleShare}
-                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                    aria-label={t.share || "Share"}
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={loading || !searchQuery.trim()}
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                  searchQuery.trim()
+                    ? "bg-gray-900 hover:bg-gray-700 text-white"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed",
                 )}
-
-                {/* Submit button */}
-                <button
-                  type="submit"
-                  disabled={loading || !searchQuery.trim()}
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
-                    searchQuery.trim()
-                      ? "bg-gray-900 hover:bg-gray-700 text-white"
-                      : "bg-gray-100 text-gray-400 cursor-not-allowed",
-                  )}
-                  aria-label={t.searchAction}
-                >
-                  <Search className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Site selection dropdown */}
-              <AnimatePresence>
-                {showSiteMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 max-h-[70vh] overflow-y-auto"
-                  >
-                    {/* All sites toggle */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedSites(sites)
-                        setIncludeShamela(false)
-                        setIncludeAlmaany(false)
-                        setIncludeDorar(false)
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
-                    >
-                      <span className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0",
-                        allSitesActive ? "bg-gray-900 border-gray-900" : "border-gray-300",
-                      )}>
-                        {allSitesActive && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                      </span>
-                      <span className="text-sm font-medium text-gray-800">All Sites</span>
-                    </button>
-
-                    <div className="h-px bg-gray-100 mx-3 my-1" />
-
-                    {/* Regular scholar sites */}
-                    {sites.map((site) => (
-                      <button
-                        key={site}
-                        type="button"
-                        onClick={() => toggleSite(site)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
-                      >
-                        <span className={cn(
-                          "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0",
-                          selectedSites.includes(site) ? "bg-gray-900 border-gray-900" : "border-gray-300",
-                        )}>
-                          {selectedSites.includes(site) && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800 truncate">
-                            {SITE_LABELS[site] || site}
-                          </p>
-                          <p className="text-xs text-gray-400 truncate">{site}</p>
-                        </div>
-                      </button>
-                    ))}
-
-                    <div className="h-px bg-gray-100 mx-3 my-1" />
-
-                    {/* Special sites */}
-                    <button
-                      type="button"
-                      onClick={() => setIncludeShamela((v) => !v)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
-                    >
-                      <span className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0",
-                        includeShamela ? "bg-gray-900 border-gray-900" : "border-gray-300",
-                      )}>
-                        {includeShamela && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800">Shamela</p>
-                        <p className="text-xs text-gray-400">shamela.ws</p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setIncludeAlmaany((v) => !v)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
-                    >
-                      <span className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0",
-                        includeAlmaany ? "bg-gray-900 border-gray-900" : "border-gray-300",
-                      )}>
-                        {includeAlmaany && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800">Al-Maany</p>
-                        <p className="text-xs text-gray-400">almaany.com</p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setIncludeDorar((v) => !v)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
-                    >
-                      <span className={cn(
-                        "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0",
-                        includeDorar ? "bg-gray-900 border-gray-900" : "border-gray-300",
-                      )}>
-                        {includeDorar && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800">Dorar</p>
-                        <p className="text-xs text-gray-400">dorar.net</p>
-                      </div>
-                    </button>
-
-                    <div className="h-px bg-gray-100 mx-3 my-1" />
-
-                    {/* Request site */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowSiteMenu(false)
-                        openModal("siteRequest")
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
-                    >
-                      <span className="w-4 h-4 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center flex-shrink-0">
-                        <Plus className="w-2.5 h-2.5 text-gray-400" />
-                      </span>
-                      <p className="text-sm text-gray-500">{t.requestSite || "Request a site"}</p>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                aria-label={t.searchAction}
+              >
+                <Search className="w-4 h-4" />
+              </button>
             </div>
           </form>
 
           {/* Active site pills */}
-          {searchQuery && !showSiteMenu && (
-            <div className="flex flex-wrap gap-1.5 mt-2 px-1">
+          {searchQuery && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2 px-1">
               {selectedSites.length === sites.length && !includeShamela && !includeAlmaany && !includeDorar ? (
                 <span className="text-xs text-gray-400 py-1">All {sites.length} sites</span>
               ) : (
@@ -639,6 +534,23 @@ const SearchComponent = ({ language = "en" }) => {
           </button>
         </div>
       </div>
+
+      <SitePickerModal
+        isOpen={activeModal === "sitePicker"}
+        onClose={closeModal}
+        sites={sites}
+        selectedSites={selectedSites}
+        setSelectedSites={setSelectedSites}
+        includeShamela={includeShamela}
+        setIncludeShamela={setIncludeShamela}
+        includeAlmaany={includeAlmaany}
+        setIncludeAlmaany={setIncludeAlmaany}
+        includeDorar={includeDorar}
+        setIncludeDorar={setIncludeDorar}
+        translations={t}
+        onRequestSite={() => openModal("siteRequest")}
+        isEnglish={isEnglish}
+      />
 
       <AnimatePresence mode="wait">
         <FeedbackModal

@@ -20,6 +20,7 @@ export async function GET(request) {
     const query = searchParams.get("q");
     const site = searchParams.get("site");
     const start = searchParams.get("start") || "1";
+    const lang = searchParams.get("lang") || "ar";
 
     // Validate required parameters
     if (!query) {
@@ -33,8 +34,9 @@ export async function GET(request) {
     // Support both new (GOOGLE_API_KEY) and legacy (REACT_APP_*) variable names
     const apiKey =
       process.env.GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY;
-    const searchEngineId =
-      process.env.SEARCH_ENGINE_ID || process.env.REACT_APP_SEARCH_ENGINE_ID;
+    const searchEngineId = lang === "en"
+      ? (process.env.SEARCH_ENGINE_ID_EN || "c0078683c28c145c0")
+      : (process.env.SEARCH_ENGINE_ID || process.env.REACT_APP_SEARCH_ENGINE_ID);
 
     if (!apiKey || !searchEngineId) {
       return NextResponse.json(

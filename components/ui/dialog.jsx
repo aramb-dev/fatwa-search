@@ -66,12 +66,11 @@ export const DialogContent = ({ children, className, ...props }) => (
         className={cn(
           "fixed left-[50%] top-[50%] z-50",
           "translate-x-[-50%] translate-y-[-50%]",
-          "w-full max-w-[670px]",
+          "w-[calc(100%-2rem)] max-w-[670px]",
           "min-h-[200px]",
           "bg-white rounded-lg",
           "p-6",
           "shadow-lg",
-          "mx-4 sm:mx-auto",
           "overflow-y-auto max-h-[90vh]",
           "focus:outline-none",
           className,

@@ -57,7 +57,7 @@ export const DialogContent = ({ children, className, ...props }) => (
         className="fixed inset-0 z-50 bg-black/50"
       />
     </RadixDialog.Overlay>
-    <RadixDialog.Content asChild>
+    <RadixDialog.Content asChild aria-describedby={undefined}>
       <motion.div
         initial="initial"
         animate="animate"

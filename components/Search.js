@@ -357,13 +357,33 @@ const SearchComponent = ({ language = "en" }) => {
       <Toaster position="top-center" />
 
       <div className="w-full max-w-3xl mx-auto px-4 pb-24">
+        {/* v3 announcement banner */}
+        {!searchQuery && !hasResults && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center pt-6"
+          >
+            <a
+              href="https://github.com/aramb-dev/fatwa-search/releases"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-full hover:bg-gray-700 transition-colors"
+            >
+              <span className="bg-white text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+              Introducing v3 — Google-style results &amp; smart site picker
+              <span className="opacity-60">→</span>
+            </a>
+          </motion.div>
+        )}
+
         {/* Hero title — only shown before search */}
         {!searchQuery && !hasResults && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="text-center pt-16 pb-8"
+            className="text-center pt-8 pb-8"
           >
             <h1 className="text-3xl font-semibold text-gray-900 mb-1">{t.searchLabel}</h1>
             <p className="text-gray-500 text-sm">{t.searchDescription}</p>
@@ -552,37 +572,32 @@ const SearchComponent = ({ language = "en" }) => {
         isEnglish={isEnglish}
       />
 
-      <AnimatePresence mode="wait">
-        <FeedbackModal
-          key="feedback"
-          isOpen={activeModal === "feedback"}
+      <FeedbackModal
+        isOpen={activeModal === "feedback"}
+        onClose={closeModal}
+        feedback={feedback}
+        setFeedback={setFeedback}
+        onSubmit={handleFeedbackSubmit}
+        translations={t}
+      />
+      <SiteRequestModal
+        isOpen={activeModal === "siteRequest"}
+        onClose={closeModal}
+        siteInput={siteInput}
+        setSiteInput={setSiteInput}
+        onSubmit={handleSiteRequest}
+        translations={t}
+      />
+      {searchResults.length > 0 && (
+        <FilterModal
+          isOpen={activeModal === "filter"}
           onClose={closeModal}
-          feedback={feedback}
-          setFeedback={setFeedback}
-          onSubmit={handleFeedbackSubmit}
+          searchResults={searchResults}
+          siteFilters={siteFilters}
+          setSiteFilters={setSiteFilters}
           translations={t}
         />
-        <SiteRequestModal
-          key="siteRequest"
-          isOpen={activeModal === "siteRequest"}
-          onClose={closeModal}
-          siteInput={siteInput}
-          setSiteInput={setSiteInput}
-          onSubmit={handleSiteRequest}
-          translations={t}
-        />
-        {searchResults.length > 0 && (
-          <FilterModal
-            key="filter"
-            isOpen={activeModal === "filter"}
-            onClose={closeModal}
-            searchResults={searchResults}
-            siteFilters={siteFilters}
-            setSiteFilters={setSiteFilters}
-            translations={t}
-          />
-        )}
-      </AnimatePresence>
+      )}
     </>
   )
 }

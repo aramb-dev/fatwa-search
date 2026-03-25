@@ -1,7 +1,6 @@
 "use client";
 
-// Removed experimental React use() hook (server-only) to prevent client build/runtime errors on Netlify.
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Youtube, Search as SearchIcon } from "lucide-react";
@@ -33,8 +32,7 @@ const tabContentVariants = {
 export default function LanguageLayout({ children, params }) {
   const router = useRouter();
   const pathname = usePathname();
-  // params is passed directly to client layout components by Next.js App Router
-  const { lang } = params;
+  const { lang } = React.use(params);
   const [language, setLanguage] = useState(lang);
   const [activeTab, setActiveTab] = useState(
     pathname.includes("/yt-search") ? "youtube" : "search",

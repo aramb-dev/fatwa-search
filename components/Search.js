@@ -554,6 +554,7 @@ const SearchComponent = ({ language = "en" }) => {
 
       <AnimatePresence mode="wait">
         <FeedbackModal
+          key="feedback"
           isOpen={activeModal === "feedback"}
           onClose={closeModal}
           feedback={feedback}
@@ -562,6 +563,7 @@ const SearchComponent = ({ language = "en" }) => {
           translations={t}
         />
         <SiteRequestModal
+          key="siteRequest"
           isOpen={activeModal === "siteRequest"}
           onClose={closeModal}
           siteInput={siteInput}
@@ -571,6 +573,7 @@ const SearchComponent = ({ language = "en" }) => {
         />
         {searchResults.length > 0 && (
           <FilterModal
+            key="filter"
             isOpen={activeModal === "filter"}
             onClose={closeModal}
             searchResults={searchResults}

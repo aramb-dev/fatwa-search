@@ -4,17 +4,20 @@ import * as RadixDialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import { cn } from "../../lib/utils";
 
-// Animation variants for modal
-// NOTE: No y offset here — centering is handled via style={{ x: "-50%", y: "-50%" }}
-// on the motion.div so Framer Motion owns ALL transforms (avoids CSS class vs inline style conflict)
+// Animation variants for modal.
+// Centering (y: "-50%") is baked into the animate variant so Framer Motion
+// owns ALL y transforms — no conflict between CSS classes and inline styles.
+// initial/exit add +20px to slide up on open and down on close.
 const modalVariants = {
   initial: {
     opacity: 0,
     scale: 0.95,
+    y: "calc(-50% + 20px)",
   },
   animate: {
     opacity: 1,
     scale: 1,
+    y: "-50%",
     transition: {
       type: "spring",
       damping: 25,
@@ -24,6 +27,7 @@ const modalVariants = {
   exit: {
     opacity: 0,
     scale: 0.95,
+    y: "calc(-50% + 20px)",
     transition: {
       duration: 0.2,
     },
@@ -62,7 +66,7 @@ export const DialogContent = ({ children, className, ...props }) => (
         animate="animate"
         exit="exit"
         variants={modalVariants}
-        style={{ x: "-50%", y: "-50%" }}
+        style={{ x: "-50%" }}
         className={cn(
           "fixed left-[50%] top-[50%] z-50",
           "w-[calc(100%-2rem)] max-w-[670px]",

@@ -34,9 +34,11 @@ export async function GET(request) {
     // Support both new (GOOGLE_API_KEY) and legacy (REACT_APP_*) variable names
     const apiKey =
       process.env.GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY;
-    const searchEngineId = lang === "en"
-      ? (process.env.SEARCH_ENGINE_ID_EN || "c0078683c28c145c0")
-      : (process.env.SEARCH_ENGINE_ID || process.env.REACT_APP_SEARCH_ENGINE_ID);
+    const searchEngineId =
+      lang === "en"
+        ? process.env.SEARCH_ENGINE_ID_EN || "c0078683c28c145c0"
+        : process.env.SEARCH_ENGINE_ID ||
+          process.env.REACT_APP_SEARCH_ENGINE_ID;
 
     if (!apiKey || !searchEngineId) {
       return NextResponse.json(

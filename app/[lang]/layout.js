@@ -34,9 +34,7 @@ export default function LanguageLayout({ children, params }) {
   const pathname = usePathname();
   const { lang } = React.use(params);
   const [language, setLanguage] = useState(lang);
-  const [activeTab, setActiveTab] = useState(
-    pathname.includes("/yt-search") ? "youtube" : "search",
-  );
+  const activeTab = pathname.includes("/yt-search") ? "youtube" : "search";
 
   // Handle language changes
   const handleLanguageChange = (newLang) => {
@@ -54,15 +52,9 @@ export default function LanguageLayout({ children, params }) {
 
   // Handle tab changes with language prefix
   const handleTabChange = (value) => {
-    setActiveTab(value);
     const newPath = `/${language}/${value === "youtube" ? "yt-search" : "search"}`;
     router.push(newPath);
   };
-
-  // Update active tab based on pathname
-  useEffect(() => {
-    setActiveTab(pathname.includes("/yt-search") ? "youtube" : "search");
-  }, [pathname]);
 
   // Update language from params
   useEffect(() => {

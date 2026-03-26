@@ -99,9 +99,9 @@ export const SitePickerModal = ({
   const handleSelectAll = () => {
     setSelectedSites(sites);
     if (!isEnglish) {
-      setIncludeShamela(false);
-      setIncludeAlmaany(false);
-      setIncludeDorar(false);
+      setIncludeShamela(true);
+      setIncludeAlmaany(true);
+      setIncludeDorar(true);
     }
   };
 

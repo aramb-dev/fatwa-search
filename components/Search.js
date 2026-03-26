@@ -132,7 +132,7 @@ const SearchComponent = ({ language = "en" }) => {
   // the centered landing layout vs. sticky-top results layout, and gates
   // the "no results" empty state so it doesn't flash while typing.
   const [hasSearched, setHasSearched] = useState(false);
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   // Prevents the ?q= useEffect from re-firing after router.push writes
@@ -293,6 +293,9 @@ const SearchComponent = ({ language = "en" }) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     // scroll: false prevents the page jumping to the top on every new search
+    // Mark initial load done before pushing so the ?q= useEffect doesn't
+    // re-trigger a second performSearch when it sees the new URL param.
+    initialLoadDoneRef.current = true;
     router.push(`/${language}/search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
     setHasSearched(true);
     setSearchResults([]);

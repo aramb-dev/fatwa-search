@@ -1,12 +1,12 @@
 "use client";
 
-import React, { Suspense } from "react";
+import { use, Suspense } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import YoutubeSearch from "../../../components/Youtube-Search";
 import { translations } from "../../../translations";
 
 function YoutubeSearchComponent({ params }) {
-  const { lang } = React.use(params);
+  const { lang } = use(params);
   return <YoutubeSearch language={lang} translations={translations[lang]} />;
 }
 

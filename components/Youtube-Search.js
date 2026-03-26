@@ -48,7 +48,7 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
   const [startIndex, setStartIndex] = useState(0);
   const [activeModal, setActiveModal] = useState(null);
   const [channelFilters, setChannelFilters] = useState([]);
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   // Refs
@@ -257,6 +257,9 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
     debouncedSearch.cancel();
 
     if (searchQuery.trim()) {
+      // Mark initial load done before pushing so the ?q= useEffect doesn't
+      // re-trigger a second search when it sees the new URL param.
+      initialLoadDoneRef.current = true;
       router.push(`/${language}/yt-search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
     }
     setStartIndex(0);

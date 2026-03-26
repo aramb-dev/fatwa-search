@@ -1,12 +1,12 @@
 "use client";
 
-import React, { Suspense } from "react";
+import { use, Suspense } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import Search from "../../../components/Search";
 import { translations } from "../../../translations";
 
 function SearchComponent({ params }) {
-  const { lang } = React.use(params);
+  const { lang } = use(params);
   return <Search language={lang} translations={translations[lang]} />;
 }
 

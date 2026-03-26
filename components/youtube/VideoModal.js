@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Dialog } from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import { Button } from "../ui/button";
-import { Youtube, X } from "lucide-react";
+import { Play as Youtube, X } from "lucide-react";
 
 export const VideoModal = ({ video, onClose, translations }) => {
   if (!video) return null;

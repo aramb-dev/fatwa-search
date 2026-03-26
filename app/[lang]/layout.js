@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Youtube, Search as SearchIcon } from "lucide-react";
+import { Play as Youtube, Search as SearchIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { translations } from "../../translations";

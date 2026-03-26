@@ -4,30 +4,12 @@ import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Play as Youtube, Search as SearchIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { translations } from "../../translations";
 import ErrorBoundary from "../../components/ErrorBoundary";
 
 const cn = (...args) => clsx(...args);
 
-// Animation variants
-const tabContentVariants = {
-  enter: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.2,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: 20,
-    transition: {
-      duration: 0.2,
-    },
-  },
-};
 
 export default function LanguageLayout({ children, params }) {
   const router = useRouter();
@@ -125,17 +107,7 @@ export default function LanguageLayout({ children, params }) {
         </div>
 
         <ErrorBoundary>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${language}-${activeTab}`}
-              variants={tabContentVariants}
-              initial="exit"
-              animate="enter"
-              exit="exit"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          {children}
         </ErrorBoundary>
       </Tabs.Root>
     </div>

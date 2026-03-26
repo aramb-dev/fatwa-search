@@ -409,4 +409,11 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
   );
 };
 
+import PropTypes from "prop-types";
+
+YoutubeSearch.propTypes = {
+  translations: PropTypes.object.isRequired,
+  language: PropTypes.string,
+};
+
 export default YoutubeSearch;

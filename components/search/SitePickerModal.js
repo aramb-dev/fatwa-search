@@ -11,7 +11,7 @@ import { Button } from "../ui/button";
 import { Check, BookOpen, Library, BookMarked, Gem, Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-const SITE_LABELS_EN = {
+export const SITE_LABELS_EN = {
   "binothaimeen.net": "Ibn Uthaimeen",
   "alfawzan.af.org.sa": "Al-Fawzan",
   "lohaidan.af.org.sa": "Al-Luhaydan",
@@ -24,7 +24,7 @@ const SITE_LABELS_EN = {
   "rabee.net": "Rabee",
 };
 
-const SITE_LABELS_AR = {
+export const SITE_LABELS_AR = {
   "binothaimeen.net": "ابن عثيمين",
   "alfawzan.af.org.sa": "الفوزان",
   "lohaidan.af.org.sa": "اللحيدان",

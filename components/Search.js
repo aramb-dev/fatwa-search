@@ -10,24 +10,12 @@ import { translations } from "../translations";
 import { FeedbackModal } from "./search/FeedbackModal";
 import { SiteRequestModal } from "./search/SiteRequestModal";
 import { FilterModal } from "./search/FilterModal";
-import { SitePickerModal } from "./search/SitePickerModal";
+import { SitePickerModal, SITE_LABELS_EN, SITE_LABELS_AR } from "./search/SitePickerModal";
 import { searchCache } from "../lib/cache";
 import PropTypes from "prop-types";
 import { cn } from "../lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
-const SITE_LABELS = {
-  "binothaimeen.net": "Ibn Uthaimeen",
-  "alfawzan.af.org.sa": "Al-Fawzan",
-  "lohaidan.af.org.sa": "Al-Luhaydan",
-  "binbaz.org.sa": "Ibn Baz",
-  "al-badr.net": "Al-Badr",
-  "obied-aljabri.com": "Al-Jabri",
-  "aletioupi.com": "Aal Al-Shaikh",
-  "miraath.net": "Miraath",
-  "al-albany.com": "Al-Albani",
-  "rabee.net": "Rabee",
-};
 
 export const DEFAULT_SITES = [
   "binothaimeen.net",
@@ -383,12 +371,6 @@ const SearchComponent = ({ language = "en" }) => {
     }
   };
 
-  const toggleSite = (site) => {
-    setSelectedSites((prev) =>
-      prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
-    );
-  };
-
   const filteredResults = searchResults.filter((result) => {
     if (siteFilters.length === 0) return true;
     return siteFilters.some((site) => result.link.includes(site));
@@ -519,7 +501,7 @@ const SearchComponent = ({ language = "en" }) => {
                       key={site}
                       className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
                     >
-                      {SITE_LABELS[site] || site}
+                      {(isEnglish ? SITE_LABELS_EN : SITE_LABELS_AR)[site] || site}
                     </span>
                   ))}
                   {includeShamela && (

@@ -75,11 +75,11 @@ export const SitePickerModal = ({
   const [activeTab, setActiveTab] = useState("all");
 
   const tabs = isEnglish
-    ? [{ id: "all", label: "All" }]
+    ? [{ id: "all", label: translations.tabAll || "All" }]
     : [
-        { id: "all", label: "All" },
-        { id: "scholars", label: "Scholars" },
-        { id: "libraries", label: "Libraries" },
+        { id: "all", label: translations.tabAll || "All" },
+        { id: "scholars", label: translations.tabScholars || "Scholars" },
+        { id: "libraries", label: translations.tabLibraries || "Libraries" },
       ];
 
   const handleSelectAll = () => {
@@ -145,7 +145,9 @@ export const SitePickerModal = ({
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-0.5 mb-3">
-            {totalSelected} of {sites.length + (isEnglish ? 0 : 3)} selected
+            {(translations.xOfYSelected || "{x} of {y} selected")
+              .replace("{x}", totalSelected)
+              .replace("{y}", sites.length + (isEnglish ? 0 : 3))}
           </p>
 
           {/* Google-style tab strip */}

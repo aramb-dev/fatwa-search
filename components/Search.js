@@ -113,14 +113,14 @@ const SearchComponent = ({ language = "en" }) => {
   const getErrorMessage = (error) => {
     const msg = error.message.toLowerCase();
     if (msg.includes("failed to fetch") || msg.includes("network"))
-      return "Network error. Please check your internet connection and try again.";
+      return t.errorNetwork;
     if (msg.includes("quota") || msg.includes("limit"))
-      return "Search quota exceeded. Please try again in a few minutes.";
+      return t.errorQuota;
     if (msg.includes("timeout") || msg.includes("aborted"))
-      return "Search timed out. Please try again with different keywords.";
+      return t.errorTimeout;
     if (msg.includes("invalid") || msg.includes("bad request"))
-      return "Invalid search query. Please try different keywords.";
-    return "Search failed. Please try again or contact support if the problem persists.";
+      return t.errorInvalid;
+    return t.errorGeneric;
   };
 
   const isEnglish = language === "en";
@@ -343,7 +343,7 @@ const SearchComponent = ({ language = "en" }) => {
 
   const handleFeedbackSubmit = async () => {
     if (!feedback.trim()) {
-      toast.error("Please enter your feedback");
+      toast.error(t.pleaseEnterFeedback);
       return;
     }
     const formData = new FormData();
@@ -357,9 +357,9 @@ const SearchComponent = ({ language = "en" }) => {
       });
       setFeedback("");
       closeModal();
-      toast.success("Thank you for your feedback!");
+      toast.success(t.feedbackSuccess);
     } catch {
-      toast.error("Failed to submit feedback");
+      toast.error(t.feedbackFailed);
     }
   };
 
@@ -371,14 +371,14 @@ const SearchComponent = ({ language = "en" }) => {
     if (navigator.share) {
       navigator
         .share({
-          title: "Fatwa Search Results",
-          text: `Search results for "${searchQuery}"`,
+          title: t.shareTitleFatwa,
+          text: `${t.shareText} "${searchQuery}"`,
           url: url.toString(),
         })
         .catch(console.error);
     } else {
       navigator.clipboard.writeText(url.toString());
-      toast.success("Link copied to clipboard!");
+      toast.success(t.linkCopied);
     }
   };
 
@@ -415,9 +415,9 @@ const SearchComponent = ({ language = "en" }) => {
               className="inline-flex items-center gap-1.5 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-full hover:bg-gray-700 transition-colors"
             >
               <span className="bg-white text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                NEW
+                {t.newBadge}
               </span>
-              Introducing v3 — Google-style results &amp; smart site picker
+              {t.v3Announcement}
               <span className="opacity-60">→</span>
             </button>
           </motion.div>
@@ -612,13 +612,13 @@ const SearchComponent = ({ language = "en" }) => {
                   {t.noResults}
                 </h3>
                 <p className="text-sm text-gray-400 mb-4">
-                  Try different keywords or select more sites
+                  {t.tryDifferentKeywords}
                 </p>
                 <button
                   onClick={() => openModal("siteRequest")}
                   className="text-sm text-blue-600 hover:underline"
                 >
-                  Request a new site
+                  {t.requestNewSite}
                 </button>
               </motion.div>
             ) : null}
@@ -732,9 +732,9 @@ const SearchComponent = ({ language = "en" }) => {
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-gray-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full leading-none tracking-wide">
-                NEW
+                {t.newBadge}
               </span>
-              <DialogTitle className="text-base">What&apos;s new in v3</DialogTitle>
+              <DialogTitle className="text-base">{t.v3WhatsNew}</DialogTitle>
             </div>
           </DialogHeader>
 
@@ -745,7 +745,7 @@ const SearchComponent = ({ language = "en" }) => {
                   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
                 </svg>
               </span>
-              <span><strong className="text-gray-900">Google-style results</strong> — favicon, breadcrumb, blue title link, and clean snippet for every result.</span>
+              <span><strong className="text-gray-900">{t.v3Feature1Title}</strong> — {t.v3Feature1Desc}</span>
             </li>
             <li className="flex gap-3">
               <span className="mt-0.5 text-gray-400">
@@ -753,7 +753,7 @@ const SearchComponent = ({ language = "en" }) => {
                   <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
                 </svg>
               </span>
-              <span><strong className="text-gray-900">Smart site picker</strong> — choose exactly which scholar sites to search, organised by category.</span>
+              <span><strong className="text-gray-900">{t.v3Feature2Title}</strong> — {t.v3Feature2Desc}</span>
             </li>
             <li className="flex gap-3">
               <span className="mt-0.5 text-gray-400">
@@ -761,7 +761,7 @@ const SearchComponent = ({ language = "en" }) => {
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                 </svg>
               </span>
-              <span><strong className="text-gray-900">Ilm Search (English)</strong> — 49 curated English salafi sites with a dedicated search engine.</span>
+              <span><strong className="text-gray-900">{t.v3Feature3Title}</strong> — {t.v3Feature3Desc}</span>
             </li>
           </ul>
 
@@ -774,7 +774,7 @@ const SearchComponent = ({ language = "en" }) => {
               }}
               className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-full hover:bg-gray-700 transition-colors"
             >
-              Got it
+              {t.gotIt}
             </button>
           </div>
         </DialogContent>

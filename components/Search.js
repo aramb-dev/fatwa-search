@@ -140,6 +140,7 @@ const SearchComponent = ({ language = "en" }) => {
   const [activeModal, setActiveModal] = useState(null);
   const [showV3Modal, setShowV3Modal] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
   const [searchParams] = useSearchParams();
   const router = useRouter();
 
@@ -289,6 +290,7 @@ const SearchComponent = ({ language = "en" }) => {
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
       initialLoadDoneRef.current = true;
+      setHasSearched(true);
       performSearch(1, true);
     }
   }, [searchParams, performSearch]);
@@ -297,6 +299,7 @@ const SearchComponent = ({ language = "en" }) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     router.push(`/${language}/search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
+    setHasSearched(true);
     setSearchResults([]);
     setStartIndex(1);
     setHasMore(true);
@@ -386,19 +389,24 @@ const SearchComponent = ({ language = "en" }) => {
 
   const hasResults = filteredResults.length > 0;
   const isLoading = loading && searchQuery;
-  const showEmptyState = searchQuery && !loading && !hasResults;
+  const showEmptyState = hasSearched && !loading && !hasResults;
 
   return (
     <>
       <Toaster position="top-center" />
 
-      <div className="w-full max-w-3xl mx-auto px-4 pb-24">
+      <div className={cn(
+        "w-full max-w-3xl mx-auto px-4",
+        !hasSearched
+          ? "min-h-[calc(100vh-10rem)] flex flex-col justify-center pb-8"
+          : "pb-24"
+      )}>
         {/* v3 announcement pill — click to re-open modal */}
-        {!searchQuery && !hasResults && (
+        {!hasSearched && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex justify-center pt-6"
+            className="flex justify-center mb-6"
           >
             <button
               type="button"
@@ -415,12 +423,12 @@ const SearchComponent = ({ language = "en" }) => {
         )}
 
         {/* Hero title — only shown before search */}
-        {!searchQuery && !hasResults && (
+        {!hasSearched && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="text-center pt-8 pb-8"
+            className="text-center pb-6"
           >
             <h1 className="text-3xl font-semibold text-gray-900 mb-1">
               {t.searchLabel}
@@ -429,8 +437,8 @@ const SearchComponent = ({ language = "en" }) => {
           </motion.div>
         )}
 
-        {/* Sticky search bar */}
-        <div className={cn("sticky top-4 z-20", searchQuery && "pt-4")}>
+        {/* Search bar: sticky after first search, static on landing */}
+        <div className={cn(hasSearched && "sticky top-4 z-20 pt-4")}>
           <form onSubmit={handleSearch}>
             {/* Input row */}
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-md px-3 py-2">
@@ -472,14 +480,17 @@ const SearchComponent = ({ language = "en" }) => {
                 type="submit"
                 disabled={loading || !searchQuery.trim()}
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors",
+                  "flex items-center justify-center flex-shrink-0 transition-all gap-1.5 font-medium text-sm",
                   searchQuery.trim()
-                    ? "bg-gray-900 hover:bg-gray-700 text-white"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed",
+                    ? "bg-gray-900 hover:bg-gray-700 text-white rounded-full px-4 h-8"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed rounded-full w-8 h-8",
                 )}
                 aria-label={t.searchAction}
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-4 h-4 flex-shrink-0" />
+                {searchQuery.trim() && (
+                  <span>{loading ? t.searching : t.searchAction}</span>
+                )}
               </button>
             </div>
           </form>

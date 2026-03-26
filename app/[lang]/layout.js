@@ -80,11 +80,11 @@ export default function LanguageLayout({ children, params }) {
     <div className="min-h-screen bg-gray-50 py-4 px-4">
       {/* Language toggle above tabs */}
       <div className="flex justify-center mb-4">
-        <div className="inline-flex items-center rounded-lg border bg-white p-0.5 shadow-sm">
+        <div className="inline-flex items-center rounded-full border bg-white p-0.5 shadow-sm gap-0.5">
           <button
             onClick={() => handleLanguageChange("en")}
             className={cn(
-              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium",
+              "inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium",
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
@@ -98,7 +98,7 @@ export default function LanguageLayout({ children, params }) {
           <button
             onClick={() => handleLanguageChange("ar")}
             className={cn(
-              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium",
+              "inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium",
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
@@ -114,17 +114,17 @@ export default function LanguageLayout({ children, params }) {
 
       <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
         <div className="flex justify-center mb-4">
-          <Tabs.List className="inline-flex items-center rounded-lg border bg-white p-1 shadow-sm">
+          <Tabs.List className="inline-flex items-center rounded-full border bg-white p-1 shadow-sm gap-1">
             <Tabs.Trigger
               value="search"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-6 py-2.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium text-gray-500 transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               <SearchIcon className="h-4 w-4" />
               {translations[language].search}
             </Tabs.Trigger>
             <Tabs.Trigger
               value="youtube"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-6 py-2.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium text-gray-500 transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               <Youtube className="h-4 w-4" />
               {translations[language].youtubeSearch}

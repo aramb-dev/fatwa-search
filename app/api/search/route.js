@@ -36,7 +36,7 @@ export async function GET(request) {
       process.env.GOOGLE_API_KEY || process.env.REACT_APP_GOOGLE_API_KEY;
     const searchEngineId =
       lang === "en"
-        ? process.env.SEARCH_ENGINE_ID_EN || "c0078683c28c145c0"
+        ? process.env.SEARCH_ENGINE_ID_EN
         : process.env.SEARCH_ENGINE_ID ||
           process.env.REACT_APP_SEARCH_ENGINE_ID;
 

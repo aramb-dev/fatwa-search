@@ -3,7 +3,7 @@ import { Play as Youtube, Filter, Share2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { AnimatePresence } from "framer-motion";
 import { VideoGrid } from "./youtube/VideoGrid";
@@ -37,7 +37,7 @@ const CHANNELS = [
   "UC0ljB6Xfg9RWjFWNb4JO-IQ",
 ];
 
-const YoutubeSearch = ({ translations }) => {
+const YoutubeSearch = ({ translations, language = "ar" }) => {
   // State declarations
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -49,6 +49,7 @@ const YoutubeSearch = ({ translations }) => {
   const [activeModal, setActiveModal] = useState(null);
   const [channelFilters, setChannelFilters] = useState([]);
   const [searchParams] = useSearchParams();
+  const router = useRouter();
 
   // Refs
   const initialLoadDoneRef = useRef(false);
@@ -255,6 +256,9 @@ const YoutubeSearch = ({ translations }) => {
     // Cancel debounced search if user manually submits
     debouncedSearch.cancel();
 
+    if (searchQuery.trim()) {
+      router.push(`/${language}/yt-search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
+    }
     setStartIndex(0);
     setHasMore(true);
     await performYoutubeSearch(true);

@@ -5,8 +5,7 @@ import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce";
+import { useSearchParams, useRouter } from "next/navigation";
 import { translations } from "../translations";
 import { FeedbackModal } from "./search/FeedbackModal";
 import { SiteRequestModal } from "./search/SiteRequestModal";
@@ -142,6 +141,7 @@ const SearchComponent = ({ language = "en" }) => {
   const [showV3Modal, setShowV3Modal] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [searchParams] = useSearchParams();
+  const router = useRouter();
 
   const initialLoadDoneRef = useRef(false);
   const abortControllerRef = useRef(null);
@@ -283,14 +283,6 @@ const SearchComponent = ({ language = "en" }) => {
     ],
   );
 
-  const debouncedSearch = useDebouncedCallback(() => {
-    if (searchQuery.trim()) {
-      setSearchResults([]);
-      setStartIndex(1);
-      setHasMore(true);
-      performSearch(1, true);
-    }
-  }, 500);
 
   useEffect(() => {
     const queryParam = searchParams?.get("q");
@@ -304,7 +296,7 @@ const SearchComponent = ({ language = "en" }) => {
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    debouncedSearch.cancel();
+    router.push(`/${language}/search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
     setSearchResults([]);
     setStartIndex(1);
     setHasMore(true);
@@ -313,7 +305,6 @@ const SearchComponent = ({ language = "en" }) => {
 
   const handleQueryChange = (e) => {
     setSearchQuery(e.target.value);
-    debouncedSearch();
   };
 
   const openModal = (name) => setActiveModal(name);

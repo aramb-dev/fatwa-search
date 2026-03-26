@@ -1,13 +1,12 @@
 "use client";
 
-// Removed experimental use() hook - not needed for simple param extraction
-import { Suspense } from "react";
+import { use, Suspense } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import Search from "../../../components/Search";
 import { translations } from "../../../translations";
 
 function SearchComponent({ params }) {
-  const { lang } = params;
+  const { lang } = use(params);
   return <Search language={lang} translations={translations[lang]} />;
 }
 

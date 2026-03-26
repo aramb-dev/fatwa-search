@@ -1,44 +1,26 @@
 "use client";
 
-// Removed experimental React use() hook (server-only) to prevent client build/runtime errors on Netlify.
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Youtube, Search as SearchIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Play as Youtube, Search as SearchIcon } from "lucide-react";
 import { clsx } from "clsx";
 import { translations } from "../../translations";
 import ErrorBoundary from "../../components/ErrorBoundary";
 
 const cn = (...args) => clsx(...args);
 
-// Animation variants
-const tabContentVariants = {
-  enter: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.2,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: 20,
-    transition: {
-      duration: 0.2,
-    },
-  },
-};
 
 export default function LanguageLayout({ children, params }) {
   const router = useRouter();
   const pathname = usePathname();
-  // params is passed directly to client layout components by Next.js App Router
-  const { lang } = params;
+  const { lang } = React.use(params);
   const [language, setLanguage] = useState(lang);
-  const [activeTab, setActiveTab] = useState(
-    pathname.includes("/yt-search") ? "youtube" : "search",
-  );
+  // Derived directly from pathname rather than useState so it stays in sync
+  // with the Next.js route on every render — including browser back/forward.
+  // Using state + useEffect caused a one-render lag where Radix Tabs saw a
+  // mismatched value/content pair and rendered nothing.
+  const activeTab = pathname.includes("/yt-search") ? "youtube" : "search";
 
   // Handle language changes
   const handleLanguageChange = (newLang) => {
@@ -56,15 +38,9 @@ export default function LanguageLayout({ children, params }) {
 
   // Handle tab changes with language prefix
   const handleTabChange = (value) => {
-    setActiveTab(value);
     const newPath = `/${language}/${value === "youtube" ? "yt-search" : "search"}`;
     router.push(newPath);
   };
-
-  // Update active tab based on pathname
-  useEffect(() => {
-    setActiveTab(pathname.includes("/yt-search") ? "youtube" : "search");
-  }, [pathname]);
 
   // Update language from params
   useEffect(() => {
@@ -82,11 +58,11 @@ export default function LanguageLayout({ children, params }) {
     <div className="min-h-screen bg-gray-50 py-4 px-4">
       {/* Language toggle above tabs */}
       <div className="flex justify-center mb-4">
-        <div className="inline-flex items-center rounded-lg border bg-white p-0.5 shadow-sm">
+        <div className="inline-flex items-center rounded-full border bg-white p-0.5 shadow-sm gap-0.5">
           <button
             onClick={() => handleLanguageChange("en")}
             className={cn(
-              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium",
+              "inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium",
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
@@ -100,7 +76,7 @@ export default function LanguageLayout({ children, params }) {
           <button
             onClick={() => handleLanguageChange("ar")}
             className={cn(
-              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium",
+              "inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium",
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
@@ -116,17 +92,17 @@ export default function LanguageLayout({ children, params }) {
 
       <Tabs.Root value={activeTab} onValueChange={handleTabChange}>
         <div className="flex justify-center mb-4">
-          <Tabs.List className="inline-flex items-center rounded-lg border bg-white p-1 shadow-sm">
+          <Tabs.List className="inline-flex items-center rounded-full border bg-white p-1 shadow-sm gap-1">
             <Tabs.Trigger
               value="search"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-6 py-2.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium text-gray-500 transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               <SearchIcon className="h-4 w-4" />
               {translations[language].search}
             </Tabs.Trigger>
             <Tabs.Trigger
               value="youtube"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-6 py-2.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-900 data-[state=active]:shadow-sm"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium text-gray-500 transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               <Youtube className="h-4 w-4" />
               {translations[language].youtubeSearch}
@@ -135,17 +111,7 @@ export default function LanguageLayout({ children, params }) {
         </div>
 
         <ErrorBoundary>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${language}-${activeTab}`}
-              variants={tabContentVariants}
-              initial="exit"
-              animate="enter"
-              exit="exit"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          {children}
         </ErrorBoundary>
       </Tabs.Root>
     </div>

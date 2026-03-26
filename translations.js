@@ -2,11 +2,10 @@ export const translations = {
   en: {
     search: "Search",
     youtubeSearch: "YouTube Search",
-    searchLabel: "Fatwa Search",
-    searchDescription: "Search the Mashayikh sites for your keyword",
-    searchPlaceholder: "Enter your search query...",
-    arabicTip:
-      "Putting your keywords in Arabic is more effective as these are Arabic sites",
+    searchLabel: "Ilm Search",
+    searchDescription: "Authentic Islamic Knowledge",
+    searchPlaceholder: "Search Islamic knowledge...",
+    arabicTip: "",
     requestSite: "Request Site",
     searchShamela: "Search Shamela.ws",
     searchAlmaany: "Search Almaany.com",
@@ -56,6 +55,45 @@ export const translations = {
     requestScholar: "Request Scholar",
     enterScholarName: "Enter scholar's name",
     pasteYoutubeLink: "Paste the YouTube channel URL you'd like to add",
+    // Error messages
+    errorNetwork:
+      "Network error. Please check your internet connection and try again.",
+    errorQuota: "Search quota exceeded. Please try again in a few minutes.",
+    errorTimeout:
+      "Search timed out. Please try again with different keywords.",
+    errorInvalid: "Invalid search query. Please try different keywords.",
+    errorGeneric:
+      "Search failed. Please try again or contact support if the problem persists.",
+    // Feedback / share toasts
+    pleaseEnterFeedback: "Please enter your feedback",
+    feedbackSuccess: "Thank you for your feedback!",
+    feedbackFailed: "Failed to submit feedback",
+    shareTitleFatwa: "Fatwa Search Results",
+    shareText: "Search results for",
+    linkCopied: "Link copied to clipboard!",
+    // Announcement pill
+    newBadge: "NEW",
+    v3Announcement:
+      "Introducing v3 — Google-style results & smart site picker",
+    // Empty state
+    tryDifferentKeywords: "Try different keywords or select more sites",
+    // Site picker tabs & count
+    tabAll: "All",
+    tabScholars: "Scholars",
+    tabLibraries: "Libraries",
+    xOfYSelected: "{x} of {y} selected",
+    // v3 announcement modal
+    v3WhatsNew: "What's new in v3",
+    v3Feature1Title: "Google-style results",
+    v3Feature1Desc:
+      "Favicon, breadcrumb, blue title link, and clean snippet for every result.",
+    v3Feature2Title: "Smart site picker",
+    v3Feature2Desc:
+      "Choose exactly which scholar sites to search, organised by category.",
+    v3Feature3Title: "Ilm Search (English)",
+    v3Feature3Desc:
+      "49 curated English salafi sites with a dedicated search engine.",
+    gotIt: "Got it",
   },
   ar: {
     search: "بحث",
@@ -113,5 +151,45 @@ export const translations = {
     requestScholar: "طلب إضافة شيخ",
     enterScholarName: "أدخل اسم الشيخ",
     pasteYoutubeLink: "الصق رابط قناة اليوتيوب التي تريد إضافتها",
+    // Error messages
+    errorNetwork:
+      "خطأ في الشبكة. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    errorQuota: "تم تجاوز حصة البحث. يرجى المحاولة مرة أخرى بعد بضع دقائق.",
+    errorTimeout:
+      "انتهت مهلة البحث. يرجى المحاولة مرة أخرى بكلمات مفتاحية مختلفة.",
+    errorInvalid: "استعلام بحث غير صالح. يرجى تجربة كلمات مفتاحية مختلفة.",
+    errorGeneric:
+      "فشل البحث. يرجى المحاولة مرة أخرى أو التواصل مع الدعم إذا استمرت المشكلة.",
+    // Feedback / share toasts
+    pleaseEnterFeedback: "الرجاء إدخال ملاحظاتك",
+    feedbackSuccess: "شكراً على ملاحظاتك!",
+    feedbackFailed: "فشل في إرسال الملاحظات",
+    shareTitleFatwa: "نتائج بحث الفتاوى",
+    shareText: "نتائج البحث عن",
+    linkCopied: "تم نسخ الرابط!",
+    // Announcement pill
+    newBadge: "جديد",
+    v3Announcement:
+      "تعرف على الإصدار v3 — نتائج بأسلوب جوجل ومختار المواقع الذكي",
+    // Empty state
+    tryDifferentKeywords:
+      "جرب كلمات مفتاحية مختلفة أو اختر المزيد من المواقع",
+    // Site picker tabs & count
+    tabAll: "الكل",
+    tabScholars: "العلماء",
+    tabLibraries: "المكتبات",
+    xOfYSelected: "{x} من {y} محدد",
+    // v3 announcement modal
+    v3WhatsNew: "الجديد في الإصدار v3",
+    v3Feature1Title: "نتائج بأسلوب جوجل",
+    v3Feature1Desc:
+      "أيقونة الموقع، مسار التنقل، رابط العنوان الأزرق، ومقتطف واضح لكل نتيجة.",
+    v3Feature2Title: "مختار المواقع الذكي",
+    v3Feature2Desc:
+      "اختر بالضبط مواقع العلماء التي تريد البحث فيها، مرتبة حسب الفئة.",
+    v3Feature3Title: "بحث شامل (إنجليزي)",
+    v3Feature3Desc:
+      "49 موقعاً سلفياً إنجليزياً منتقى بعناية مع محرك بحث مخصص.",
+    gotIt: "حسناً",
   },
 };

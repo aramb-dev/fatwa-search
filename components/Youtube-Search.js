@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Youtube, Filter, Share2 } from "lucide-react";
+import { Play as Youtube, Filter, Share2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { AnimatePresence } from "framer-motion";
 import { VideoGrid } from "./youtube/VideoGrid";
@@ -37,7 +37,7 @@ const CHANNELS = [
   "UC0ljB6Xfg9RWjFWNb4JO-IQ",
 ];
 
-const YoutubeSearch = ({ translations }) => {
+const YoutubeSearch = ({ translations, language = "ar" }) => {
   // State declarations
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -48,7 +48,8 @@ const YoutubeSearch = ({ translations }) => {
   const [startIndex, setStartIndex] = useState(0);
   const [activeModal, setActiveModal] = useState(null);
   const [channelFilters, setChannelFilters] = useState([]);
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Refs
   const initialLoadDoneRef = useRef(false);
@@ -255,6 +256,12 @@ const YoutubeSearch = ({ translations }) => {
     // Cancel debounced search if user manually submits
     debouncedSearch.cancel();
 
+    if (searchQuery.trim()) {
+      // Mark initial load done before pushing so the ?q= useEffect doesn't
+      // re-trigger a second search when it sees the new URL param.
+      initialLoadDoneRef.current = true;
+      router.push(`/${language}/yt-search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
+    }
     setStartIndex(0);
     setHasMore(true);
     await performYoutubeSearch(true);
@@ -403,6 +410,13 @@ const YoutubeSearch = ({ translations }) => {
       </div>
     </div>
   );
+};
+
+import PropTypes from "prop-types";
+
+YoutubeSearch.propTypes = {
+  translations: PropTypes.object.isRequired,
+  language: PropTypes.string,
 };
 
 export default YoutubeSearch;

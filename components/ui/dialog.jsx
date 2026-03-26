@@ -4,17 +4,20 @@ import * as RadixDialog from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import { cn } from "../../lib/utils";
 
-// Animation variants for modal
+// Animation variants for modal.
+// Centering (y: "-50%") is baked into the animate variant so Framer Motion
+// owns ALL y transforms — no conflict between CSS classes and inline styles.
+// initial/exit add +20px to slide up on open and down on close.
 const modalVariants = {
   initial: {
     opacity: 0,
     scale: 0.95,
-    y: 20,
+    y: "calc(-50% + 20px)",
   },
   animate: {
     opacity: 1,
     scale: 1,
-    y: 0,
+    y: "-50%",
     transition: {
       type: "spring",
       damping: 25,
@@ -24,7 +27,7 @@ const modalVariants = {
   exit: {
     opacity: 0,
     scale: 0.95,
-    y: 20,
+    y: "calc(-50% + 20px)",
     transition: {
       duration: 0.2,
     },
@@ -57,21 +60,20 @@ export const DialogContent = ({ children, className, ...props }) => (
         className="fixed inset-0 z-50 bg-black/50"
       />
     </RadixDialog.Overlay>
-    <RadixDialog.Content asChild>
+    <RadixDialog.Content asChild aria-describedby={undefined}>
       <motion.div
         initial="initial"
         animate="animate"
         exit="exit"
         variants={modalVariants}
+        style={{ x: "-50%" }}
         className={cn(
           "fixed left-[50%] top-[50%] z-50",
-          "translate-x-[-50%] translate-y-[-50%]",
-          "w-full max-w-[670px]",
+          "w-[calc(100%-2rem)] max-w-[670px]",
           "min-h-[200px]",
           "bg-white rounded-lg",
           "p-6",
           "shadow-lg",
-          "mx-4 sm:mx-auto",
           "overflow-y-auto max-h-[90vh]",
           "focus:outline-none",
           className,

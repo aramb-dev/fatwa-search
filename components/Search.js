@@ -1,41 +1,21 @@
 import React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Search, Plus, Filter, Share2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Switch } from "./ui/switch";
+import { Search, Plus, Share2 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
+import { Button } from "./ui/button";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce";
+import { useSearchParams, useRouter } from "next/navigation";
 import { translations } from "../translations";
 import { FeedbackModal } from "./search/FeedbackModal";
 import { SiteRequestModal } from "./search/SiteRequestModal";
 import { FilterModal } from "./search/FilterModal";
-import { SiteFilters } from "./search/SiteFilters";
+import { SitePickerModal, SITE_LABELS_EN, SITE_LABELS_AR } from "./search/SitePickerModal";
 import { searchCache } from "../lib/cache";
 import PropTypes from "prop-types";
 import { cn } from "../lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
-const buttonVariants = {
-  hover: { scale: 1.05 },
-  tap: { scale: 0.95 },
-  initial: { scale: 1 },
-};
-
-const resultsVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
-};
-
-const filterVariants = {
-  initial: { opacity: 0, x: 20 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: 20 },
-};
 
 export const DEFAULT_SITES = [
   "binothaimeen.net",
@@ -50,9 +30,66 @@ export const DEFAULT_SITES = [
   "rabee.net",
 ];
 
+export const ENGLISH_SITES = [
+  "islamtees.wordpress.com",
+  "bakkah.net",
+  "greatrewards.abdurrahman.org",
+  "authentic-dua.com",
+  "thenoblequran.com",
+  "sunnah.com",
+  "salaf.com",
+  "aqidah.com",
+  "tawhidfirst.com",
+  "abovethethrone.com",
+  "manhaj.com",
+  "salafis.com",
+  "piousmuslim.com",
+  "ibntaymiyyah.com",
+  "themadkhalis.com",
+  "wahhabis.com",
+  "sahihalbukhari.com",
+  "sahihmuslim.com",
+  "nawawis40hadith.com",
+  "fatwaislam.com",
+  "learnaboutislam.co.uk",
+  "salafisounds.com",
+  "sunnahaudio.com",
+  "sunnahradio.net",
+  "troid.org",
+  "bidah.com",
+  "islamagainstextremism.com",
+  "kharijites.com",
+  "takfiris.com",
+  "mutazilah.com",
+  "asharis.com",
+  "maturidis.com",
+  "sayyidqutb.com",
+  "ikhwanis.com",
+  "barelwis.com",
+  "shariah.ws",
+  "dajjaal.com",
+  "aboutatheism.net",
+  "islamjesus.ws",
+  "islammoses.com",
+  "islaam.ca",
+  "prophetmuhammad.name",
+  "abukhadeejah.com",
+  "embodyislam.org",
+  "knowledgeofislamblog.wordpress.com",
+  "miraathpubs.net",
+  "mpubs.org",
+  "dusunnah.com",
+  "quran.com",
+];
+
+const resultsVariants = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -10 },
+};
+
 const SearchComponent = ({ language = "en" }) => {
   let t = translations[language];
-
   if (!t) {
     console.error("Missing translations for language:", language);
     t = translations.en;
@@ -60,46 +97,24 @@ const SearchComponent = ({ language = "en" }) => {
 
   const resultsPerPage = 10;
 
-  /**
-   * Provides user-friendly, actionable error messages based on error type
-   * @param {Error} error - The error object
-   * @returns {string} - User-friendly error message
-   */
   const getErrorMessage = (error) => {
-    const errorMessage = error.message.toLowerCase();
-
-    // Network errors
-    if (
-      errorMessage.includes("failed to fetch") ||
-      errorMessage.includes("network")
-    ) {
-      return "Network error. Please check your internet connection and try again.";
-    }
-
-    // Quota exceeded
-    if (errorMessage.includes("quota") || errorMessage.includes("limit")) {
-      return "Search quota exceeded. Please try again in a few minutes.";
-    }
-
-    // Timeout errors
-    if (errorMessage.includes("timeout") || errorMessage.includes("aborted")) {
-      return "Search timed out. Please try again with different keywords.";
-    }
-
-    // Invalid query
-    if (
-      errorMessage.includes("invalid") ||
-      errorMessage.includes("bad request")
-    ) {
-      return "Invalid search query. Please try different keywords.";
-    }
-
-    // Generic fallback with helpful suggestion
-    return `Search failed. Please try again or contact support if the problem persists.`;
+    const msg = error.message.toLowerCase();
+    if (msg.includes("failed to fetch") || msg.includes("network"))
+      return t.errorNetwork;
+    if (msg.includes("quota") || msg.includes("limit"))
+      return t.errorQuota;
+    if (msg.includes("timeout") || msg.includes("aborted"))
+      return t.errorTimeout;
+    if (msg.includes("invalid") || msg.includes("bad request"))
+      return t.errorInvalid;
+    return t.errorGeneric;
   };
 
+  const isEnglish = language === "en";
+  const sitesForLanguage = isEnglish ? ENGLISH_SITES : DEFAULT_SITES;
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [sites] = useState(DEFAULT_SITES);
+  const [sites] = useState(sitesForLanguage);
   const [includeShamela, setIncludeShamela] = useState(false);
   const [includeAlmaany, setIncludeAlmaany] = useState(false);
   const [includeDorar, setIncludeDorar] = useState(false);
@@ -108,34 +123,35 @@ const SearchComponent = ({ language = "en" }) => {
   const [siteInput, setSiteInput] = useState("");
   const [startIndex, setStartIndex] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [selectedSites, setSelectedSites] = useState(sites);
-  const [isShiftPressed, setIsShiftPressed] = useState(false);
-  const [isMobileSelecting, setIsMobileSelecting] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [selectedSites, setSelectedSites] = useState(sitesForLanguage);
   const [siteFilters, setSiteFilters] = useState([]);
   const [activeModal, setActiveModal] = useState(null);
-  const [searchParams] = useSearchParams();
+  const [showV3Modal, setShowV3Modal] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  // Tracks whether the user has submitted at least one search. Controls
+  // the centered landing layout vs. sticky-top results layout, and gates
+  // the "no results" empty state so it doesn't flash while typing.
+  const [hasSearched, setHasSearched] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
+  // Prevents the ?q= useEffect from re-firing after router.push writes
+  // the same param back — without this guard, every push would trigger
+  // a second search.
   const initialLoadDoneRef = useRef(false);
-  const resultsContainerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
-  /**
-   * Performs a search across configured scholar websites
-   * Handles caching, parallel searches, request cancellation, and result sorting
-   * @param {number} start - The starting index for pagination
-   * @param {boolean} isNewSearch - Whether this is a new search or loading more results
-   * @returns {Promise<void>}
-   */
+  useEffect(() => {
+    if (!localStorage.getItem("v3-announced")) {
+      setShowV3Modal(true);
+    }
+  }, []);
+
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
-      // Cancel previous request if still running
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-
-      // Create new AbortController for this request
       abortControllerRef.current = new AbortController();
       const signal = abortControllerRef.current.signal;
 
@@ -148,7 +164,6 @@ const SearchComponent = ({ language = "en" }) => {
           ...(includeDorar ? ["dorar.net"] : []),
         ];
 
-        // Check cache first
         const cacheKey = {
           query: searchQuery,
           sites: regularSites,
@@ -171,20 +186,17 @@ const SearchComponent = ({ language = "en" }) => {
 
         let allResults = [];
 
-        // Search special sites in parallel
         const specialSearches = specialSitesToSearch.map(
           async (specialSite) => {
             const response = await fetch(
-              `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}`,
+              `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}&lang=${language}`,
               { signal },
             );
             const data = await response.json();
-
             if (data.error) {
               console.error(`Search error for ${specialSite}:`, data.error);
               return [];
             }
-
             return data.items || [];
           },
         );
@@ -192,24 +204,20 @@ const SearchComponent = ({ language = "en" }) => {
         const specialResults = await Promise.all(specialSearches);
         allResults = specialResults.flat();
 
-        // Search regular sites
         if (regularSites.length > 0) {
           const regularSiteQuery = regularSites
             .map((site) => `site:${site}`)
             .join(" OR ");
-
           const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`;
           const regularResponse = await fetch(
-            `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}`,
+            `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
             { signal },
           );
           const regularData = await regularResponse.json();
-
           if (regularData.error) {
             console.error("Search error:", regularData.error);
             throw new Error(regularData.error);
           }
-
           if (regularData.items) {
             allResults = [...allResults, ...regularData.items];
           }
@@ -220,7 +228,6 @@ const SearchComponent = ({ language = "en" }) => {
           const bIsDorar = b.link.includes("dorar.net");
           if (aIsDorar && !bIsDorar) return -1;
           if (!aIsDorar && bIsDorar) return 1;
-
           const aIsSpecial = specialSitesToSearch.some((site) =>
             a.link.includes(site),
           );
@@ -234,12 +241,9 @@ const SearchComponent = ({ language = "en" }) => {
           const newResults = isNewSearch
             ? allResults
             : [...prev, ...allResults];
-
-          // Cache the results for new searches only
           if (isNewSearch && allResults.length > 0) {
             searchCache.set(cacheKey, allResults);
           }
-
           return newResults;
         });
 
@@ -253,10 +257,7 @@ const SearchComponent = ({ language = "en" }) => {
           });
         }
       } catch (error) {
-        // Don't show error if request was cancelled
-        if (error.name === "AbortError") {
-          return;
-        }
+        if (error.name === "AbortError") return;
         console.error("Search failed:", error);
         toast.error(getErrorMessage(error), {
           duration: 7000,
@@ -277,104 +278,47 @@ const SearchComponent = ({ language = "en" }) => {
     ],
   );
 
-  /**
-   * Debounced search callback for auto-search as user types
-   * Waits 500ms after user stops typing before performing search
-   * Prevents excessive API calls during rapid user input
-   * @returns {void}
-   */
-  const debouncedSearch = useDebouncedCallback(
-    () => {
-      if (searchQuery.trim()) {
-        setSearchResults([]);
-        setStartIndex(1);
-        setHasMore(true);
-        performSearch(1, true);
-      }
-    },
-    500, // 500ms delay
-  );
 
   useEffect(() => {
     const queryParam = searchParams?.get("q");
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
       initialLoadDoneRef.current = true;
+      setHasSearched(true);
       performSearch(1, true);
     }
   }, [searchParams, performSearch]);
 
-  /**
-   * Handles search form submission
-   * Cancels any pending debounced searches and performs immediate search
-   * @param {Event} e - Form submission event
-   * @returns {Promise<void>}
-   */
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-
-    // Cancel debounced search if user manually submits
-    debouncedSearch.cancel();
-
+    // scroll: false prevents the page jumping to the top on every new search
+    // Mark initial load done before pushing so the ?q= useEffect doesn't
+    // re-trigger a second performSearch when it sees the new URL param.
+    initialLoadDoneRef.current = true;
+    router.push(`/${language}/search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
+    setHasSearched(true);
     setSearchResults([]);
     setStartIndex(1);
     setHasMore(true);
     await performSearch(1, true);
   };
 
-  /**
-   * Opens a modal by setting the active modal state
-   * @param {string} modalName - The name of the modal to open ("feedback", "filter", "siteRequest")
-   * @returns {void}
-   */
-  const openModal = (modalName) => {
-    setActiveModal(modalName);
+  const handleQueryChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
-  /**
-   * Closes any open modal by clearing the active modal state
-   * @returns {void}
-   */
-  const closeModal = () => {
-    setActiveModal(null);
-  };
+  const openModal = (name) => setActiveModal(name);
+  const closeModal = () => setActiveModal(null);
 
-  /** Opens the feedback modal */
-  const openFeedbackModal = () => openModal("feedback");
-  /** Opens the filter modal */
-  const openFilterModal = () => openModal("filter");
-  /** Opens the site request modal */
-  const openSiteRequestModal = () => openModal("siteRequest");
-
-  useEffect(() => {
-    const handleKeyDown = (e) => e.shiftKey && setIsShiftPressed(true);
-    const handleKeyUp = (e) => !e.shiftKey && setIsShiftPressed(false);
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
-
-  /**
-   * Handles site request form submission via Netlify Forms
-   * Validates input and submits new scholar site request
-   * @returns {Promise<void>}
-   */
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
       toast.error(t.pleaseEnterSite);
       return;
     }
-
     const formData = new FormData();
     formData.append("form-name", "site-request");
     formData.append("requested-site", siteInput);
-
     try {
       await fetch("/", {
         method: "POST",
@@ -384,65 +328,49 @@ const SearchComponent = ({ language = "en" }) => {
       setSiteInput("");
       closeModal();
       toast.success(t.requestSubmitted);
-    } catch (error) {
+    } catch {
       toast.error(t.requestFailed);
     }
   };
 
-  /**
-   * Handles feedback form submission via Netlify Forms
-   * Validates input and submits user feedback
-   * @returns {Promise<void>}
-   */
   const handleFeedbackSubmit = async () => {
     if (!feedback.trim()) {
-      toast.error("Please enter your feedback");
+      toast.error(t.pleaseEnterFeedback);
       return;
     }
-
     const formData = new FormData();
     formData.append("form-name", "feedback");
     formData.append("feedback", feedback);
-
     try {
       await fetch("/", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(formData).toString(),
       });
-      setShowFeedback(false);
       setFeedback("");
       closeModal();
-      toast.success("Thank you for your feedback!");
-    } catch (error) {
-      toast.error("Failed to submit feedback");
+      toast.success(t.feedbackSuccess);
+    } catch {
+      toast.error(t.feedbackFailed);
     }
   };
 
-  /**
-   * Handles sharing search results
-   * Uses Web Share API if available, falls back to clipboard copy
-   * @param {Event} e - Click event
-   * @returns {void}
-   */
   const handleShare = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
     const url = new URL(window.location.href);
     url.searchParams.set("q", searchQuery);
-
     if (navigator.share) {
       navigator
         .share({
-          title: "Fatwa Search Results",
-          text: `Check out these search results for "${searchQuery}"`,
+          title: t.shareTitleFatwa,
+          text: `${t.shareText} "${searchQuery}"`,
           url: url.toString(),
         })
         .catch(console.error);
     } else {
       navigator.clipboard.writeText(url.toString());
-      toast.success("Link copied to clipboard!");
+      toast.success(t.linkCopied);
     }
   };
 
@@ -451,391 +379,453 @@ const SearchComponent = ({ language = "en" }) => {
     return siteFilters.some((site) => result.link.includes(site));
   });
 
+  const hasResults = filteredResults.length > 0;
+  const isLoading = loading && searchQuery;
+  const showEmptyState = hasSearched && !loading && !hasResults;
+
   return (
     <>
       <Toaster position="top-center" />
-      <Card className="w-full max-w-6xl mx-auto mb-16">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>{t.searchLabel}</CardTitle>
-            <p className="text-sm text-gray-500">{t.searchDescription}</p>
-            <p className="text-sm text-gray-500">{t.arabicTip}</p>
-          </div>
-          <div className="flex flex-col gap-2 items-end">
-            <Button
-              onClick={openSiteRequestModal}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              aria-label={t.requestSite || "Request to add a new site"}
-            >
-              <Plus className="h-4 w-4" />
-              {t.requestSite}
-            </Button>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">{t.searchShamela}</span>
-                <Switch
-                  checked={includeShamela}
-                  onCheckedChange={setIncludeShamela}
-                  className="data-[state=checked]:bg-green-600"
-                  aria-label={t.searchShamela || "Include Shamela in search"}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">{t.searchAlmaany}</span>
-                <Switch
-                  checked={includeAlmaany}
-                  onCheckedChange={setIncludeAlmaany}
-                  className="data-[state=checked]:bg-green-600"
-                  aria-label={t.searchAlmaany || "Include Almaany in search"}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">{t.searchDorar}</span>
-                <Switch
-                  checked={includeDorar}
-                  onCheckedChange={setIncludeDorar}
-                  className="data-[state=checked]:bg-green-600"
-                  aria-label={t.searchDorar || "Include Dorar in search"}
-                />
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSearch} className="space-y-4">
-            <motion.div className="flex gap-2">
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchPlaceholder}
-                className="flex-grow"
-                aria-label={t.searchPlaceholder || "Search Islamic scholars"}
-                type="search"
-              />
-              <motion.div
-                variants={buttonVariants}
-                initial="initial"
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className={cn(
-                    "flex items-center gap-2",
-                    searchQuery.trim() &&
-                      "bg-gray-900 text-white hover:bg-gray-800",
-                  )}
-                >
-                  <Search className="h-4 w-4" />
-                  {loading ? t.searching : t.searchAction}
-                </Button>
-              </motion.div>
 
+      <div className={cn(
+        "w-full max-w-3xl mx-auto px-4",
+        !hasSearched
+          ? "min-h-[calc(100vh-10rem)] flex flex-col justify-center pb-8"
+          : "pb-24"
+      )}>
+        {/* v3 announcement pill — click to re-open modal */}
+        {!hasSearched && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-center mb-6"
+          >
+            <button
+              type="button"
+              onClick={() => setShowV3Modal(true)}
+              className="inline-flex items-center gap-1.5 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-full hover:bg-gray-700 transition-colors"
+            >
+              <span className="bg-white text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                {t.newBadge}
+              </span>
+              {t.v3Announcement}
+              <span className="opacity-60">→</span>
+            </button>
+          </motion.div>
+        )}
+
+        {/* Hero title — only shown before search */}
+        {!hasSearched && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="text-center pb-6"
+          >
+            <h1 className="text-3xl font-semibold text-gray-900 mb-1">
+              {t.searchLabel}
+            </h1>
+            <p className="text-gray-500 text-sm">{t.searchDescription}</p>
+          </motion.div>
+        )}
+
+        {/* Search bar: sticky after first search, static on landing */}
+        <div className={cn(hasSearched && "sticky top-4 z-20 pt-4")}>
+          <form onSubmit={handleSearch}>
+            {/* Input row */}
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-md px-3 py-2">
+              {/* + Sites button */}
+              <button
+                type="button"
+                onClick={() => openModal("sitePicker")}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center flex-shrink-0 transition-colors"
+                aria-label="Select sites to search"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+
+              {/* Query input */}
+              <input
+                value={searchQuery}
+                onChange={handleQueryChange}
+                placeholder={t.searchPlaceholder || "Ask anything"}
+                className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400 text-base min-w-0"
+                aria-label={t.searchPlaceholder}
+                type="search"
+                autoFocus
+              />
+
+              {/* Share button */}
               {searchQuery && (
-                <Button
-                  variant="outline"
+                <button
+                  type="button"
                   onClick={handleShare}
-                  className="flex items-center gap-2"
-                  aria-label={`${t.share || "Share"} search results for "${searchQuery}"`}
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  aria-label={t.share || "Share"}
                 >
-                  <Share2 className="h-4 w-4" />
-                  {t.share}
-                </Button>
+                  <Share2 className="w-4 h-4" />
+                </button>
               )}
 
-              <AnimatePresence>
-                {searchResults.length > 0 && (
-                  <motion.div
-                    variants={filterVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                  >
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={openFilterModal}
-                      className="flex items-center gap-2"
-                      aria-label={`${t.filter || "Filter"} results by site (${searchResults.length} results)`}
-                    >
-                      <Filter className="h-4 w-4" />
-                      {t.filter}
-                    </Button>
-                  </motion.div>
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={loading || !searchQuery.trim()}
+                className={cn(
+                  "flex items-center justify-center flex-shrink-0 transition-all gap-1.5 font-medium text-sm",
+                  searchQuery.trim()
+                    ? "bg-gray-900 hover:bg-gray-700 text-white rounded-full px-4 h-8"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed rounded-full w-8 h-8",
                 )}
-              </AnimatePresence>
-            </motion.div>
-
-            <SiteFilters
-              sites={sites}
-              selectedSites={selectedSites}
-              setSelectedSites={setSelectedSites}
-              isShiftPressed={isShiftPressed}
-              isMobileSelecting={isMobileSelecting}
-              setIsMobileSelecting={setIsMobileSelecting}
-              translations={t}
-            />
+                aria-label={t.searchAction}
+              >
+                <Search className="w-4 h-4 flex-shrink-0" />
+                {searchQuery.trim() && (
+                  <span>{loading ? t.searching : t.searchAction}</span>
+                )}
+              </button>
+            </div>
           </form>
 
-          <div ref={resultsContainerRef} className="mt-6 space-y-4 scroll-mt-4">
-            <AnimatePresence mode="wait">
-              {(() => {
-                const isLoading = loading && searchQuery;
-                const hasResults = searchQuery && filteredResults.length > 0;
-                const showEmptyState = searchQuery && !loading;
-
-                if (isLoading) {
-                  return (
-                    <motion.div
-                      className="space-y-4"
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
-                      variants={resultsVariants}
+          {/* Active site pills */}
+          {searchQuery && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-2 px-1">
+              {selectedSites.length === sites.length &&
+              !includeShamela &&
+              !includeAlmaany &&
+              !includeDorar ? (
+                <span className="text-xs text-gray-400 py-1">
+                  All {sites.length} sites
+                </span>
+              ) : (
+                <>
+                  {selectedSites.map((site) => (
+                    <span
+                      key={site}
+                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
                     >
-                      {[...new Array(5)].map((_, i) => (
-                        <div
-                          key={`skeleton-${i}`}
-                          className="p-4 border rounded-lg bg-white shadow-sm space-y-3"
-                        >
-                          <Skeleton className="h-5 w-3/4" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-5/6" />
-                          <Skeleton className="h-3 w-1/4" />
-                        </div>
-                      ))}
-                    </motion.div>
-                  );
-                }
-
-                if (hasResults) {
-                  return (
-                    <motion.div
-                      className="space-y-4"
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
-                      variants={resultsVariants}
-                    >
-                      {filteredResults.map((result, index) => (
-                        <SearchResult
-                          key={result.link}
-                          result={result}
-                          index={index}
-                          isNewResult={
-                            index >= filteredResults.length - resultsPerPage
-                          }
-                        />
-                      ))}
-                    </motion.div>
-                  );
-                }
-
-                if (showEmptyState) {
-                  return (
-                    <motion.div
-                      variants={resultsVariants}
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
-                      className="text-center py-12"
-                    >
-                      <div className="max-w-md mx-auto">
-                        <div className="mb-4">
-                          <svg
-                            className="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          {t.noResults}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-6">
-                          Try adjusting your search or selecting different sites
-                        </p>
-                        <div className="space-y-2 text-left bg-gray-50 p-4 rounded-lg">
-                          <p className="text-sm font-medium text-gray-700">
-                            Suggestions:
-                          </p>
-                          <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                            <li>Check your spelling</li>
-                            <li>Try different or more general keywords</li>
-                            <li>Select more sites to search</li>
-                            <li>
-                              <button
-                                onClick={openSiteRequestModal}
-                                className="text-blue-600 hover:underline"
-                              >
-                                Request a new site
-                              </button>{" "}
-                              to be added
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                }
-
-                return null;
-              })()}
-            </AnimatePresence>
-          </div>
-
-          {hasMore && searchResults.length > 0 && (
-            <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
-              <Button
-                onClick={() => performSearch(startIndex)}
-                disabled={loading}
-                variant="outline"
-                className="w-full max-w-sm shadow-lg bg-white hover:bg-gray-50"
-                aria-label={`${t.loadMore || "Load more"} search results (currently showing ${searchResults.length} results)`}
-              >
-                {loading ? t.loading : t.loadMore}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={openFeedbackModal}
-                className="shadow-lg bg-white hover:bg-gray-50"
-                aria-label={t.provideFeedback || "Provide feedback"}
-              >
-                {t.provideFeedback}
-              </Button>
-            </div>
-          )}
-
-          <div className="mt-8 border-t pt-8">
-            <div className="flex flex-col items-center space-y-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openFeedbackModal}
-                className="text-sm"
-              >
-                {showFeedback ? t.closeFeedback : t.provideFeedback}
-              </Button>
-
-              {showFeedback && (
-                <div className="w-full max-w-md space-y-4">
-                  <textarea
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    placeholder={t.feedbackPlaceholder}
-                    className="w-full min-h-[100px] p-3 rounded-md border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-200"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setShowFeedback(false);
-                        setFeedback("");
-                      }}
-                    >
-                      {t.cancel}
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleFeedbackSubmit}
-                      disabled={!feedback.trim()}
-                    >
-                      Submit Feedback
-                    </Button>
-                  </div>
-                </div>
+                      {(isEnglish ? SITE_LABELS_EN : SITE_LABELS_AR)[site] || site}
+                    </span>
+                  ))}
+                  {includeShamela && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      Shamela
+                    </span>
+                  )}
+                  {includeAlmaany && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      Al-Maany
+                    </span>
+                  )}
+                  {includeDorar && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      Dorar
+                    </span>
+                  )}
+                </>
+              )}
+              {searchResults.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => openModal("filter")}
+                  className="text-xs text-blue-600 hover:underline py-0.5 ml-1"
+                >
+                  {t.filter}
+                </button>
               )}
             </div>
-          </div>
+          )}
+        </div>
 
-          <div className="mt-4 text-center text-sm text-gray-500">
-            {t.createdBy}{" "}
-            <a
-              href="https://github.com/aramb-dev"
-              className="underline hover:text-gray-700"
-              target="_blank"
-              rel="noreferrer"
+        {/* Results */}
+        <div className="mt-6">
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+              <motion.div
+                key="skeletons"
+                variants={resultsVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-6"
+              >
+                {[...new Array(5)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="w-4 h-4 rounded-full" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                  </div>
+                ))}
+              </motion.div>
+            ) : hasResults ? (
+              <motion.div
+                key="results"
+                variants={resultsVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="divide-y divide-gray-100"
+              >
+                {filteredResults.map((result, index) => (
+                  <SearchResult
+                    key={result.link}
+                    result={result}
+                    isNewResult={
+                      index >= filteredResults.length - resultsPerPage
+                    }
+                  />
+                ))}
+              </motion.div>
+            ) : showEmptyState ? (
+              <motion.div
+                key="empty"
+                variants={resultsVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="text-center py-16"
+              >
+                <svg
+                  className="mx-auto h-10 w-10 text-gray-300 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <h3 className="text-base font-medium text-gray-700 mb-1">
+                  {t.noResults}
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  {t.tryDifferentKeywords}
+                </p>
+                <button
+                  onClick={() => openModal("siteRequest")}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {t.requestNewSite}
+                </button>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+
+        {/* Load more */}
+        {hasMore && searchResults.length > 0 && !loading && (
+          <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+            <Button
+              onClick={() => performSearch(startIndex)}
+              disabled={loading}
+              variant="outline"
+              className="shadow-lg bg-white hover:bg-gray-50"
             >
-              عبد من عباد الله
-            </a>
-            {" | "}
-            <a
-              href="https://github.com/aramb-dev/fatwa-search"
-              className="underline hover:text-gray-700"
-              target="_blank"
-              rel="noreferrer"
+              {t.loadMore}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => openModal("feedback")}
+              className="shadow-lg bg-white hover:bg-gray-50"
             >
-              {t.viewOnGithub}
-            </a>
+              {t.provideFeedback}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <AnimatePresence mode="wait">
-        <FeedbackModal
-          isOpen={activeModal === "feedback"}
-          onClose={closeModal}
-          feedback={feedback}
-          setFeedback={setFeedback}
-          onSubmit={handleFeedbackSubmit}
-          translations={t}
-        />
-
-        <SiteRequestModal
-          isOpen={activeModal === "siteRequest"}
-          onClose={closeModal}
-          siteInput={siteInput}
-          setSiteInput={setSiteInput}
-          onSubmit={handleSiteRequest}
-          translations={t}
-        />
-
-        {searchResults.length > 0 && (
-          <FilterModal
-            isOpen={activeModal === "filter"}
-            onClose={closeModal}
-            searchResults={searchResults}
-            siteFilters={siteFilters}
-            setSiteFilters={setSiteFilters}
-            translations={t}
-          />
         )}
-      </AnimatePresence>
+
+        {/* Footer */}
+        <div className="mt-16 pt-6 border-t text-center text-xs text-gray-400 space-x-2">
+          <span>{t.createdBy}</span>
+          <a
+            href="https://github.com/aramb-dev"
+            className="hover:text-gray-600 underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            عبد من عباد الله
+          </a>
+          <span>·</span>
+          <a
+            href="https://github.com/aramb-dev/fatwa-search"
+            className="hover:text-gray-600 underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t.viewOnGithub}
+          </a>
+          <span>·</span>
+          <button
+            onClick={() => openModal("feedback")}
+            className="hover:text-gray-600 underline"
+          >
+            {t.provideFeedback}
+          </button>
+        </div>
+      </div>
+
+      <SitePickerModal
+        isOpen={activeModal === "sitePicker"}
+        onClose={closeModal}
+        sites={sites}
+        selectedSites={selectedSites}
+        setSelectedSites={setSelectedSites}
+        includeShamela={includeShamela}
+        setIncludeShamela={setIncludeShamela}
+        includeAlmaany={includeAlmaany}
+        setIncludeAlmaany={setIncludeAlmaany}
+        includeDorar={includeDorar}
+        setIncludeDorar={setIncludeDorar}
+        translations={t}
+        onRequestSite={() => openModal("siteRequest")}
+        isEnglish={isEnglish}
+      />
+
+      <FeedbackModal
+        isOpen={activeModal === "feedback"}
+        onClose={closeModal}
+        feedback={feedback}
+        setFeedback={setFeedback}
+        onSubmit={handleFeedbackSubmit}
+        translations={t}
+      />
+      <SiteRequestModal
+        isOpen={activeModal === "siteRequest"}
+        onClose={closeModal}
+        siteInput={siteInput}
+        setSiteInput={setSiteInput}
+        onSubmit={handleSiteRequest}
+        translations={t}
+      />
+      {searchResults.length > 0 && (
+        <FilterModal
+          isOpen={activeModal === "filter"}
+          onClose={closeModal}
+          searchResults={searchResults}
+          siteFilters={siteFilters}
+          setSiteFilters={setSiteFilters}
+          translations={t}
+        />
+      )}
+
+      {/* v3 announcement modal */}
+      <Dialog
+        open={showV3Modal}
+        onOpenChange={(open) => {
+          setShowV3Modal(open);
+          if (!open) localStorage.setItem("v3-announced", "1");
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="bg-gray-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full leading-none tracking-wide">
+                {t.newBadge}
+              </span>
+              <DialogTitle className="text-base">{t.v3WhatsNew}</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <ul className="space-y-3 text-sm text-gray-700">
+            <li className="flex gap-3">
+              <span className="mt-0.5 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+              </span>
+              <span><strong className="text-gray-900">{t.v3Feature1Title}</strong> — {t.v3Feature1Desc}</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-0.5 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+                </svg>
+              </span>
+              <span><strong className="text-gray-900">{t.v3Feature2Title}</strong> — {t.v3Feature2Desc}</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-0.5 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+              </span>
+              <span><strong className="text-gray-900">{t.v3Feature3Title}</strong> — {t.v3Feature3Desc}</span>
+            </li>
+          </ul>
+
+          <div className="mt-5 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setShowV3Modal(false);
+                localStorage.setItem("v3-announced", "1");
+              }}
+              className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-full hover:bg-gray-700 transition-colors"
+            >
+              {t.gotIt}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
 
 const SearchResult = React.memo(({ result, isNewResult }) => {
+  let hostname = "";
+  let breadcrumb = "";
+
+  try {
+    const url = new URL(result.link);
+    hostname = url.hostname.replace(/^www\./, "");
+    const parts = url.pathname.split("/").filter(Boolean);
+    breadcrumb = parts.length > 0 ? [hostname, ...parts].join(" › ") : hostname;
+  } catch {
+    hostname = result.link;
+    breadcrumb = result.link;
+  }
+
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+
   return (
     <motion.div
-      key={result.link}
-      initial={isNewResult ? { opacity: 0, y: 20 } : false}
+      initial={isNewResult ? { opacity: 0, y: 10 } : false}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: isNewResult ? 0.1 : 0 }}
-      className="p-4 border rounded-lg bg-white shadow-sm"
+      transition={{ delay: isNewResult ? 0.05 : 0 }}
+      className="py-4 group"
     >
+      {/* Source line */}
+      <div className="flex items-center gap-2 mb-1">
+        <img
+          src={faviconUrl}
+          alt=""
+          className="w-4 h-4 rounded-full flex-shrink-0"
+          onError={(e) => {
+            e.target.style.display = "none";
+          }}
+        />
+        <span className="text-sm text-gray-700 truncate">{breadcrumb}</span>
+      </div>
+
+      {/* Title */}
       <a
         href={result.link}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-600 hover:underline block font-medium"
+        className="text-[#1a0dab] hover:underline text-xl font-normal leading-snug block mb-1 group-hover:text-[#1a0dab]"
       >
         {result.title}
       </a>
-      <p className="text-sm text-gray-600 mt-2">{result.snippet}</p>
-      <p className="text-xs text-gray-400 mt-1">
-        {new URL(result.link).hostname}
+
+      {/* Snippet */}
+      <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+        {result.snippet}
       </p>
     </motion.div>
   );

@@ -1,20 +1,21 @@
-import React from "react"
-import { useState, useCallback, useEffect, useRef } from "react"
-import { Search, Plus, Share2 } from "lucide-react"
-import { Skeleton } from "./ui/skeleton"
-import { Button } from "./ui/button"
-import { Toaster, toast } from "sonner"
-import { motion, AnimatePresence } from "framer-motion"
-import { useSearchParams } from "next/navigation"
-import { useDebouncedCallback } from "use-debounce"
-import { translations } from "../translations"
-import { FeedbackModal } from "./search/FeedbackModal"
-import { SiteRequestModal } from "./search/SiteRequestModal"
-import { FilterModal } from "./search/FilterModal"
-import { SitePickerModal } from "./search/SitePickerModal"
-import { searchCache } from "../lib/cache"
-import PropTypes from "prop-types"
-import { cn } from "../lib/utils"
+import React from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Search, Plus, Share2 } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
+import { Button } from "./ui/button";
+import { Toaster, toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
+import { useDebouncedCallback } from "use-debounce";
+import { translations } from "../translations";
+import { FeedbackModal } from "./search/FeedbackModal";
+import { SiteRequestModal } from "./search/SiteRequestModal";
+import { FilterModal } from "./search/FilterModal";
+import { SitePickerModal } from "./search/SitePickerModal";
+import { searchCache } from "../lib/cache";
+import PropTypes from "prop-types";
+import { cn } from "../lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 const SITE_LABELS = {
   "binothaimeen.net": "Ibn Uthaimeen",
@@ -27,7 +28,7 @@ const SITE_LABELS = {
   "miraath.net": "Miraath",
   "al-albany.com": "Al-Albani",
   "rabee.net": "Rabee",
-}
+};
 
 export const DEFAULT_SITES = [
   "binothaimeen.net",
@@ -40,7 +41,7 @@ export const DEFAULT_SITES = [
   "miraath.net",
   "al-albany.com",
   "rabee.net",
-]
+];
 
 export const ENGLISH_SITES = [
   "islamtees.wordpress.com",
@@ -92,288 +93,333 @@ export const ENGLISH_SITES = [
   "mpubs.org",
   "dusunnah.com",
   "quran.com",
-]
+];
 
 const resultsVariants = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -10 },
-}
+};
 
 const SearchComponent = ({ language = "en" }) => {
-  let t = translations[language]
+  let t = translations[language];
   if (!t) {
-    console.error("Missing translations for language:", language)
-    t = translations.en
+    console.error("Missing translations for language:", language);
+    t = translations.en;
   }
 
-  const resultsPerPage = 10
+  const resultsPerPage = 10;
 
   const getErrorMessage = (error) => {
-    const msg = error.message.toLowerCase()
+    const msg = error.message.toLowerCase();
     if (msg.includes("failed to fetch") || msg.includes("network"))
-      return "Network error. Please check your internet connection and try again."
+      return "Network error. Please check your internet connection and try again.";
     if (msg.includes("quota") || msg.includes("limit"))
-      return "Search quota exceeded. Please try again in a few minutes."
+      return "Search quota exceeded. Please try again in a few minutes.";
     if (msg.includes("timeout") || msg.includes("aborted"))
-      return "Search timed out. Please try again with different keywords."
+      return "Search timed out. Please try again with different keywords.";
     if (msg.includes("invalid") || msg.includes("bad request"))
-      return "Invalid search query. Please try different keywords."
-    return "Search failed. Please try again or contact support if the problem persists."
-  }
+      return "Invalid search query. Please try different keywords.";
+    return "Search failed. Please try again or contact support if the problem persists.";
+  };
 
-  const isEnglish = language === "en"
-  const sitesForLanguage = isEnglish ? ENGLISH_SITES : DEFAULT_SITES
+  const isEnglish = language === "en";
+  const sitesForLanguage = isEnglish ? ENGLISH_SITES : DEFAULT_SITES;
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sites] = useState(sitesForLanguage)
-  const [includeShamela, setIncludeShamela] = useState(false)
-  const [includeAlmaany, setIncludeAlmaany] = useState(false)
-  const [includeDorar, setIncludeDorar] = useState(false)
-  const [searchResults, setSearchResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [siteInput, setSiteInput] = useState("")
-  const [startIndex, setStartIndex] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [selectedSites, setSelectedSites] = useState(sitesForLanguage)
-  const [siteFilters, setSiteFilters] = useState([])
-  const [activeModal, setActiveModal] = useState(null)
-  const [feedback, setFeedback] = useState("")
-  const [searchParams] = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sites] = useState(sitesForLanguage);
+  const [includeShamela, setIncludeShamela] = useState(false);
+  const [includeAlmaany, setIncludeAlmaany] = useState(false);
+  const [includeDorar, setIncludeDorar] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [siteInput, setSiteInput] = useState("");
+  const [startIndex, setStartIndex] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [selectedSites, setSelectedSites] = useState(sitesForLanguage);
+  const [siteFilters, setSiteFilters] = useState([]);
+  const [activeModal, setActiveModal] = useState(null);
+  const [showV3Modal, setShowV3Modal] = useState(false);
+  const [feedback, setFeedback] = useState("");
+  const [searchParams] = useSearchParams();
 
-  const initialLoadDoneRef = useRef(false)
-  const abortControllerRef = useRef(null)
+  const initialLoadDoneRef = useRef(false);
+  const abortControllerRef = useRef(null);
+
+  useEffect(() => {
+    if (!localStorage.getItem("v3-announced")) {
+      setShowV3Modal(true);
+    }
+  }, []);
 
   const performSearch = useCallback(
     async (start, isNewSearch = false) => {
       if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
+        abortControllerRef.current.abort();
       }
-      abortControllerRef.current = new AbortController()
-      const signal = abortControllerRef.current.signal
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
 
-      setLoading(true)
+      setLoading(true);
       try {
-        const regularSites = selectedSites
+        const regularSites = selectedSites;
         const specialSitesToSearch = [
           ...(includeShamela ? ["shamela.ws"] : []),
           ...(includeAlmaany ? ["almaany.com"] : []),
           ...(includeDorar ? ["dorar.net"] : []),
-        ]
+        ];
 
-        const cacheKey = { query: searchQuery, sites: regularSites, special: specialSitesToSearch, start }
-        const cachedResults = searchCache.get(cacheKey)
+        const cacheKey = {
+          query: searchQuery,
+          sites: regularSites,
+          special: specialSitesToSearch,
+          start,
+        };
+        const cachedResults = searchCache.get(cacheKey);
 
         if (cachedResults && isNewSearch) {
-          setSearchResults(cachedResults)
-          setHasMore(cachedResults.length >= resultsPerPage)
-          setStartIndex(start + resultsPerPage)
-          setLoading(false)
-          toast(t.searchResultsDisclaimer, { duration: 5000, closeButton: true })
-          return
+          setSearchResults(cachedResults);
+          setHasMore(cachedResults.length >= resultsPerPage);
+          setStartIndex(start + resultsPerPage);
+          setLoading(false);
+          toast(t.searchResultsDisclaimer, {
+            duration: 5000,
+            closeButton: true,
+          });
+          return;
         }
 
-        let allResults = []
+        let allResults = [];
 
-        const specialSearches = specialSitesToSearch.map(async (specialSite) => {
-          const response = await fetch(
-            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}&lang=${language}`,
-            { signal },
-          )
-          const data = await response.json()
-          if (data.error) {
-            console.error(`Search error for ${specialSite}:`, data.error)
-            return []
-          }
-          return data.items || []
-        })
+        const specialSearches = specialSitesToSearch.map(
+          async (specialSite) => {
+            const response = await fetch(
+              `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}&lang=${language}`,
+              { signal },
+            );
+            const data = await response.json();
+            if (data.error) {
+              console.error(`Search error for ${specialSite}:`, data.error);
+              return [];
+            }
+            return data.items || [];
+          },
+        );
 
-        const specialResults = await Promise.all(specialSearches)
-        allResults = specialResults.flat()
+        const specialResults = await Promise.all(specialSearches);
+        allResults = specialResults.flat();
 
         if (regularSites.length > 0) {
-          const regularSiteQuery = regularSites.map((site) => `site:${site}`).join(" OR ")
-          const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`
+          const regularSiteQuery = regularSites
+            .map((site) => `site:${site}`)
+            .join(" OR ");
+          const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`;
           const regularResponse = await fetch(
             `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
             { signal },
-          )
-          const regularData = await regularResponse.json()
+          );
+          const regularData = await regularResponse.json();
           if (regularData.error) {
-            console.error("Search error:", regularData.error)
-            throw new Error(regularData.error)
+            console.error("Search error:", regularData.error);
+            throw new Error(regularData.error);
           }
           if (regularData.items) {
-            allResults = [...allResults, ...regularData.items]
+            allResults = [...allResults, ...regularData.items];
           }
         }
 
         allResults.sort((a, b) => {
-          const aIsDorar = a.link.includes("dorar.net")
-          const bIsDorar = b.link.includes("dorar.net")
-          if (aIsDorar && !bIsDorar) return -1
-          if (!aIsDorar && bIsDorar) return 1
-          const aIsSpecial = specialSitesToSearch.some((site) => a.link.includes(site))
-          const bIsSpecial = specialSitesToSearch.some((site) => b.link.includes(site))
-          return bIsSpecial - aIsSpecial
-        })
+          const aIsDorar = a.link.includes("dorar.net");
+          const bIsDorar = b.link.includes("dorar.net");
+          if (aIsDorar && !bIsDorar) return -1;
+          if (!aIsDorar && bIsDorar) return 1;
+          const aIsSpecial = specialSitesToSearch.some((site) =>
+            a.link.includes(site),
+          );
+          const bIsSpecial = specialSitesToSearch.some((site) =>
+            b.link.includes(site),
+          );
+          return bIsSpecial - aIsSpecial;
+        });
 
         setSearchResults((prev) => {
-          const newResults = isNewSearch ? allResults : [...prev, ...allResults]
+          const newResults = isNewSearch
+            ? allResults
+            : [...prev, ...allResults];
           if (isNewSearch && allResults.length > 0) {
-            searchCache.set(cacheKey, allResults)
+            searchCache.set(cacheKey, allResults);
           }
-          return newResults
-        })
+          return newResults;
+        });
 
-        setHasMore(allResults.length >= resultsPerPage)
-        setStartIndex(start + resultsPerPage)
+        setHasMore(allResults.length >= resultsPerPage);
+        setStartIndex(start + resultsPerPage);
 
         if (isNewSearch) {
-          toast(t.searchResultsDisclaimer, { duration: 5000, closeButton: true })
+          toast(t.searchResultsDisclaimer, {
+            duration: 5000,
+            closeButton: true,
+          });
         }
       } catch (error) {
-        if (error.name === "AbortError") return
-        console.error("Search failed:", error)
-        toast.error(getErrorMessage(error), { duration: 7000, closeButton: true })
+        if (error.name === "AbortError") return;
+        console.error("Search failed:", error);
+        toast.error(getErrorMessage(error), {
+          duration: 7000,
+          closeButton: true,
+        });
       } finally {
-        setLoading(false)
-        abortControllerRef.current = null
+        setLoading(false);
+        abortControllerRef.current = null;
       }
     },
-    [searchQuery, selectedSites, includeShamela, includeAlmaany, includeDorar, t],
-  )
+    [
+      searchQuery,
+      selectedSites,
+      includeShamela,
+      includeAlmaany,
+      includeDorar,
+      t,
+    ],
+  );
 
   const debouncedSearch = useDebouncedCallback(() => {
     if (searchQuery.trim()) {
-      setSearchResults([])
-      setStartIndex(1)
-      setHasMore(true)
-      performSearch(1, true)
+      setSearchResults([]);
+      setStartIndex(1);
+      setHasMore(true);
+      performSearch(1, true);
     }
-  }, 500)
+  }, 500);
 
   useEffect(() => {
-    const queryParam = searchParams?.get("q")
+    const queryParam = searchParams?.get("q");
     if (queryParam && !initialLoadDoneRef.current) {
-      setSearchQuery(queryParam)
-      initialLoadDoneRef.current = true
-      performSearch(1, true)
+      setSearchQuery(queryParam);
+      initialLoadDoneRef.current = true;
+      performSearch(1, true);
     }
-  }, [searchParams, performSearch])
+  }, [searchParams, performSearch]);
 
   const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!searchQuery.trim()) return
-    debouncedSearch.cancel()
-    setSearchResults([])
-    setStartIndex(1)
-    setHasMore(true)
-    await performSearch(1, true)
-  }
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    debouncedSearch.cancel();
+    setSearchResults([]);
+    setStartIndex(1);
+    setHasMore(true);
+    await performSearch(1, true);
+  };
 
   const handleQueryChange = (e) => {
-    setSearchQuery(e.target.value)
-    debouncedSearch()
-  }
+    setSearchQuery(e.target.value);
+    debouncedSearch();
+  };
 
-  const openModal = (name) => setActiveModal(name)
-  const closeModal = () => setActiveModal(null)
+  const openModal = (name) => setActiveModal(name);
+  const closeModal = () => setActiveModal(null);
 
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
-      toast.error(t.pleaseEnterSite)
-      return
+      toast.error(t.pleaseEnterSite);
+      return;
     }
-    const formData = new FormData()
-    formData.append("form-name", "site-request")
-    formData.append("requested-site", siteInput)
+    const formData = new FormData();
+    formData.append("form-name", "site-request");
+    formData.append("requested-site", siteInput);
     try {
       await fetch("/", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(formData).toString(),
-      })
-      setSiteInput("")
-      closeModal()
-      toast.success(t.requestSubmitted)
+      });
+      setSiteInput("");
+      closeModal();
+      toast.success(t.requestSubmitted);
     } catch {
-      toast.error(t.requestFailed)
+      toast.error(t.requestFailed);
     }
-  }
+  };
 
   const handleFeedbackSubmit = async () => {
     if (!feedback.trim()) {
-      toast.error("Please enter your feedback")
-      return
+      toast.error("Please enter your feedback");
+      return;
     }
-    const formData = new FormData()
-    formData.append("form-name", "feedback")
-    formData.append("feedback", feedback)
+    const formData = new FormData();
+    formData.append("form-name", "feedback");
+    formData.append("feedback", feedback);
     try {
       await fetch("/", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams(formData).toString(),
-      })
-      setFeedback("")
-      closeModal()
-      toast.success("Thank you for your feedback!")
+      });
+      setFeedback("");
+      closeModal();
+      toast.success("Thank you for your feedback!");
     } catch {
-      toast.error("Failed to submit feedback")
+      toast.error("Failed to submit feedback");
     }
-  }
+  };
 
   const handleShare = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const url = new URL(window.location.href)
-    url.searchParams.set("q", searchQuery)
+    e.preventDefault();
+    e.stopPropagation();
+    const url = new URL(window.location.href);
+    url.searchParams.set("q", searchQuery);
     if (navigator.share) {
-      navigator.share({ title: "Fatwa Search Results", text: `Search results for "${searchQuery}"`, url: url.toString() }).catch(console.error)
+      navigator
+        .share({
+          title: "Fatwa Search Results",
+          text: `Search results for "${searchQuery}"`,
+          url: url.toString(),
+        })
+        .catch(console.error);
     } else {
-      navigator.clipboard.writeText(url.toString())
-      toast.success("Link copied to clipboard!")
+      navigator.clipboard.writeText(url.toString());
+      toast.success("Link copied to clipboard!");
     }
-  }
+  };
 
   const toggleSite = (site) => {
     setSelectedSites((prev) =>
       prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
-    )
-  }
+    );
+  };
 
   const filteredResults = searchResults.filter((result) => {
-    if (siteFilters.length === 0) return true
-    return siteFilters.some((site) => result.link.includes(site))
-  })
+    if (siteFilters.length === 0) return true;
+    return siteFilters.some((site) => result.link.includes(site));
+  });
 
-  const hasResults = filteredResults.length > 0
-  const isLoading = loading && searchQuery
-  const showEmptyState = searchQuery && !loading && !hasResults
+  const hasResults = filteredResults.length > 0;
+  const isLoading = loading && searchQuery;
+  const showEmptyState = searchQuery && !loading && !hasResults;
 
   return (
     <>
       <Toaster position="top-center" />
 
       <div className="w-full max-w-3xl mx-auto px-4 pb-24">
-        {/* v3 announcement banner */}
+        {/* v3 announcement pill — click to re-open modal */}
         {!searchQuery && !hasResults && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-center pt-6"
           >
-            <a
-              href="https://github.com/aramb-dev/fatwa-search/releases"
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => setShowV3Modal(true)}
               className="inline-flex items-center gap-1.5 bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-full hover:bg-gray-700 transition-colors"
             >
-              <span className="bg-white text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">NEW</span>
+              <span className="bg-white text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                NEW
+              </span>
               Introducing v3 — Google-style results &amp; smart site picker
               <span className="opacity-60">→</span>
-            </a>
+            </button>
           </motion.div>
         )}
 
@@ -385,7 +431,9 @@ const SearchComponent = ({ language = "en" }) => {
             exit={{ opacity: 0, y: -10 }}
             className="text-center pt-8 pb-8"
           >
-            <h1 className="text-3xl font-semibold text-gray-900 mb-1">{t.searchLabel}</h1>
+            <h1 className="text-3xl font-semibold text-gray-900 mb-1">
+              {t.searchLabel}
+            </h1>
             <p className="text-gray-500 text-sm">{t.searchDescription}</p>
           </motion.div>
         )}
@@ -448,18 +496,38 @@ const SearchComponent = ({ language = "en" }) => {
           {/* Active site pills */}
           {searchQuery && (
             <div className="flex flex-wrap items-center gap-1.5 mt-2 px-1">
-              {selectedSites.length === sites.length && !includeShamela && !includeAlmaany && !includeDorar ? (
-                <span className="text-xs text-gray-400 py-1">All {sites.length} sites</span>
+              {selectedSites.length === sites.length &&
+              !includeShamela &&
+              !includeAlmaany &&
+              !includeDorar ? (
+                <span className="text-xs text-gray-400 py-1">
+                  All {sites.length} sites
+                </span>
               ) : (
                 <>
                   {selectedSites.map((site) => (
-                    <span key={site} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                    <span
+                      key={site}
+                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
+                    >
                       {SITE_LABELS[site] || site}
                     </span>
                   ))}
-                  {includeShamela && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Shamela</span>}
-                  {includeAlmaany && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Al-Maany</span>}
-                  {includeDorar && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Dorar</span>}
+                  {includeShamela && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      Shamela
+                    </span>
+                  )}
+                  {includeAlmaany && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      Al-Maany
+                    </span>
+                  )}
+                  {includeDorar && (
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                      Dorar
+                    </span>
+                  )}
                 </>
               )}
               {searchResults.length > 0 && (
@@ -479,7 +547,14 @@ const SearchComponent = ({ language = "en" }) => {
         <div className="mt-6">
           <AnimatePresence mode="wait">
             {isLoading ? (
-              <motion.div key="skeletons" variants={resultsVariants} initial="initial" animate="animate" exit="exit" className="space-y-6">
+              <motion.div
+                key="skeletons"
+                variants={resultsVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-6"
+              >
                 {[...new Array(5)].map((_, i) => (
                   <div key={i} className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -493,23 +568,56 @@ const SearchComponent = ({ language = "en" }) => {
                 ))}
               </motion.div>
             ) : hasResults ? (
-              <motion.div key="results" variants={resultsVariants} initial="initial" animate="animate" exit="exit" className="divide-y divide-gray-100">
+              <motion.div
+                key="results"
+                variants={resultsVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="divide-y divide-gray-100"
+              >
                 {filteredResults.map((result, index) => (
                   <SearchResult
                     key={result.link}
                     result={result}
-                    isNewResult={index >= filteredResults.length - resultsPerPage}
+                    isNewResult={
+                      index >= filteredResults.length - resultsPerPage
+                    }
                   />
                 ))}
               </motion.div>
             ) : showEmptyState ? (
-              <motion.div key="empty" variants={resultsVariants} initial="initial" animate="animate" exit="exit" className="text-center py-16">
-                <svg className="mx-auto h-10 w-10 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <motion.div
+                key="empty"
+                variants={resultsVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="text-center py-16"
+              >
+                <svg
+                  className="mx-auto h-10 w-10 text-gray-300 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
-                <h3 className="text-base font-medium text-gray-700 mb-1">{t.noResults}</h3>
-                <p className="text-sm text-gray-400 mb-4">Try different keywords or select more sites</p>
-                <button onClick={() => openModal("siteRequest")} className="text-sm text-blue-600 hover:underline">
+                <h3 className="text-base font-medium text-gray-700 mb-1">
+                  {t.noResults}
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  Try different keywords or select more sites
+                </p>
+                <button
+                  onClick={() => openModal("siteRequest")}
+                  className="text-sm text-blue-600 hover:underline"
+                >
                   Request a new site
                 </button>
               </motion.div>
@@ -541,15 +649,28 @@ const SearchComponent = ({ language = "en" }) => {
         {/* Footer */}
         <div className="mt-16 pt-6 border-t text-center text-xs text-gray-400 space-x-2">
           <span>{t.createdBy}</span>
-          <a href="https://github.com/aramb-dev" className="hover:text-gray-600 underline" target="_blank" rel="noreferrer">
+          <a
+            href="https://github.com/aramb-dev"
+            className="hover:text-gray-600 underline"
+            target="_blank"
+            rel="noreferrer"
+          >
             عبد من عباد الله
           </a>
           <span>·</span>
-          <a href="https://github.com/aramb-dev/fatwa-search" className="hover:text-gray-600 underline" target="_blank" rel="noreferrer">
+          <a
+            href="https://github.com/aramb-dev/fatwa-search"
+            className="hover:text-gray-600 underline"
+            target="_blank"
+            rel="noreferrer"
+          >
             {t.viewOnGithub}
           </a>
           <span>·</span>
-          <button onClick={() => openModal("feedback")} className="hover:text-gray-600 underline">
+          <button
+            onClick={() => openModal("feedback")}
+            className="hover:text-gray-600 underline"
+          >
             {t.provideFeedback}
           </button>
         </div>
@@ -598,25 +719,85 @@ const SearchComponent = ({ language = "en" }) => {
           translations={t}
         />
       )}
+
+      {/* v3 announcement modal */}
+      <Dialog
+        open={showV3Modal}
+        onOpenChange={(open) => {
+          setShowV3Modal(open);
+          if (!open) localStorage.setItem("v3-announced", "1");
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="bg-gray-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full leading-none tracking-wide">
+                NEW
+              </span>
+              <DialogTitle className="text-base">What&apos;s new in v3</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <ul className="space-y-3 text-sm text-gray-700">
+            <li className="flex gap-3">
+              <span className="mt-0.5 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+              </span>
+              <span><strong className="text-gray-900">Google-style results</strong> — favicon, breadcrumb, blue title link, and clean snippet for every result.</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-0.5 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+                </svg>
+              </span>
+              <span><strong className="text-gray-900">Smart site picker</strong> — choose exactly which scholar sites to search, organised by category.</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="mt-0.5 text-gray-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+              </span>
+              <span><strong className="text-gray-900">Ilm Search (English)</strong> — 49 curated English salafi sites with a dedicated search engine.</span>
+            </li>
+          </ul>
+
+          <div className="mt-5 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setShowV3Modal(false);
+                localStorage.setItem("v3-announced", "1");
+              }}
+              className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-full hover:bg-gray-700 transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
-  )
-}
+  );
+};
 
 const SearchResult = React.memo(({ result, isNewResult }) => {
-  let hostname = ""
-  let breadcrumb = ""
+  let hostname = "";
+  let breadcrumb = "";
 
   try {
-    const url = new URL(result.link)
-    hostname = url.hostname.replace(/^www\./, "")
-    const parts = url.pathname.split("/").filter(Boolean)
-    breadcrumb = parts.length > 0 ? [hostname, ...parts].join(" › ") : hostname
+    const url = new URL(result.link);
+    hostname = url.hostname.replace(/^www\./, "");
+    const parts = url.pathname.split("/").filter(Boolean);
+    breadcrumb = parts.length > 0 ? [hostname, ...parts].join(" › ") : hostname;
   } catch {
-    hostname = result.link
-    breadcrumb = result.link
+    hostname = result.link;
+    breadcrumb = result.link;
   }
 
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
 
   return (
     <motion.div
@@ -631,7 +812,9 @@ const SearchResult = React.memo(({ result, isNewResult }) => {
           src={faviconUrl}
           alt=""
           className="w-4 h-4 rounded-full flex-shrink-0"
-          onError={(e) => { e.target.style.display = "none" }}
+          onError={(e) => {
+            e.target.style.display = "none";
+          }}
         />
         <span className="text-sm text-gray-700 truncate">{breadcrumb}</span>
       </div>
@@ -647,10 +830,12 @@ const SearchResult = React.memo(({ result, isNewResult }) => {
       </a>
 
       {/* Snippet */}
-      <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{result.snippet}</p>
+      <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+        {result.snippet}
+      </p>
     </motion.div>
-  )
-})
+  );
+});
 
 SearchResult.propTypes = {
   result: PropTypes.shape({
@@ -659,8 +844,8 @@ SearchResult.propTypes = {
     snippet: PropTypes.string.isRequired,
   }).isRequired,
   isNewResult: PropTypes.bool,
-}
+};
 
-SearchResult.displayName = "SearchResult"
+SearchResult.displayName = "SearchResult";
 
-export default SearchComponent
+export default SearchComponent;

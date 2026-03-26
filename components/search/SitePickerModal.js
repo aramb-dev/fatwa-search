@@ -1,15 +1,15 @@
-import React, { useState } from "react"
-import PropTypes from "prop-types"
+import React, { useState } from "react";
+import PropTypes from "prop-types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "../ui/dialog"
-import { Button } from "../ui/button"
-import { Check, BookOpen, Library, BookMarked, Gem, Plus } from "lucide-react"
-import { cn } from "../../lib/utils"
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Check, BookOpen, Library, BookMarked, Gem, Plus } from "lucide-react";
+import { cn } from "../../lib/utils";
 
 const SITE_LABELS = {
   "binothaimeen.net": "Ibn Uthaimeen",
@@ -22,7 +22,7 @@ const SITE_LABELS = {
   "miraath.net": "Miraath",
   "al-albany.com": "Al-Albani",
   "rabee.net": "Rabee",
-}
+};
 
 const MenuItem = ({ icon: Icon, label, sublabel, checked, onClick }) => (
   <button
@@ -37,14 +37,16 @@ const MenuItem = ({ icon: Icon, label, sublabel, checked, onClick }) => (
       <p className="text-sm font-medium text-gray-900 truncate">{label}</p>
       {sublabel && <p className="text-xs text-gray-400 truncate">{sublabel}</p>}
     </div>
-    <div className={cn(
-      "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors",
-      checked ? "bg-gray-900 border-gray-900" : "border-gray-300",
-    )}>
+    <div
+      className={cn(
+        "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors",
+        checked ? "bg-gray-900 border-gray-900" : "border-gray-300",
+      )}
+    >
       {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
     </div>
   </button>
-)
+);
 
 MenuItem.propTypes = {
   icon: PropTypes.elementType.isRequired,
@@ -52,7 +54,7 @@ MenuItem.propTypes = {
   sublabel: PropTypes.string,
   checked: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
-}
+};
 
 export const SitePickerModal = ({
   isOpen,
@@ -70,7 +72,7 @@ export const SitePickerModal = ({
   onRequestSite,
   isEnglish,
 }) => {
-  const [activeTab, setActiveTab] = useState("all")
+  const [activeTab, setActiveTab] = useState("all");
 
   const tabs = isEnglish
     ? [{ id: "all", label: "All" }]
@@ -78,44 +80,53 @@ export const SitePickerModal = ({
         { id: "all", label: "All" },
         { id: "scholars", label: "Scholars" },
         { id: "libraries", label: "Libraries" },
-      ]
+      ];
 
   const handleSelectAll = () => {
-    setSelectedSites(sites)
+    setSelectedSites(sites);
     if (!isEnglish) {
-      setIncludeShamela(false)
-      setIncludeAlmaany(false)
-      setIncludeDorar(false)
+      setIncludeShamela(false);
+      setIncludeAlmaany(false);
+      setIncludeDorar(false);
     }
-  }
+  };
 
   const handleSelectNone = () => {
-    setSelectedSites([])
+    setSelectedSites([]);
     if (!isEnglish) {
-      setIncludeShamela(false)
-      setIncludeAlmaany(false)
-      setIncludeDorar(false)
+      setIncludeShamela(false);
+      setIncludeAlmaany(false);
+      setIncludeDorar(false);
     }
-  }
+  };
 
   const toggleSite = (site) => {
     setSelectedSites((prev) =>
       prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
-    )
-  }
+    );
+  };
 
-  const specialCheckedCount = (includeShamela ? 1 : 0) + (includeAlmaany ? 1 : 0) + (includeDorar ? 1 : 0)
-  const totalSelected = selectedSites.length + specialCheckedCount
+  const specialCheckedCount =
+    (includeShamela ? 1 : 0) +
+    (includeAlmaany ? 1 : 0) +
+    (includeDorar ? 1 : 0);
+  const totalSelected = selectedSites.length + specialCheckedCount;
 
-  const showScholars = activeTab === "all" || activeTab === "scholars"
-  const showLibraries = !isEnglish && (activeTab === "all" || activeTab === "libraries")
+  const showScholars = activeTab === "all" || activeTab === "scholars";
+  const showLibraries =
+    !isEnglish && (activeTab === "all" || activeTab === "libraries");
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm w-full p-0 gap-0" onClick={(e) => e.stopPropagation()}>
+      <DialogContent
+        className="max-w-sm p-0 gap-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         <DialogHeader className="px-4 pt-4 pb-0">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-base">{translations.allSites || "Sites"}</DialogTitle>
+            <DialogTitle className="text-base">
+              {translations.allSites || "Sites"}
+            </DialogTitle>
             <div className="flex gap-1">
               <button
                 type="button"
@@ -161,16 +172,17 @@ export const SitePickerModal = ({
 
         {/* Scrollable list */}
         <div className="overflow-y-auto max-h-[52vh] px-2 py-2">
-          {showScholars && sites.map((site) => (
-            <MenuItem
-              key={site}
-              icon={BookOpen}
-              label={SITE_LABELS[site] || site}
-              sublabel={SITE_LABELS[site] ? site : undefined}
-              checked={selectedSites.includes(site)}
-              onClick={() => toggleSite(site)}
-            />
-          ))}
+          {showScholars &&
+            sites.map((site) => (
+              <MenuItem
+                key={site}
+                icon={BookOpen}
+                label={SITE_LABELS[site] || site}
+                sublabel={SITE_LABELS[site] ? site : undefined}
+                checked={selectedSites.includes(site)}
+                onClick={() => toggleSite(site)}
+              />
+            ))}
 
           {showLibraries && (
             <>
@@ -205,13 +217,18 @@ export const SitePickerModal = ({
 
           <button
             type="button"
-            onClick={() => { onClose(); onRequestSite() }}
+            onClick={() => {
+              onClose();
+              onRequestSite();
+            }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 text-left transition-colors"
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex-shrink-0 text-gray-400">
               <Plus className="w-4 h-4" />
             </div>
-            <p className="text-sm text-gray-500">{translations.requestSite || "Request a site"}</p>
+            <p className="text-sm text-gray-500">
+              {translations.requestSite || "Request a site"}
+            </p>
           </button>
         </div>
 
@@ -222,8 +239,8 @@ export const SitePickerModal = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
 SitePickerModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
@@ -240,4 +257,4 @@ SitePickerModal.propTypes = {
   translations: PropTypes.object.isRequired,
   onRequestSite: PropTypes.func.isRequired,
   isEnglish: PropTypes.bool,
-}
+};

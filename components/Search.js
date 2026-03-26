@@ -140,10 +140,16 @@ const SearchComponent = ({ language = "en" }) => {
   const [activeModal, setActiveModal] = useState(null);
   const [showV3Modal, setShowV3Modal] = useState(false);
   const [feedback, setFeedback] = useState("");
+  // Tracks whether the user has submitted at least one search. Controls
+  // the centered landing layout vs. sticky-top results layout, and gates
+  // the "no results" empty state so it doesn't flash while typing.
   const [hasSearched, setHasSearched] = useState(false);
   const [searchParams] = useSearchParams();
   const router = useRouter();
 
+  // Prevents the ?q= useEffect from re-firing after router.push writes
+  // the same param back — without this guard, every push would trigger
+  // a second search.
   const initialLoadDoneRef = useRef(false);
   const abortControllerRef = useRef(null);
 
@@ -298,6 +304,7 @@ const SearchComponent = ({ language = "en" }) => {
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+    // scroll: false prevents the page jumping to the top on every new search
     router.push(`/${language}/search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
     setHasSearched(true);
     setSearchResults([]);

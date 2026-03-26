@@ -60,7 +60,7 @@ A specialized search application designed to help Muslims find Islamic rulings (
   - [موقع الشيخ ربيع المدخلي](https://rabee.net)
 - **Scholar Request System**: Request new scholars to be added to the searching list
 - **Channel Submission**: Submit YouTube channels for consideration
-- **Sharing Capabilities**: Easily share search results with others
+- **Shareable URLs**: Search queries are reflected in the URL (`?q=`) — copy the address bar to share, or register the app as a browser custom search engine
 - **Mobile Responsive**: Works seamlessly on all devices
 - **Modern UI**: Built with Tailwind CSS and shadcn/ui components
 
@@ -150,10 +150,11 @@ NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 ## Usage
 
 1. Use the search bar to look for Islamic topics or questions
-2. Filter results by specific scholars using the filter button
+2. Filter results by specific scholars using the + site-picker button
 3. Watch videos directly in the app or open them on YouTube
-4. Share interesting search results with others
-5. Request new scholars or channels to be added to the platform
+4. Share results by copying the URL — the `?q=` param always reflects your query
+5. Register as a browser custom search engine: set the URL to `https://fatwa-search.vercel.app/ar/search?q=%s`
+6. Request new scholars or channels to be added to the platform
 
 ## Developer Guide
 

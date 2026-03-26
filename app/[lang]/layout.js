@@ -16,6 +16,10 @@ export default function LanguageLayout({ children, params }) {
   const pathname = usePathname();
   const { lang } = React.use(params);
   const [language, setLanguage] = useState(lang);
+  // Derived directly from pathname rather than useState so it stays in sync
+  // with the Next.js route on every render — including browser back/forward.
+  // Using state + useEffect caused a one-render lag where Radix Tabs saw a
+  // mismatched value/content pair and rendered nothing.
   const activeTab = pathname.includes("/yt-search") ? "youtube" : "search";
 
   // Handle language changes

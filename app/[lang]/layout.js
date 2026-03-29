@@ -114,6 +114,27 @@ export default function LanguageLayout({ children, params }) {
           {children}
         </ErrorBoundary>
       </Tabs.Root>
+
+      <footer className="mt-8 pb-4 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+        <span>{translations[language].createdBy}</span>
+        <a
+          href="https://github.com/aramb-dev"
+          className="hover:text-gray-600 underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          عبد من عباد الله
+        </a>
+        <span>·</span>
+        <a
+          href="https://github.com/aramb-dev/fatwa-search"
+          className="hover:text-gray-600 underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {translations[language].viewOnGithub}
+        </a>
+      </footer>
     </div>
   );
 }

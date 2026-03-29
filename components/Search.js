@@ -170,7 +170,6 @@ const SearchComponent = ({ language = "en" }) => {
           setHasMore(cachedResults.length >= resultsPerPage);
           setStartIndex(start + resultsPerPage);
           setLoading(false);
-          toast(t.searchResultsDisclaimer, { duration: 5000, closeButton: true });
           return;
         }
 
@@ -216,7 +215,8 @@ const SearchComponent = ({ language = "en" }) => {
         setHasMore(allResults.length >= resultsPerPage);
         setStartIndex(start + resultsPerPage);
 
-        if (isNewSearch) {
+        if (isNewSearch && searchMode === "scholars" && !localStorage.getItem("disclaimer-shown")) {
+          localStorage.setItem("disclaimer-shown", "1");
           toast(t.searchResultsDisclaimer, {
             duration: 5000,
             closeButton: true,

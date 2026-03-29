@@ -285,7 +285,7 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
     if (navigator.share) {
       navigator
         .share({
-          title: "Fatwa Search Results",
+          title: translations.shareTitleFatwa || "Ilm Search Results",
           text: `Check out these YouTube search results for "${searchQuery}"`,
           url: url.toString(),
         })

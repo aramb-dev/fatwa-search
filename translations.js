@@ -68,7 +68,7 @@ export const translations = {
     pleaseEnterFeedback: "Please enter your feedback",
     feedbackSuccess: "Thank you for your feedback!",
     feedbackFailed: "Failed to submit feedback",
-    shareTitleFatwa: "Fatwa Search Results",
+    shareTitleFatwa: "Ilm Search Results",
     shareText: "Search results for",
     linkCopied: "Link copied to clipboard!",
     // Announcement pill
@@ -103,7 +103,7 @@ export const translations = {
   ar: {
     search: "بحث",
     youtubeSearch: "بحث يوتيوب",
-    searchLabel: "بحث شامل",
+    searchLabel: "بحث العلم",
     searchDescription:
       "ابحث في مواقع المشايخ باستخدام الكلمات المفتاحية الخاصة بك",
     searchPlaceholder: "ادخل كلمات البحث...",
@@ -169,7 +169,7 @@ export const translations = {
     pleaseEnterFeedback: "الرجاء إدخال ملاحظاتك",
     feedbackSuccess: "شكراً على ملاحظاتك!",
     feedbackFailed: "فشل في إرسال الملاحظات",
-    shareTitleFatwa: "نتائج بحث الفتاوى",
+    shareTitleFatwa: "نتائج بحث العلم",
     shareText: "نتائج البحث عن",
     linkCopied: "تم نسخ الرابط!",
     // Announcement pill

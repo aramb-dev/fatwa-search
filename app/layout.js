@@ -3,9 +3,9 @@ import { Toaster } from "sonner";
 import Script from "next/script";
 
 export const metadata = {
-  title: "Fatwa Search - بحث شامل",
+  title: "Ilm Search - بحث العلم",
   description:
-    "Search the Mashayikh sites for your keyword - ابحث في مواقع المشايخ باستخدام الكلمات المفتاحية الخاصة بك",
+    "Search Islamic knowledge across scholar sites, books, and references - ابحث في العلم الإسلامي عبر مواقع العلماء والكتب والمراجع",
   icons: {
     icon: "/favicon.ico",
   },

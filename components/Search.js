@@ -240,6 +240,19 @@ const SearchComponent = ({ language = "en" }) => {
 
   useEffect(() => {
     const queryParam = searchParams?.get("q");
+    if (!queryParam && initialLoadDoneRef.current) {
+      // URL lost its ?q= (tab click, back button, or post-reset navigation) — reset to landing
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+      setSearchQuery("");
+      setSearchResults([]);
+      setSearchMode("scholars");
+      setHasSearched(false);
+      setStartIndex(1);
+      setHasMore(true);
+      setSiteFilters([]);
+      initialLoadDoneRef.current = false;
+      return;
+    }
     if (queryParam && !initialLoadDoneRef.current) {
       setSearchQuery(queryParam);
       initialLoadDoneRef.current = true;
@@ -279,7 +292,6 @@ const SearchComponent = ({ language = "en" }) => {
     setStartIndex(1);
     setHasMore(true);
     setSiteFilters([]);
-    initialLoadDoneRef.current = false;
     router.push(`/${language}/search`, { scroll: false });
   };
 

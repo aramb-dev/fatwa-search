@@ -82,6 +82,11 @@ export const translations = {
     tabScholars: "Scholars",
     tabLibraries: "Libraries",
     xOfYSelected: "{x} of {y} selected",
+    andNMore: "and {n} more",
+    modeScholars: "Scholars",
+    modeShamela: "Shamela",
+    modeDorar: "Dorar",
+    modeAlmaany: "Al-Maany",
     // v3 announcement modal
     v3WhatsNew: "What's new in v3",
     v3Feature1Title: "Google-style results",
@@ -179,6 +184,11 @@ export const translations = {
     tabScholars: "العلماء",
     tabLibraries: "المكتبات",
     xOfYSelected: "{x} من {y} محدد",
+    andNMore: "و{n} أخرى",
+    modeScholars: "العلماء",
+    modeShamela: "الشاملة",
+    modeDorar: "الدرر",
+    modeAlmaany: "المعاني",
     // v3 announcement modal
     v3WhatsNew: "الجديد في الإصدار v3",
     v3Feature1Title: "نتائج بأسلوب جوجل",

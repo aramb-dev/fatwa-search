@@ -8,7 +8,7 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Check, BookOpen, Library, BookMarked, Gem, Plus } from "lucide-react";
+import { Check, BookOpen, Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export const SITE_LABELS_EN = {
@@ -75,12 +75,6 @@ export const SitePickerModal = ({
   sites,
   selectedSites,
   setSelectedSites,
-  includeShamela,
-  setIncludeShamela,
-  includeAlmaany,
-  setIncludeAlmaany,
-  includeDorar,
-  setIncludeDorar,
   translations,
   onRequestSite,
   isEnglish,
@@ -93,26 +87,10 @@ export const SitePickerModal = ({
     : [
         { id: "all", label: translations.tabAll || "All" },
         { id: "scholars", label: translations.tabScholars || "Scholars" },
-        { id: "libraries", label: translations.tabLibraries || "Libraries" },
       ];
 
-  const handleSelectAll = () => {
-    setSelectedSites(sites);
-    if (!isEnglish) {
-      setIncludeShamela(true);
-      setIncludeAlmaany(true);
-      setIncludeDorar(true);
-    }
-  };
-
-  const handleSelectNone = () => {
-    setSelectedSites([]);
-    if (!isEnglish) {
-      setIncludeShamela(false);
-      setIncludeAlmaany(false);
-      setIncludeDorar(false);
-    }
-  };
+  const handleSelectAll = () => setSelectedSites(sites);
+  const handleSelectNone = () => setSelectedSites([]);
 
   const toggleSite = (site) => {
     setSelectedSites((prev) =>
@@ -120,15 +98,8 @@ export const SitePickerModal = ({
     );
   };
 
-  const specialCheckedCount =
-    (includeShamela ? 1 : 0) +
-    (includeAlmaany ? 1 : 0) +
-    (includeDorar ? 1 : 0);
-  const totalSelected = selectedSites.length + specialCheckedCount;
-
+  const totalSelected = selectedSites.length;
   const showScholars = activeTab === "all" || activeTab === "scholars";
-  const showLibraries =
-    !isEnglish && (activeTab === "all" || activeTab === "libraries");
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -161,7 +132,7 @@ export const SitePickerModal = ({
           <p className="text-xs text-gray-400 mt-0.5 mb-3">
             {(translations.xOfYSelected || "{x} of {y} selected")
               .replace("{x}", totalSelected)
-              .replace("{y}", sites.length + (isEnglish ? 0 : 3))}
+              .replace("{y}", sites.length)}
           </p>
 
           {/* Google-style tab strip */}
@@ -200,35 +171,6 @@ export const SitePickerModal = ({
               />
             ))}
 
-          {showLibraries && (
-            <>
-              {activeTab === "all" && (
-                <div className="h-px bg-gray-100 mx-1 my-1" />
-              )}
-              <MenuItem
-                icon={Library}
-                label="Shamela"
-                sublabel="shamela.ws"
-                checked={includeShamela}
-                onClick={() => setIncludeShamela((v) => !v)}
-              />
-              <MenuItem
-                icon={BookMarked}
-                label="Al-Maany"
-                sublabel="almaany.com"
-                checked={includeAlmaany}
-                onClick={() => setIncludeAlmaany((v) => !v)}
-              />
-              <MenuItem
-                icon={Gem}
-                label="Dorar"
-                sublabel="dorar.net"
-                checked={includeDorar}
-                onClick={() => setIncludeDorar((v) => !v)}
-              />
-            </>
-          )}
-
           <div className="h-px bg-gray-100 mx-1 my-1" />
 
           <button
@@ -264,12 +206,6 @@ SitePickerModal.propTypes = {
   sites: PropTypes.array.isRequired,
   selectedSites: PropTypes.array.isRequired,
   setSelectedSites: PropTypes.func.isRequired,
-  includeShamela: PropTypes.bool.isRequired,
-  setIncludeShamela: PropTypes.func.isRequired,
-  includeAlmaany: PropTypes.bool.isRequired,
-  setIncludeAlmaany: PropTypes.func.isRequired,
-  includeDorar: PropTypes.bool.isRequired,
-  setIncludeDorar: PropTypes.func.isRequired,
   translations: PropTypes.object.isRequired,
   onRequestSite: PropTypes.func.isRequired,
   isEnglish: PropTypes.bool,

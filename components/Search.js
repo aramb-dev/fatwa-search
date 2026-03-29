@@ -115,9 +115,8 @@ const SearchComponent = ({ language = "en" }) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sites] = useState(sitesForLanguage);
-  const [includeShamela, setIncludeShamela] = useState(false);
-  const [includeAlmaany, setIncludeAlmaany] = useState(false);
-  const [includeDorar, setIncludeDorar] = useState(false);
+  // "scholars" | "shamela" | "dorar" | "almaany"
+  const [searchMode, setSearchMode] = useState("scholars");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [siteInput, setSiteInput] = useState("");
@@ -157,19 +156,13 @@ const SearchComponent = ({ language = "en" }) => {
 
       setLoading(true);
       try {
-        const regularSites = selectedSites;
-        const specialSitesToSearch = [
-          ...(includeShamela ? ["shamela.ws"] : []),
-          ...(includeAlmaany ? ["almaany.com"] : []),
-          ...(includeDorar ? ["dorar.net"] : []),
-        ];
-
-        const cacheKey = {
-          query: searchQuery,
-          sites: regularSites,
-          special: specialSitesToSearch,
-          start,
+        const libraryDomains = {
+          shamela: "shamela.ws",
+          dorar: "dorar.net",
+          almaany: "almaany.com",
         };
+
+        const cacheKey = { query: searchQuery, mode: searchMode, sites: selectedSites, start };
         const cachedResults = searchCache.get(cacheKey);
 
         if (cachedResults && isNewSearch) {
@@ -177,65 +170,38 @@ const SearchComponent = ({ language = "en" }) => {
           setHasMore(cachedResults.length >= resultsPerPage);
           setStartIndex(start + resultsPerPage);
           setLoading(false);
-          toast(t.searchResultsDisclaimer, {
-            duration: 5000,
-            closeButton: true,
-          });
+          toast(t.searchResultsDisclaimer, { duration: 5000, closeButton: true });
           return;
         }
 
         let allResults = [];
 
-        const specialSearches = specialSitesToSearch.map(
-          async (specialSite) => {
+        if (searchMode !== "scholars") {
+          // Dedicated library mode — single API call to the selected site
+          const domain = libraryDomains[searchMode];
+          const response = await fetch(
+            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${domain}&start=${start}&lang=${language}`,
+            { signal },
+          );
+          const data = await response.json();
+          if (data.error) throw new Error(data.error);
+          allResults = data.items || [];
+        } else {
+          // Scholars mode — bundle all selected sites into one query
+          if (selectedSites.length > 0) {
+            const regularSiteQuery = selectedSites
+              .map((site) => `site:${site}`)
+              .join(" OR ");
+            const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`;
             const response = await fetch(
-              `/api/search?q=${encodeURIComponent(searchQuery)}&site=${specialSite}&start=${start}&lang=${language}`,
+              `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
               { signal },
             );
             const data = await response.json();
-            if (data.error) {
-              console.error(`Search error for ${specialSite}:`, data.error);
-              return [];
-            }
-            return data.items || [];
-          },
-        );
-
-        const specialResults = await Promise.all(specialSearches);
-        allResults = specialResults.flat();
-
-        if (regularSites.length > 0) {
-          const regularSiteQuery = regularSites
-            .map((site) => `site:${site}`)
-            .join(" OR ");
-          const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`;
-          const regularResponse = await fetch(
-            `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
-            { signal },
-          );
-          const regularData = await regularResponse.json();
-          if (regularData.error) {
-            console.error("Search error:", regularData.error);
-            throw new Error(regularData.error);
-          }
-          if (regularData.items) {
-            allResults = [...allResults, ...regularData.items];
+            if (data.error) throw new Error(data.error);
+            allResults = data.items || [];
           }
         }
-
-        allResults.sort((a, b) => {
-          const aIsDorar = a.link.includes("dorar.net");
-          const bIsDorar = b.link.includes("dorar.net");
-          if (aIsDorar && !bIsDorar) return -1;
-          if (!aIsDorar && bIsDorar) return 1;
-          const aIsSpecial = specialSitesToSearch.some((site) =>
-            a.link.includes(site),
-          );
-          const bIsSpecial = specialSitesToSearch.some((site) =>
-            b.link.includes(site),
-          );
-          return bIsSpecial - aIsSpecial;
-        });
 
         setSearchResults((prev) => {
           const newResults = isNewSearch
@@ -268,14 +234,7 @@ const SearchComponent = ({ language = "en" }) => {
         abortControllerRef.current = null;
       }
     },
-    [
-      searchQuery,
-      selectedSites,
-      includeShamela,
-      includeAlmaany,
-      includeDorar,
-      t,
-    ],
+    [searchQuery, selectedSites, searchMode, t],
   );
 
 
@@ -434,15 +393,17 @@ const SearchComponent = ({ language = "en" }) => {
           <form onSubmit={handleSearch}>
             {/* Input row */}
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-md px-3 py-2">
-              {/* + Sites button */}
-              <button
-                type="button"
-                onClick={() => openModal("sitePicker")}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center flex-shrink-0 transition-colors"
-                aria-label="Select sites to search"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
+              {/* + Sites button — hidden in library modes */}
+              {searchMode === "scholars" && (
+                <button
+                  type="button"
+                  onClick={() => openModal("sitePicker")}
+                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center flex-shrink-0 transition-colors"
+                  aria-label="Select sites to search"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
 
               {/* Query input */}
               <input
@@ -487,48 +448,41 @@ const SearchComponent = ({ language = "en" }) => {
             </div>
           </form>
 
-          {/* Active site pills */}
+          {/* Active site summary */}
           {searchQuery && (
-            <div className="flex flex-wrap items-center gap-1.5 mt-2 px-1">
-              {selectedSites.length === sites.length &&
-              !includeShamela &&
-              !includeAlmaany &&
-              !includeDorar ? (
-                <span className="text-xs text-gray-400 py-1">
-                  All {sites.length} sites
-                </span>
-              ) : (
-                <>
-                  {selectedSites.map((site) => (
-                    <span
-                      key={site}
-                      className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
-                    >
-                      {(isEnglish ? SITE_LABELS_EN : SITE_LABELS_AR)[site] || site}
-                    </span>
-                  ))}
-                  {includeShamela && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                      Shamela
-                    </span>
-                  )}
-                  {includeAlmaany && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                      Al-Maany
-                    </span>
-                  )}
-                  {includeDorar && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                      Dorar
-                    </span>
-                  )}
-                </>
-              )}
+            <div className="flex items-center gap-1.5 mt-2 px-1 min-h-[24px]">
+              {(() => {
+                if (searchMode !== "scholars") {
+                  const modeLabel = {
+                    shamela: t.modeShamela || "Shamela",
+                    dorar: t.modeDorar || "Dorar",
+                    almaany: t.modeAlmaany || "Al-Maany",
+                  }[searchMode]
+                  return (
+                    <span className="text-xs text-gray-400 py-1">{modeLabel}</span>
+                  )
+                }
+
+                const siteLabels = isEnglish ? SITE_LABELS_EN : SITE_LABELS_AR
+                const sep = isEnglish ? ", " : "، "
+                if (selectedSites.length === 0) return null
+
+                const MAX_SHOWN = 2
+                const shown = selectedSites.slice(0, MAX_SHOWN).map((s) => siteLabels[s] || s)
+                const remaining = selectedSites.length - MAX_SHOWN
+                const summary = shown.join(sep) + (remaining > 0
+                  ? " " + (t.andNMore || "and {n} more").replace("{n}", remaining)
+                  : "")
+
+                return (
+                  <span className="text-xs text-gray-400 py-1 truncate">{summary}</span>
+                )
+              })()}
               {searchResults.length > 0 && (
                 <button
                   type="button"
                   onClick={() => openModal("filter")}
-                  className="text-xs text-blue-600 hover:underline py-0.5 ml-1"
+                  className="text-xs text-blue-600 hover:underline py-0.5 ml-1 flex-shrink-0"
                 >
                   {t.filter}
                 </button>
@@ -536,6 +490,37 @@ const SearchComponent = ({ language = "en" }) => {
             </div>
           )}
         </div>
+
+        {/* Library mode tabs — Arabic only */}
+        {!isEnglish && (
+          <div className="flex gap-1 mt-3 border-b border-gray-100 overflow-x-auto">
+            {[
+              { id: "scholars", label: t.modeScholars || "العلماء" },
+              { id: "shamela",  label: t.modeShamela  || "الشاملة" },
+              { id: "dorar",    label: t.modeDorar    || "الدرر" },
+              { id: "almaany",  label: t.modeAlmaany  || "المعاني" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setSearchMode(tab.id)
+                  setSearchResults([])
+                  setStartIndex(1)
+                  setHasMore(true)
+                }}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px flex-shrink-0",
+                  searchMode === tab.id
+                    ? "border-gray-900 text-gray-900"
+                    : "border-transparent text-gray-500 hover:text-gray-700",
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Results */}
         <div className="mt-6">
@@ -676,12 +661,6 @@ const SearchComponent = ({ language = "en" }) => {
         sites={sites}
         selectedSites={selectedSites}
         setSelectedSites={setSelectedSites}
-        includeShamela={includeShamela}
-        setIncludeShamela={setIncludeShamela}
-        includeAlmaany={includeAlmaany}
-        setIncludeAlmaany={setIncludeAlmaany}
-        includeDorar={includeDorar}
-        setIncludeDorar={setIncludeDorar}
         translations={t}
         onRequestSite={() => openModal("siteRequest")}
         isEnglish={isEnglish}

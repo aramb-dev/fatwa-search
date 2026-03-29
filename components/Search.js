@@ -1,6 +1,6 @@
 import React from "react";
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Search, Plus, Share2 } from "lucide-react";
+import { Search, Plus, Share2, X } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 import { Toaster, toast } from "sonner";
@@ -270,6 +270,19 @@ const SearchComponent = ({ language = "en" }) => {
   const openModal = (name) => setActiveModal(name);
   const closeModal = () => setActiveModal(null);
 
+  const handleReset = () => {
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    setSearchQuery("");
+    setSearchResults([]);
+    setSearchMode("scholars");
+    setHasSearched(false);
+    setStartIndex(1);
+    setHasMore(true);
+    setSiteFilters([]);
+    initialLoadDoneRef.current = false;
+    router.push(`/${language}/search`, { scroll: false });
+  };
+
   const handleSiteRequest = async () => {
     if (!siteInput.trim()) {
       toast.error(t.pleaseEnterSite);
@@ -425,6 +438,18 @@ const SearchComponent = ({ language = "en" }) => {
                   aria-label={t.share || "Share"}
                 >
                   <Share2 className="w-4 h-4" />
+                </button>
+              )}
+
+              {/* Reset button — clears query, mode, and results */}
+              {hasSearched && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               )}
 

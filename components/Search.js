@@ -662,6 +662,37 @@ const SearchComponent = ({ language = "en" }) => {
           </div>
         )}
 
+        {/* Footer — only on landing page */}
+        {!hasSearched && (
+          <div className="mt-8 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+            <span>{t.createdBy}</span>
+            <a
+              href="https://github.com/aramb-dev"
+              className="hover:text-gray-600 underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              عبد من عباد الله
+            </a>
+            <span>·</span>
+            <a
+              href="https://github.com/aramb-dev/fatwa-search"
+              className="hover:text-gray-600 underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {t.viewOnGithub}
+            </a>
+            <span>·</span>
+            <button
+              onClick={() => openModal("feedback")}
+              className="hover:text-gray-600 underline"
+            >
+              {t.provideFeedback}
+            </button>
+          </div>
+        )}
+
       </div>
 
       <SitePickerModal

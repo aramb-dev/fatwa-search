@@ -99,6 +99,8 @@ export const translations = {
     v3Feature3Desc:
       "49 curated English salafi sites with a dedicated search engine.",
     gotIt: "Got it",
+    ytEnglishComingSoon:
+      "English channel support is coming soon. In the meantime, searching here will search Arabic channels — you'll need to use Arabic search terms.",
   },
   ar: {
     search: "بحث",
@@ -201,5 +203,6 @@ export const translations = {
     v3Feature3Desc:
       "49 موقعاً سلفياً إنجليزياً منتقى بعناية مع محرك بحث مخصص.",
     gotIt: "حسناً",
+    ytEnglishComingSoon: "",
   },
 };

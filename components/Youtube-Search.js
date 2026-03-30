@@ -282,6 +282,14 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
   return (
     <div className="w-full max-w-6xl mx-auto">
       <div className="space-y-4">
+        {language === "en" && translations.ytEnglishComingSoon && (
+          <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <svg className="mt-0.5 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>{translations.ytEnglishComingSoon}</p>
+          </div>
+        )}
         <form onSubmit={handleSearch} className="flex gap-2 mb-4">
           <Input
             value={searchQuery}

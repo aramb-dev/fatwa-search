@@ -7,7 +7,7 @@ export const metadata = {
   description:
     "Search Islamic knowledge across scholar sites, books, and references - ابحث في العلم الإسلامي عبر مواقع العلماء والكتب والمراجع",
   icons: {
-    icon: "/favicon.ico",
+    icon: { url: "/favicon.svg", type: "image/svg+xml" },
   },
 };
 

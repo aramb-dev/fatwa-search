@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import PropTypes from "prop-types";
 import { SITE_LABELS_AR } from "../../lib/constants";
 import {
   Dialog,
@@ -11,10 +10,19 @@ import {
 import { Button } from "../ui/button";
 import { Check, BookOpen, Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
+import type { Translation } from "../../lib/types";
 
 export { SITE_LABELS_AR };
 
-const MenuItem = ({ icon: Icon, label, sublabel, checked, onClick }) => (
+interface MenuItemProps {
+  icon: React.ElementType;
+  label: string;
+  sublabel?: string;
+  checked: boolean;
+  onClick: () => void;
+}
+
+const MenuItem = ({ icon: Icon, label, sublabel, checked, onClick }: MenuItemProps) => (
   <button
     type="button"
     onClick={onClick}
@@ -38,13 +46,16 @@ const MenuItem = ({ icon: Icon, label, sublabel, checked, onClick }) => (
   </button>
 );
 
-MenuItem.propTypes = {
-  icon: PropTypes.elementType.isRequired,
-  label: PropTypes.string.isRequired,
-  sublabel: PropTypes.string,
-  checked: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
-};
+interface SitePickerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  sites: string[];
+  selectedSites: string[];
+  setSelectedSites: (sites: string[]) => void;
+  translations: Translation;
+  onRequestSite: () => void;
+  isEnglish?: boolean;
+}
 
 export const SitePickerModal = ({
   isOpen,
@@ -55,7 +66,7 @@ export const SitePickerModal = ({
   translations,
   onRequestSite,
   isEnglish,
-}) => {
+}: SitePickerModalProps) => {
   const [activeTab, setActiveTab] = useState("all");
   const SITE_LABELS = SITE_LABELS_AR;
 
@@ -69,9 +80,11 @@ export const SitePickerModal = ({
   const handleSelectAll = () => setSelectedSites(sites);
   const handleSelectNone = () => setSelectedSites([]);
 
-  const toggleSite = (site) => {
-    setSelectedSites((prev) =>
-      prev.includes(site) ? prev.filter((s) => s !== site) : [...prev, site],
+  const toggleSite = (site: string) => {
+    setSelectedSites(
+      selectedSites.includes(site)
+        ? selectedSites.filter((s) => s !== site)
+        : [...selectedSites, site],
     );
   };
 
@@ -108,11 +121,10 @@ export const SitePickerModal = ({
           </div>
           <p className="text-xs text-gray-400 mt-0.5 mb-3">
             {(translations.xOfYSelected || "{x} of {y} selected")
-              .replace("{x}", totalSelected)
-              .replace("{y}", sites.length)}
+              .replace("{x}", String(totalSelected))
+              .replace("{y}", String(sites.length))}
           </p>
 
-          {/* Google-style tab strip */}
           {tabs.length > 1 && (
             <div className="flex gap-1 border-b border-gray-100 -mx-4 px-4">
               {tabs.map((tab) => (
@@ -134,7 +146,6 @@ export const SitePickerModal = ({
           )}
         </DialogHeader>
 
-        {/* Scrollable list */}
         <div className="overflow-y-auto max-h-[52vh] px-2 py-2">
           {showScholars &&
             sites.map((site) => (
@@ -175,15 +186,4 @@ export const SitePickerModal = ({
       </DialogContent>
     </Dialog>
   );
-};
-
-SitePickerModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  sites: PropTypes.array.isRequired,
-  selectedSites: PropTypes.array.isRequired,
-  setSelectedSites: PropTypes.func.isRequired,
-  translations: PropTypes.object.isRequired,
-  onRequestSite: PropTypes.func.isRequired,
-  isEnglish: PropTypes.bool,
 };

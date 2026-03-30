@@ -1,29 +1,24 @@
+"use client";
+
 import React from "react";
-import { useState, useCallback, useEffect, useRef } from "react";
 import { Search, Plus, Share2, X } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams, useRouter } from "next/navigation";
 import { translations } from "../translations";
 import { FeedbackModal } from "./search/FeedbackModal";
 import { SiteRequestModal } from "./search/SiteRequestModal";
 import { FilterModal } from "./search/FilterModal";
 import { SitePickerModal } from "./search/SitePickerModal";
-import { searchCache } from "../lib/cache";
-import {
-  DEFAULT_SITES,
-  ENGLISH_SITES,
-  SITE_LABELS_AR,
-  RESULTS_PER_PAGE,
-} from "../lib/constants";
-import PropTypes from "prop-types";
+import { SITE_LABELS_AR } from "../lib/constants";
 import { cn } from "../lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { useSearch } from "../hooks/useSearch";
+import { SearchResult } from "./search/SearchResult";
+import type { Language, SearchMode, SearchResultItem } from "../lib/types";
 
-
-export { DEFAULT_SITES, ENGLISH_SITES };
+export { DEFAULT_SITES, ENGLISH_SITES } from "../lib/constants";
 
 const resultsVariants = {
   initial: { opacity: 0, y: 10 },
@@ -31,281 +26,51 @@ const resultsVariants = {
   exit: { opacity: 0, y: -10 },
 };
 
-const SearchComponent = ({ language = "en" }) => {
+interface SearchComponentProps {
+  language?: Language;
+}
+
+const SearchComponent = ({ language = "en" }: SearchComponentProps) => {
   let t = translations[language];
   if (!t) {
     console.error("Missing translations for language:", language);
     t = translations.en;
   }
 
-  const resultsPerPage = RESULTS_PER_PAGE;
-
-  const getErrorMessage = (error) => {
-    const msg = error.message.toLowerCase();
-    if (msg.includes("failed to fetch") || msg.includes("network"))
-      return t.errorNetwork;
-    if (msg.includes("quota") || msg.includes("limit"))
-      return t.errorQuota;
-    if (msg.includes("timeout") || msg.includes("aborted"))
-      return t.errorTimeout;
-    if (msg.includes("invalid") || msg.includes("bad request"))
-      return t.errorInvalid;
-    return t.errorGeneric;
-  };
-
   const isEnglish = language === "en";
-  const sitesForLanguage = isEnglish ? ENGLISH_SITES : DEFAULT_SITES;
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sites] = useState(sitesForLanguage);
-  // "scholars" | "shamela" | "dorar" | "almaany"
-  const [searchMode, setSearchMode] = useState("scholars");
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [siteInput, setSiteInput] = useState("");
-  const [startIndex, setStartIndex] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [selectedSites, setSelectedSites] = useState(sitesForLanguage);
-  const [siteFilters, setSiteFilters] = useState([]);
-  const [activeModal, setActiveModal] = useState(null);
-  const [showV3Modal, setShowV3Modal] = useState(false);
-  const [feedback, setFeedback] = useState("");
-  // Tracks whether the user has submitted at least one search. Controls
-  // the centered landing layout vs. sticky-top results layout, and gates
-  // the "no results" empty state so it doesn't flash while typing.
-  const [hasSearched, setHasSearched] = useState(false);
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  // Prevents the ?q= useEffect from re-firing after router.push writes
-  // the same param back — without this guard, every push would trigger
-  // a second search.
-  const initialLoadDoneRef = useRef(false);
-  const abortControllerRef = useRef(null);
-
-  useEffect(() => {
-    if (!localStorage.getItem("v3-announced")) {
-      setShowV3Modal(true);
-    }
-  }, []);
-
-  const performSearch = useCallback(
-    async (start, isNewSearch = false, queryOverride) => {
-      const activeQuery = queryOverride !== undefined ? queryOverride : searchQuery;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
-
-      setLoading(true);
-      try {
-        const libraryDomains = {
-          shamela: "shamela.ws",
-          dorar: "dorar.net",
-          almaany: "almaany.com",
-        };
-
-        const cacheKey = { query: activeQuery, mode: searchMode, sites: selectedSites, start };
-        const cachedResults = searchCache.get(cacheKey);
-
-        if (cachedResults && isNewSearch) {
-          setSearchResults(cachedResults);
-          setHasMore(cachedResults.length >= resultsPerPage);
-          setStartIndex(start + resultsPerPage);
-          setLoading(false);
-          return;
-        }
-
-        let allResults = [];
-
-        if (searchMode !== "scholars") {
-          // Dedicated library mode — single API call to the selected site
-          const domain = libraryDomains[searchMode];
-          const response = await fetch(
-            `/api/search?q=${encodeURIComponent(activeQuery)}&site=${domain}&start=${start}&lang=${language}`,
-            { signal },
-          );
-          const data = await response.json();
-          if (data.error) throw new Error(data.error);
-          allResults = data.items || [];
-        } else {
-          // Scholars mode — bundle all selected sites into one query
-          if (selectedSites.length > 0) {
-            const regularSiteQuery = selectedSites
-              .map((site) => `site:${site}`)
-              .join(" OR ");
-            const combinedQuery = `(${regularSiteQuery}) ${activeQuery}`;
-            const response = await fetch(
-              `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
-              { signal },
-            );
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            allResults = data.items || [];
-          }
-        }
-
-        setSearchResults((prev) => {
-          const newResults = isNewSearch
-            ? allResults
-            : [...prev, ...allResults];
-          if (isNewSearch && allResults.length > 0) {
-            searchCache.set(cacheKey, allResults);
-          }
-          return newResults;
-        });
-
-        setHasMore(allResults.length >= resultsPerPage);
-        setStartIndex(start + resultsPerPage);
-
-        if (isNewSearch && searchMode === "scholars" && !localStorage.getItem("disclaimer-shown")) {
-          localStorage.setItem("disclaimer-shown", "1");
-          toast(t.searchResultsDisclaimer, {
-            duration: 5000,
-            closeButton: true,
-          });
-        }
-      } catch (error) {
-        if (error.name === "AbortError") return;
-        console.error("Search failed:", error);
-        toast.error(getErrorMessage(error), {
-          duration: 7000,
-          closeButton: true,
-        });
-      } finally {
-        setLoading(false);
-        abortControllerRef.current = null;
-      }
-    },
-    [searchQuery, selectedSites, searchMode, t],
-  );
-
-
-  useEffect(() => {
-    const queryParam = searchParams?.get("q");
-    if (!queryParam && initialLoadDoneRef.current) {
-      // URL lost its ?q= (tab click, back button, or post-reset navigation) — reset to landing
-      if (abortControllerRef.current) abortControllerRef.current.abort();
-      setSearchQuery("");
-      setSearchResults([]);
-      setSearchMode("scholars");
-      setHasSearched(false);
-      setStartIndex(1);
-      setHasMore(true);
-      setSiteFilters([]);
-      initialLoadDoneRef.current = false;
-      return;
-    }
-    if (queryParam && !initialLoadDoneRef.current) {
-      setSearchQuery(queryParam);
-      initialLoadDoneRef.current = true;
-      setHasSearched(true);
-      performSearch(1, true, queryParam);
-    }
-  }, [searchParams, performSearch]);
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    // scroll: false prevents the page jumping to the top on every new search
-    // Mark initial load done before pushing so the ?q= useEffect doesn't
-    // re-trigger a second performSearch when it sees the new URL param.
-    initialLoadDoneRef.current = true;
-    router.push(`/${language}/search?q=${encodeURIComponent(searchQuery.trim())}`, { scroll: false });
-    setHasSearched(true);
-    setSearchResults([]);
-    setStartIndex(1);
-    setHasMore(true);
-    await performSearch(1, true);
-  };
-
-  const handleQueryChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const openModal = (name) => setActiveModal(name);
-  const closeModal = () => setActiveModal(null);
-
-  const handleReset = () => {
-    if (abortControllerRef.current) abortControllerRef.current.abort();
-    setSearchQuery("");
-    setSearchResults([]);
-    setSearchMode("scholars");
-    setHasSearched(false);
-    setStartIndex(1);
-    setHasMore(true);
-    setSiteFilters([]);
-    router.push(`/${language}/search`, { scroll: false });
-  };
-
-  const handleSiteRequest = async () => {
-    if (!siteInput.trim()) {
-      toast.error(t.pleaseEnterSite);
-      return;
-    }
-    const formData = new FormData();
-    formData.append("form-name", "site-request");
-    formData.append("requested-site", siteInput);
-    try {
-      await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(formData).toString(),
-      });
-      setSiteInput("");
-      closeModal();
-      toast.success(t.requestSubmitted);
-    } catch {
-      toast.error(t.requestFailed);
-    }
-  };
-
-  const handleFeedbackSubmit = async () => {
-    if (!feedback.trim()) {
-      toast.error(t.pleaseEnterFeedback);
-      return;
-    }
-    const formData = new FormData();
-    formData.append("form-name", "feedback");
-    formData.append("feedback", feedback);
-    try {
-      await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams(formData).toString(),
-      });
-      setFeedback("");
-      closeModal();
-      toast.success(t.feedbackSuccess);
-    } catch {
-      toast.error(t.feedbackFailed);
-    }
-  };
-
-  const handleShare = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const url = new URL(window.location.href);
-    url.searchParams.set("q", searchQuery);
-    if (navigator.share) {
-      navigator
-        .share({
-          title: t.shareTitleFatwa,
-          text: `${t.shareText} "${searchQuery}"`,
-          url: url.toString(),
-        })
-        .catch(console.error);
-    } else {
-      navigator.clipboard.writeText(url.toString());
-      toast.success(t.linkCopied);
-    }
-  };
-
-  const filteredResults = searchResults.filter((result) => {
-    if (siteFilters.length === 0) return true;
-    return siteFilters.some((site) => result.link.includes(site));
-  });
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    loading,
+    hasMore,
+    hasSearched,
+    startIndex,
+    selectedSites,
+    setSelectedSites,
+    siteFilters,
+    setSiteFilters,
+    searchMode,
+    setSearchMode,
+    sites,
+    filteredResults,
+    siteInput,
+    setSiteInput,
+    feedback,
+    setFeedback,
+    activeModal,
+    openModal,
+    closeModal,
+    showV3Modal,
+    setShowV3Modal,
+    handleSearch,
+    handleReset,
+    handleShare,
+    handleSiteRequest,
+    handleFeedbackSubmit,
+    performSearch,
+  } = useSearch({ language, t });
 
   const hasResults = filteredResults.length > 0;
   const isLoading = loading && searchQuery;
@@ -321,7 +86,6 @@ const SearchComponent = ({ language = "en" }) => {
           ? "min-h-[calc(100vh-10rem)] flex flex-col justify-center pb-8"
           : "pb-24"
       )}>
-        {/* v3 announcement pill — click to re-open modal */}
         {!hasSearched && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
@@ -342,7 +106,6 @@ const SearchComponent = ({ language = "en" }) => {
           </motion.div>
         )}
 
-        {/* Hero title — only shown before search */}
         {!hasSearched && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -357,12 +120,9 @@ const SearchComponent = ({ language = "en" }) => {
           </motion.div>
         )}
 
-        {/* Search bar: sticky after first search, static on landing */}
         <div className={cn(hasSearched && "sticky top-4 z-20 pt-4")}>
           <form onSubmit={handleSearch}>
-            {/* Input row */}
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full shadow-md px-3 py-2">
-              {/* + Sites button — hidden in library modes */}
               {searchMode === "scholars" && (
                 <button
                   type="button"
@@ -374,10 +134,9 @@ const SearchComponent = ({ language = "en" }) => {
                 </button>
               )}
 
-              {/* Query input */}
               <input
                 value={searchQuery}
-                onChange={handleQueryChange}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder || "Ask anything"}
                 className="flex-1 bg-transparent outline-none text-gray-800 placeholder-gray-400 text-base min-w-0"
                 aria-label={t.searchPlaceholder}
@@ -385,7 +144,6 @@ const SearchComponent = ({ language = "en" }) => {
                 autoFocus
               />
 
-              {/* Share button */}
               {searchQuery && (
                 <button
                   type="button"
@@ -397,7 +155,6 @@ const SearchComponent = ({ language = "en" }) => {
                 </button>
               )}
 
-              {/* Reset button — clears query, mode, and results */}
               {hasSearched && (
                 <button
                   type="button"
@@ -409,7 +166,6 @@ const SearchComponent = ({ language = "en" }) => {
                 </button>
               )}
 
-              {/* Submit button */}
               <button
                 type="submit"
                 disabled={loading || !searchQuery.trim()}
@@ -429,35 +185,35 @@ const SearchComponent = ({ language = "en" }) => {
             </div>
           </form>
 
-          {/* Active site summary */}
           {searchQuery && (
             <div className="flex items-center gap-1.5 mt-2 px-1 min-h-[24px]">
               {(() => {
                 if (searchMode !== "scholars") {
-                  const modeLabel = {
+                  const modeLabel: Record<string, string> = {
                     shamela: t.modeShamela || "Shamela",
                     dorar: t.modeDorar || "Dorar",
                     almaany: t.modeAlmaany || "Al-Maany",
-                  }[searchMode]
+                  };
                   return (
-                    <span className="text-xs text-gray-400 py-1">{modeLabel}</span>
-                  )
+                    <span className="text-xs text-gray-400 py-1">{modeLabel[searchMode]}</span>
+                  );
                 }
 
-                const siteLabels = SITE_LABELS_AR
-                const sep = isEnglish ? ", " : "، "
-                if (selectedSites.length === 0) return null
+                const sep = isEnglish ? ", " : "، ";
+                if (selectedSites.length === 0) return null;
 
-                const MAX_SHOWN = 2
-                const shown = selectedSites.slice(0, MAX_SHOWN).map((s) => siteLabels[s] || s)
-                const remaining = selectedSites.length - MAX_SHOWN
-                const summary = shown.join(sep) + (remaining > 0
-                  ? " " + (t.andNMore || "and {n} more").replace("{n}", remaining)
-                  : "")
+                const MAX_SHOWN = 2;
+                const shown = selectedSites.slice(0, MAX_SHOWN).map((s) => SITE_LABELS_AR[s] || s);
+                const remaining = selectedSites.length - MAX_SHOWN;
+                const summary =
+                  shown.join(sep) +
+                  (remaining > 0
+                    ? " " + (t.andNMore || "and {n} more").replace("{n}", String(remaining))
+                    : "");
 
                 return (
                   <span className="text-xs text-gray-400 py-1 truncate">{summary}</span>
-                )
+                );
               })()}
               {searchResults.length > 0 && (
                 <button
@@ -472,23 +228,22 @@ const SearchComponent = ({ language = "en" }) => {
           )}
         </div>
 
-        {/* Library mode tabs — Arabic only */}
         {!isEnglish && (
           <div className="flex gap-1 mt-3 border-b border-gray-100 overflow-x-auto">
-            {[
-              { id: "scholars", label: t.modeScholars || "العلماء" },
-              { id: "shamela",  label: t.modeShamela  || "الشاملة" },
-              { id: "dorar",    label: t.modeDorar    || "الدرر" },
-              { id: "almaany",  label: t.modeAlmaany  || "المعاني" },
-            ].map((tab) => (
+            {(
+              [
+                { id: "scholars" as SearchMode, label: t.modeScholars || "العلماء" },
+                { id: "shamela" as SearchMode, label: t.modeShamela || "الشاملة" },
+                { id: "dorar" as SearchMode, label: t.modeDorar || "الدرر" },
+                { id: "almaany" as SearchMode, label: t.modeAlmaany || "المعاني" },
+              ] as { id: SearchMode; label: string }[]
+            ).map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => {
-                  setSearchMode(tab.id)
-                  setSearchResults([])
-                  setStartIndex(1)
-                  setHasMore(true)
+                  setSearchMode(tab.id);
+                  // reset results on mode switch — handled by parent via setSearchMode
                 }}
                 className={cn(
                   "px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px flex-shrink-0",
@@ -503,7 +258,6 @@ const SearchComponent = ({ language = "en" }) => {
           </div>
         )}
 
-        {/* Results */}
         <div className="mt-6">
           <AnimatePresence mode="wait">
             {isLoading ? (
@@ -540,9 +294,7 @@ const SearchComponent = ({ language = "en" }) => {
                   <SearchResult
                     key={result.link}
                     result={result}
-                    isNewResult={
-                      index >= filteredResults.length - resultsPerPage
-                    }
+                    isNewResult={index >= filteredResults.length - 10}
                   />
                 ))}
               </motion.div>
@@ -585,7 +337,6 @@ const SearchComponent = ({ language = "en" }) => {
           </AnimatePresence>
         </div>
 
-        {/* Load more */}
         {hasMore && searchResults.length > 0 && !loading && (
           <div className="fixed bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
             <Button
@@ -606,7 +357,6 @@ const SearchComponent = ({ language = "en" }) => {
           </div>
         )}
 
-        {/* Footer — only on landing page */}
         {!hasSearched && (
           <div className="mt-8 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
             <span>{t.createdBy}</span>
@@ -636,7 +386,6 @@ const SearchComponent = ({ language = "en" }) => {
             </button>
           </div>
         )}
-
       </div>
 
       <SitePickerModal
@@ -677,7 +426,6 @@ const SearchComponent = ({ language = "en" }) => {
         />
       )}
 
-      {/* v3 announcement modal */}
       <Dialog
         open={showV3Modal}
         onOpenChange={(open) => {
@@ -739,70 +487,5 @@ const SearchComponent = ({ language = "en" }) => {
     </>
   );
 };
-
-const SearchResult = React.memo(({ result, isNewResult }) => {
-  let hostname = "";
-  let breadcrumb = "";
-
-  try {
-    const url = new URL(result.link);
-    hostname = url.hostname.replace(/^www\./, "");
-    const parts = url.pathname.split("/").filter(Boolean);
-    breadcrumb = parts.length > 0 ? [hostname, ...parts].join(" › ") : hostname;
-  } catch {
-    hostname = result.link;
-    breadcrumb = result.link;
-  }
-
-  const faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
-
-  return (
-    <motion.div
-      initial={isNewResult ? { opacity: 0, y: 10 } : false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: isNewResult ? 0.05 : 0 }}
-      className="py-4 group"
-    >
-      {/* Source line */}
-      <div className="flex items-center gap-2 mb-1">
-        <img
-          src={faviconUrl}
-          alt=""
-          className="w-4 h-4 rounded-full flex-shrink-0"
-          onError={(e) => {
-            e.target.style.display = "none";
-          }}
-        />
-        <span className="text-sm text-gray-700 truncate">{breadcrumb}</span>
-      </div>
-
-      {/* Title */}
-      <a
-        href={result.link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-[#1a0dab] hover:underline text-xl font-normal leading-snug block mb-1 group-hover:text-[#1a0dab]"
-      >
-        {result.title}
-      </a>
-
-      {/* Snippet */}
-      <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
-        {result.snippet}
-      </p>
-    </motion.div>
-  );
-});
-
-SearchResult.propTypes = {
-  result: PropTypes.shape({
-    link: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    snippet: PropTypes.string.isRequired,
-  }).isRequired,
-  isNewResult: PropTypes.bool,
-};
-
-SearchResult.displayName = "SearchResult";
 
 export default SearchComponent;

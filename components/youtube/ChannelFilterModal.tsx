@@ -1,14 +1,23 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Dialog } from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import { Button } from "../ui/button";
+import type { VideoItem, Translation } from "../../lib/types";
 
 const modalVariants = {
   initial: { opacity: 0, scale: 0.95 },
   animate: { opacity: 1, scale: 1 },
   exit: { opacity: 0, scale: 0.95 },
 };
+
+interface ChannelFilterModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  results: VideoItem[];
+  channelFilters: string[];
+  setChannelFilters: (filters: string[]) => void;
+  translations: Translation;
+}
 
 export const ChannelFilterModal = ({
   isOpen,
@@ -17,12 +26,12 @@ export const ChannelFilterModal = ({
   channelFilters,
   setChannelFilters,
   translations,
-}) => {
+}: ChannelFilterModalProps) => {
   const uniqueChannels = Array.from(
     new Set(results.map((r) => r.snippet.channelId)),
   );
 
-  const handleToggleChannel = (channelId, isChecked) => {
+  const handleToggleChannel = (channelId: string, isChecked: boolean) => {
     if (isChecked) {
       setChannelFilters([...channelFilters, channelId]);
     } else {
@@ -79,13 +88,4 @@ export const ChannelFilterModal = ({
       </motion.div>
     </Dialog>
   );
-};
-
-ChannelFilterModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  results: PropTypes.array.isRequired,
-  channelFilters: PropTypes.array.isRequired,
-  setChannelFilters: PropTypes.func.isRequired,
-  translations: PropTypes.object.isRequired,
 };

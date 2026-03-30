@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +8,16 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import type { Translation } from "../../lib/types";
+
+interface SiteRequestModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  siteInput: string;
+  setSiteInput: (v: string) => void;
+  onSubmit: () => void;
+  translations: Translation;
+}
 
 export const SiteRequestModal = ({
   isOpen,
@@ -17,7 +26,7 @@ export const SiteRequestModal = ({
   setSiteInput,
   onSubmit,
   translations,
-}) => {
+}: SiteRequestModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onClick={(e) => e.stopPropagation()}>
@@ -44,13 +53,4 @@ export const SiteRequestModal = ({
       </DialogContent>
     </Dialog>
   );
-};
-
-SiteRequestModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  siteInput: PropTypes.string.isRequired,
-  setSiteInput: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  translations: PropTypes.object.isRequired,
 };

@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +7,16 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
+import type { SearchResultItem, Translation } from "../../lib/types";
+
+interface FilterModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  searchResults: SearchResultItem[];
+  siteFilters: string[];
+  setSiteFilters: (filters: string[]) => void;
+  translations: Translation;
+}
 
 export const FilterModal = ({
   isOpen,
@@ -16,12 +25,12 @@ export const FilterModal = ({
   siteFilters,
   setSiteFilters,
   translations,
-}) => {
+}: FilterModalProps) => {
   const uniqueSites = Array.from(
     new Set(searchResults.map((result) => new URL(result.link).hostname)),
   );
 
-  const handleToggleSite = (site, isChecked) => {
+  const handleToggleSite = (site: string, isChecked: boolean) => {
     if (isChecked) {
       setSiteFilters([...siteFilters, site]);
     } else {
@@ -62,13 +71,4 @@ export const FilterModal = ({
       </DialogContent>
     </Dialog>
   );
-};
-
-FilterModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  searchResults: PropTypes.array.isRequired,
-  siteFilters: PropTypes.array.isRequired,
-  setSiteFilters: PropTypes.func.isRequired,
-  translations: PropTypes.object.isRequired,
 };

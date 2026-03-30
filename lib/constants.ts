@@ -1,8 +1,4 @@
-// ---------------------------------------------------------------------------
-// Search sites
-// ---------------------------------------------------------------------------
-
-export const DEFAULT_SITES = [
+export const DEFAULT_SITES: string[] = [
   "binothaimeen.net",
   "alfawzan.af.org.sa",
   "lohaidan.af.org.sa",
@@ -15,7 +11,7 @@ export const DEFAULT_SITES = [
   "rabee.net",
 ];
 
-export const ENGLISH_SITES = [
+export const ENGLISH_SITES: string[] = [
   "islamtees.wordpress.com",
   "bakkah.net",
   "greatrewards.abdurrahman.org",
@@ -67,11 +63,7 @@ export const ENGLISH_SITES = [
   "quran.com",
 ];
 
-// ---------------------------------------------------------------------------
-// Site display labels
-// ---------------------------------------------------------------------------
-
-export const SITE_LABELS_AR = {
+export const SITE_LABELS_AR: Record<string, string> = {
   "binothaimeen.net": "ابن عثيمين",
   "alfawzan.af.org.sa": "الفوزان",
   "lohaidan.af.org.sa": "اللحيدان",
@@ -84,11 +76,7 @@ export const SITE_LABELS_AR = {
   "rabee.net": "ربيع المدخلي",
 };
 
-// ---------------------------------------------------------------------------
-// YouTube channels
-// ---------------------------------------------------------------------------
-
-export const ARABIC_CHANNELS = [
+export const ARABIC_CHANNELS: string[] = [
   "UCFjzJYgxHjk44AFoEwwgPjg",
   "UCi7vzSJrU3beV_6Sdgpowng",
   "UCMgtvQNueoOwjAgo-fMF-lQ",
@@ -112,17 +100,7 @@ export const ARABIC_CHANNELS = [
   "UC0ljB6Xfg9RWjFWNb4JO-IQ",
 ];
 
-// export const ENGLISH_CHANNELS = [];
-
-// ---------------------------------------------------------------------------
-// Pagination
-// ---------------------------------------------------------------------------
-
 export const RESULTS_PER_PAGE = 10;
 
-// ---------------------------------------------------------------------------
-// Supported languages
-// ---------------------------------------------------------------------------
-
-export const SUPPORTED_LANGUAGES = ["en", "ar"];
+export const SUPPORTED_LANGUAGES = ["en", "ar"] as const;
 export const DEFAULT_LANGUAGE = "en";

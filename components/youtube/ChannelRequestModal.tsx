@@ -1,15 +1,24 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Dialog } from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import type { Translation } from "../../lib/types";
 
 const modalVariants = {
   initial: { opacity: 0, scale: 0.95 },
   animate: { opacity: 1, scale: 1 },
   exit: { opacity: 0, scale: 0.95 },
 };
+
+interface ChannelRequestModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  channelRequest: string;
+  setChannelRequest: (v: string) => void;
+  onSubmit: () => void;
+  translations: Translation;
+}
 
 export const ChannelRequestModal = ({
   isOpen,
@@ -18,7 +27,7 @@ export const ChannelRequestModal = ({
   setChannelRequest,
   onSubmit,
   translations,
-}) => {
+}: ChannelRequestModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <motion.div
@@ -51,13 +60,4 @@ export const ChannelRequestModal = ({
       </motion.div>
     </Dialog>
   );
-};
-
-ChannelRequestModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  channelRequest: PropTypes.string.isRequired,
-  setChannelRequest: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  translations: PropTypes.object.isRequired,
 };

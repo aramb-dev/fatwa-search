@@ -7,48 +7,51 @@ import { Play as Youtube, Search as SearchIcon } from "lucide-react";
 import { clsx } from "clsx";
 import { translations } from "../../translations";
 import ErrorBoundary from "../../components/ErrorBoundary";
+import type { Language } from "../../lib/types";
+import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from "../../lib/constants";
 
-const cn = (...args) => clsx(...args);
+const cn = (...args: Parameters<typeof clsx>) => clsx(...args);
 
+function toLanguage(lang: string): Language {
+  return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang)
+    ? (lang as Language)
+    : DEFAULT_LANGUAGE;
+}
 
-export default function LanguageLayout({ children, params }) {
+export default function LanguageLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ lang: string }>;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const { lang } = React.use(params);
-  const [language, setLanguage] = useState(lang);
-  // Derived directly from pathname rather than useState so it stays in sync
-  // with the Next.js route on every render — including browser back/forward.
-  // Using state + useEffect caused a one-render lag where Radix Tabs saw a
-  // mismatched value/content pair and rendered nothing.
+  const { lang: rawLang } = React.use(params);
+  const lang = toLanguage(rawLang);
+  const [language, setLanguage] = useState<Language>(lang);
   const activeTab = pathname.includes("/yt-search") ? "youtube" : "search";
 
-  // Handle language changes
-  const handleLanguageChange = (newLang) => {
+  const handleLanguageChange = (newLang: Language): void => {
     setLanguage(newLang);
     localStorage.setItem("language", newLang);
-
-    // Update URL to include language prefix
     const currentPath = pathname
-      .replace(/^\/[a-z]{2}\//, "/") // Remove any existing language prefix
-      .replace(/^\//, ""); // Remove leading slash
-
+      .replace(/^\/[a-z]{2}\//, "/")
+      .replace(/^\//, "");
     const newPath = `/${newLang}/${currentPath || "search"}`;
     router.push(newPath);
   };
 
-  // Handle tab changes with language prefix
-  const handleTabChange = (value) => {
+  const handleTabChange = (value: string) => {
     const newPath = `/${language}/${value === "youtube" ? "yt-search" : "search"}`;
     router.push(newPath);
   };
 
-  // Update language from params
   useEffect(() => {
     setLanguage(lang);
     localStorage.setItem("language", lang);
   }, [lang]);
 
-  // Set document direction based on language
   useEffect(() => {
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
@@ -56,7 +59,6 @@ export default function LanguageLayout({ children, params }) {
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 px-4">
-      {/* Language toggle above tabs */}
       <div className="flex justify-center mb-4">
         <div className="inline-flex items-center rounded-full border bg-white p-0.5 shadow-sm gap-0.5">
           <button
@@ -66,9 +68,7 @@ export default function LanguageLayout({ children, params }) {
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
-              language === "en"
-                ? "bg-gray-100 text-gray-900 shadow-sm"
-                : "text-gray-500",
+              language === "en" ? "bg-gray-100 text-gray-900 shadow-sm" : "text-gray-500",
             )}
           >
             EN
@@ -80,9 +80,7 @@ export default function LanguageLayout({ children, params }) {
               "ring-offset-white transition-all focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2",
               "disabled:pointer-events-none disabled:opacity-50",
-              language === "ar"
-                ? "bg-gray-100 text-gray-900 shadow-sm"
-                : "text-gray-500",
+              language === "ar" ? "bg-gray-100 text-gray-900 shadow-sm" : "text-gray-500",
             )}
           >
             ع

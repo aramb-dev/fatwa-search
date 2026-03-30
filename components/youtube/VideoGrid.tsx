@@ -1,7 +1,7 @@
 import React from "react";
-import PropTypes from "prop-types";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import type { VideoItem } from "../../lib/types";
 
 const cardVariants = {
   initial: { opacity: 0, y: 20 },
@@ -9,7 +9,12 @@ const cardVariants = {
   exit: { opacity: 0, y: -20 },
 };
 
-export const VideoGrid = ({ videos, onVideoClick }) => {
+interface VideoGridProps {
+  videos: VideoItem[];
+  onVideoClick: (video: VideoItem) => void;
+}
+
+export const VideoGrid = ({ videos, onVideoClick }: VideoGridProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <AnimatePresence>
@@ -56,24 +61,4 @@ export const VideoGrid = ({ videos, onVideoClick }) => {
       </AnimatePresence>
     </div>
   );
-};
-
-VideoGrid.propTypes = {
-  videos: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.shape({
-        videoId: PropTypes.string.isRequired,
-      }).isRequired,
-      snippet: PropTypes.shape({
-        title: PropTypes.string.isRequired,
-        channelTitle: PropTypes.string.isRequired,
-        thumbnails: PropTypes.shape({
-          medium: PropTypes.shape({
-            url: PropTypes.string.isRequired,
-          }).isRequired,
-        }).isRequired,
-      }).isRequired,
-    }),
-  ).isRequired,
-  onVideoClick: PropTypes.func.isRequired,
 };

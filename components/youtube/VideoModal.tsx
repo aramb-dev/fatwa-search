@@ -1,11 +1,17 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { Dialog } from "@radix-ui/react-dialog";
 import { motion } from "framer-motion";
 import { Button } from "../ui/button";
 import { Play as Youtube, X } from "lucide-react";
+import type { VideoItem, Translation } from "../../lib/types";
 
-export const VideoModal = ({ video, onClose, translations }) => {
+interface VideoModalProps {
+  video: VideoItem | null;
+  onClose: () => void;
+  translations: Translation;
+}
+
+export const VideoModal = ({ video, onClose, translations }: VideoModalProps) => {
   if (!video) return null;
 
   return (
@@ -48,17 +54,4 @@ export const VideoModal = ({ video, onClose, translations }) => {
       </motion.div>
     </Dialog>
   );
-};
-
-VideoModal.propTypes = {
-  video: PropTypes.shape({
-    id: PropTypes.shape({
-      videoId: PropTypes.string.isRequired,
-    }).isRequired,
-    snippet: PropTypes.shape({
-      title: PropTypes.string.isRequired,
-    }).isRequired,
-  }),
-  onClose: PropTypes.func.isRequired,
-  translations: PropTypes.object.isRequired,
 };

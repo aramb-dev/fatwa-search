@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +7,16 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
+import type { Translation } from "../../lib/types";
+
+interface FeedbackModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  feedback: string;
+  setFeedback: (v: string) => void;
+  onSubmit: () => void;
+  translations: Translation;
+}
 
 export const FeedbackModal = ({
   isOpen,
@@ -16,7 +25,7 @@ export const FeedbackModal = ({
   setFeedback,
   onSubmit,
   translations,
-}) => {
+}: FeedbackModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent onClick={(e) => e.stopPropagation()}>
@@ -45,13 +54,4 @@ export const FeedbackModal = ({
       </DialogContent>
     </Dialog>
   );
-};
-
-FeedbackModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  feedback: PropTypes.string.isRequired,
-  setFeedback: PropTypes.func.isRequired,
-  onSubmit: PropTypes.func.isRequired,
-  translations: PropTypes.object.isRequired,
 };

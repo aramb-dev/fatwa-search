@@ -202,7 +202,7 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
   }, [searchParams, performYoutubeSearch]);
 
   /**
-   * Handles YouTube channel request form submission via Netlify Forms
+   * Handles YouTube channel request form submission
    * Validates input URL format and submits new channel request
    * @returns {Promise<void>}
    */

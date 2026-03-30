@@ -4,32 +4,6 @@ const nextConfig = {
   // output: 'export',
   // trailingSlash: true,
   
-  // Configure redirects for external config routes
-  async redirects() {
-    return [
-      {
-        source: '/config',
-        destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: true,
-      },
-      {
-        source: '/:lang(en|ar)/config',
-        destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: true,
-      },
-      {
-        source: '/:lang(en|ar)/search/config',
-        destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: true,
-      },
-      {
-        source: '/:lang(en|ar)/yt-search/config',
-        destination: 'https://app.netlify.com/sites/fatwa-search/overview',
-        permanent: true,
-      },
-    ];
-  },
-  
   // Configure rewrites for root redirections
   async rewrites() {
     return [

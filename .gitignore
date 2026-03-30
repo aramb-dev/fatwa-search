@@ -30,14 +30,9 @@ yarn-error.log*
 .env
 .env*.local
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
 # macOS resource forks
 ._*
-# Local Netlify folder
-.netlify

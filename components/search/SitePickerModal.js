@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { SITE_LABELS_EN, SITE_LABELS_AR } from "../../lib/constants";
+import { SITE_LABELS_AR } from "../../lib/constants";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import { Button } from "../ui/button";
 import { Check, BookOpen, Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-export { SITE_LABELS_EN, SITE_LABELS_AR };
+export { SITE_LABELS_AR };
 
 const MenuItem = ({ icon: Icon, label, sublabel, checked, onClick }) => (
   <button
@@ -57,7 +57,7 @@ export const SitePickerModal = ({
   isEnglish,
 }) => {
   const [activeTab, setActiveTab] = useState("all");
-  const SITE_LABELS = isEnglish ? SITE_LABELS_EN : SITE_LABELS_AR;
+  const SITE_LABELS = SITE_LABELS_AR;
 
   const tabs = isEnglish
     ? [{ id: "all", label: translations.tabAll || "All" }]

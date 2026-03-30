@@ -15,7 +15,6 @@ import { searchCache } from "../lib/cache";
 import {
   DEFAULT_SITES,
   ENGLISH_SITES,
-  SITE_LABELS_EN,
   SITE_LABELS_AR,
   RESULTS_PER_PAGE,
 } from "../lib/constants";
@@ -445,7 +444,7 @@ const SearchComponent = ({ language = "en" }) => {
                   )
                 }
 
-                const siteLabels = isEnglish ? SITE_LABELS_EN : SITE_LABELS_AR
+                const siteLabels = SITE_LABELS_AR
                 const sep = isEnglish ? ", " : "، "
                 if (selectedSites.length === 0) return null
 

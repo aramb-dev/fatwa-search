@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
+import { SITE_LABELS_EN, SITE_LABELS_AR } from "../../lib/constants";
 import {
   Dialog,
   DialogContent,
@@ -11,31 +12,7 @@ import { Button } from "../ui/button";
 import { Check, BookOpen, Plus } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-export const SITE_LABELS_EN = {
-  "binothaimeen.net": "Ibn Uthaimeen",
-  "alfawzan.af.org.sa": "Al-Fawzan",
-  "lohaidan.af.org.sa": "Al-Luhaydan",
-  "binbaz.org.sa": "Ibn Baz",
-  "al-badr.net": "Al-Badr",
-  "obied-aljabri.com": "Al-Jabri",
-  "aletioupi.com": "Aal Al-Shaikh",
-  "miraath.net": "Miraath",
-  "al-albany.com": "Al-Albani",
-  "rabee.net": "Rabee",
-};
-
-export const SITE_LABELS_AR = {
-  "binothaimeen.net": "ابن عثيمين",
-  "alfawzan.af.org.sa": "الفوزان",
-  "lohaidan.af.org.sa": "اللحيدان",
-  "binbaz.org.sa": "ابن باز",
-  "al-badr.net": "البدر",
-  "obied-aljabri.com": "الجابري",
-  "aletioupi.com": "آل الشيخ",
-  "miraath.net": "ميراث الأنبياء",
-  "al-albany.com": "الألباني",
-  "rabee.net": "ربيع المدخلي",
-};
+export { SITE_LABELS_EN, SITE_LABELS_AR };
 
 const MenuItem = ({ icon: Icon, label, sublabel, checked, onClick }) => (
   <button

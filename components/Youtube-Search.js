@@ -12,31 +12,8 @@ import { VideoModal } from "./youtube/VideoModal";
 import { ChannelRequestModal } from "./youtube/ChannelRequestModal";
 import { ChannelFilterModal } from "./youtube/ChannelFilterModal";
 import { youtubeCache } from "../lib/cache";
+import { CHANNELS, RESULTS_PER_PAGE } from "../lib/constants";
 
-// Default channels array
-const CHANNELS = [
-  "UCFjzJYgxHjk44AFoEwwgPjg",
-  "UCi7vzSJrU3beV_6Sdgpowng",
-  "UCMgtvQNueoOwjAgo-fMF-lQ",
-  "UCphY7uVzua2z_Mq1oZcOXGA",
-  "UCQPQtAxx45gjN44ZOw4cqmw",
-  "UCtF3YygTiodnYSw8vD3UJtQ",
-  "UCP44H-iDsDp-_wV85QKkdVA",
-  "UCPPQcw5SA1yeQHttDbdxXGw",
-  "UC-V7X5AL2krPtSanQEbCbAQ",
-  "UCwMocSKEbLav6SZvwzTvDbQ",
-  "UC6u5aFIhKDOC_WYKVLBw8Dg",
-  "UCS-XgiMGKaiQsZNkgwsDbYg",
-  "UCWSfNmixfPlKg9OCoqghwwg",
-  "UCiiJRwQ0MUaQo8ZZuf18pPw",
-  "UCO_MLsqOIoqYXbSXfyqluxw",
-  "UCYbR2Su3mqwl88US4eyrQdg",
-  "UCLHZET13eDxW-z1tSKTAdVg",
-  "UCXI4M81wRAVYlFPw7V1l3Mw",
-  "UCYZkmbBbVMWxB1gyioTPLIA",
-  "UCleHL3J-q13VVmy7_WwFLCw",
-  "UC0ljB6Xfg9RWjFWNb4JO-IQ",
-];
 
 const YoutubeSearch = ({ translations, language = "ar" }) => {
   // State declarations
@@ -56,7 +33,7 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
   const initialLoadDoneRef = useRef(false);
   const previousSearchRef = useRef("");
   const abortControllerRef = useRef(null);
-  const resultsPerPage = 10;
+  const resultsPerPage = RESULTS_PER_PAGE;
 
   /**
    * Performs a YouTube search across configured scholar channels

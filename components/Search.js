@@ -10,77 +10,21 @@ import { translations } from "../translations";
 import { FeedbackModal } from "./search/FeedbackModal";
 import { SiteRequestModal } from "./search/SiteRequestModal";
 import { FilterModal } from "./search/FilterModal";
-import { SitePickerModal, SITE_LABELS_EN, SITE_LABELS_AR } from "./search/SitePickerModal";
+import { SitePickerModal } from "./search/SitePickerModal";
 import { searchCache } from "../lib/cache";
+import {
+  DEFAULT_SITES,
+  ENGLISH_SITES,
+  SITE_LABELS_EN,
+  SITE_LABELS_AR,
+  RESULTS_PER_PAGE,
+} from "../lib/constants";
 import PropTypes from "prop-types";
 import { cn } from "../lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 
-export const DEFAULT_SITES = [
-  "binothaimeen.net",
-  "alfawzan.af.org.sa",
-  "lohaidan.af.org.sa",
-  "binbaz.org.sa",
-  "al-badr.net",
-  "obied-aljabri.com",
-  "aletioupi.com",
-  "miraath.net",
-  "al-albany.com",
-  "rabee.net",
-];
-
-export const ENGLISH_SITES = [
-  "islamtees.wordpress.com",
-  "bakkah.net",
-  "greatrewards.abdurrahman.org",
-  "authentic-dua.com",
-  "thenoblequran.com",
-  "sunnah.com",
-  "salaf.com",
-  "aqidah.com",
-  "tawhidfirst.com",
-  "abovethethrone.com",
-  "manhaj.com",
-  "salafis.com",
-  "piousmuslim.com",
-  "ibntaymiyyah.com",
-  "themadkhalis.com",
-  "wahhabis.com",
-  "sahihalbukhari.com",
-  "sahihmuslim.com",
-  "nawawis40hadith.com",
-  "fatwaislam.com",
-  "learnaboutislam.co.uk",
-  "salafisounds.com",
-  "sunnahaudio.com",
-  "sunnahradio.net",
-  "troid.org",
-  "bidah.com",
-  "islamagainstextremism.com",
-  "kharijites.com",
-  "takfiris.com",
-  "mutazilah.com",
-  "asharis.com",
-  "maturidis.com",
-  "sayyidqutb.com",
-  "ikhwanis.com",
-  "barelwis.com",
-  "shariah.ws",
-  "dajjaal.com",
-  "aboutatheism.net",
-  "islamjesus.ws",
-  "islammoses.com",
-  "islaam.ca",
-  "prophetmuhammad.name",
-  "abukhadeejah.com",
-  "embodyislam.org",
-  "knowledgeofislamblog.wordpress.com",
-  "miraathpubs.net",
-  "mpubs.org",
-  "dusunnah.com",
-  "quran.com",
-];
+export { DEFAULT_SITES, ENGLISH_SITES };
 
 const resultsVariants = {
   initial: { opacity: 0, y: 10 },
@@ -95,7 +39,7 @@ const SearchComponent = ({ language = "en" }) => {
     t = translations.en;
   }
 
-  const resultsPerPage = 10;
+  const resultsPerPage = RESULTS_PER_PAGE;
 
   const getErrorMessage = (error) => {
     const msg = error.message.toLowerCase();

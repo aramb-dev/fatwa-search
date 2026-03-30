@@ -147,7 +147,8 @@ const SearchComponent = ({ language = "en" }) => {
   }, []);
 
   const performSearch = useCallback(
-    async (start, isNewSearch = false) => {
+    async (start, isNewSearch = false, queryOverride) => {
+      const activeQuery = queryOverride !== undefined ? queryOverride : searchQuery;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -162,7 +163,7 @@ const SearchComponent = ({ language = "en" }) => {
           almaany: "almaany.com",
         };
 
-        const cacheKey = { query: searchQuery, mode: searchMode, sites: selectedSites, start };
+        const cacheKey = { query: activeQuery, mode: searchMode, sites: selectedSites, start };
         const cachedResults = searchCache.get(cacheKey);
 
         if (cachedResults && isNewSearch) {
@@ -179,7 +180,7 @@ const SearchComponent = ({ language = "en" }) => {
           // Dedicated library mode — single API call to the selected site
           const domain = libraryDomains[searchMode];
           const response = await fetch(
-            `/api/search?q=${encodeURIComponent(searchQuery)}&site=${domain}&start=${start}&lang=${language}`,
+            `/api/search?q=${encodeURIComponent(activeQuery)}&site=${domain}&start=${start}&lang=${language}`,
             { signal },
           );
           const data = await response.json();
@@ -191,7 +192,7 @@ const SearchComponent = ({ language = "en" }) => {
             const regularSiteQuery = selectedSites
               .map((site) => `site:${site}`)
               .join(" OR ");
-            const combinedQuery = `(${regularSiteQuery}) ${searchQuery}`;
+            const combinedQuery = `(${regularSiteQuery}) ${activeQuery}`;
             const response = await fetch(
               `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
               { signal },
@@ -257,7 +258,7 @@ const SearchComponent = ({ language = "en" }) => {
       setSearchQuery(queryParam);
       initialLoadDoneRef.current = true;
       setHasSearched(true);
-      performSearch(1, true);
+      performSearch(1, true, queryParam);
     }
   }, [searchParams, performSearch]);
 

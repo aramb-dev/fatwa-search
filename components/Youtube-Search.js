@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import { Play as Youtube, Filter, Share2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -277,9 +278,9 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Create URL with correct path
+    // Create URL with correct path, preserving the language prefix
     const url = new URL(window.location.href);
-    url.pathname = "/yt-search"; // Ensure we're on the YouTube search path
+    url.pathname = `/${language}/yt-search`;
     url.searchParams.set("q", searchQuery);
 
     if (navigator.share) {
@@ -411,8 +412,6 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
     </div>
   );
 };
-
-import PropTypes from "prop-types";
 
 YoutubeSearch.propTypes = {
   translations: PropTypes.object.isRequired,

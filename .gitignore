@@ -23,6 +23,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# bun
+.bun-cache/
+
 # local env files
 .env
 .env*.local

@@ -1,0 +1,11 @@
+[install]
+# Use the lockfile for reproducible installs
+frozen = false
+
+[install.cache]
+# Share the global cache across projects
+dir = "~/.bun/install/cache"
+
+[run]
+# Bun will use its own JS runtime for scripts where possible
+bun = true

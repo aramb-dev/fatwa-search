@@ -12,7 +12,7 @@ import { VideoModal } from "./youtube/VideoModal";
 import { ChannelRequestModal } from "./youtube/ChannelRequestModal";
 import { ChannelFilterModal } from "./youtube/ChannelFilterModal";
 import { youtubeCache } from "../lib/cache";
-import { CHANNELS, RESULTS_PER_PAGE } from "../lib/constants";
+import { ARABIC_CHANNELS, RESULTS_PER_PAGE } from "../lib/constants";
 
 
 const YoutubeSearch = ({ translations, language = "ar" }) => {
@@ -62,7 +62,7 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
       }
 
       try {
-        const channelsToSearch = CHANNELS.slice(
+        const channelsToSearch = ARABIC_CHANNELS.slice(
           isNewSearch ? 0 : startIndex,
           isNewSearch ? resultsPerPage : startIndex + resultsPerPage,
         );
@@ -77,7 +77,7 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
 
         if (cachedResults && isNewSearch) {
           setResults(cachedResults);
-          setHasMore(startIndex + resultsPerPage < CHANNELS.length);
+          setHasMore(startIndex + resultsPerPage < ARABIC_CHANNELS.length);
           setLoading(false);
           return;
         }
@@ -122,7 +122,7 @@ const YoutubeSearch = ({ translations, language = "ar" }) => {
           return finalResults;
         });
 
-        setHasMore(startIndex + resultsPerPage < CHANNELS.length);
+        setHasMore(startIndex + resultsPerPage < ARABIC_CHANNELS.length);
         if (!isNewSearch) {
           setStartIndex((prev) => prev + resultsPerPage);
         }

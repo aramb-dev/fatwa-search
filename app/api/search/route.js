@@ -48,7 +48,7 @@ export async function GET(request) {
     }
 
     // Build search query with site restriction if provided
-    const searchQuery = site ? `site:${site} ${query}` : query;
+    const searchQuery = site ? `${query} site:${site}` : query;
 
     // Make request to Google Custom Search API
     const apiUrl = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&start=${start}`;

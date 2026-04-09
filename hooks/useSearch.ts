@@ -130,8 +130,15 @@ export function useSearch({ language, t }: UseSearchOptions): UseSearchReturn {
           allResults = data.items || [];
         } else {
           if (selectedSites.length > 0) {
-            const regularSiteQuery = selectedSites.map((site) => `site:${site}`).join(" OR ");
-            const combinedQuery = `(${regularSiteQuery}) ${activeQuery}`;
+            const isAllSitesSelected = selectedSites.length === sitesForLanguage.length;
+            
+            // If all sites are selected, we don't need to pass site: operators
+            // This is an optimization that avoids Google's 32-word limit.
+            // It assumes the Custom Search Engine (cx) is already configured to search these sites.
+            const combinedQuery = isAllSitesSelected
+              ? activeQuery
+              : `${activeQuery} (${selectedSites.map((site) => `site:${site}`).join(" OR ")})`;
+
             const response = await fetch(
               `/api/search?q=${encodeURIComponent(combinedQuery)}&start=${start}&lang=${language}`,
               { signal },

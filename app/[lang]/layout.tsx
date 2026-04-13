@@ -3,7 +3,7 @@ import LanguageShell from "./_components/LanguageShell"
 import type { Language } from "../../lib/types"
 import { SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from "../../lib/constants"
 
-const BASE_URL = "https://is-search.aramb.dev"
+const BASE_URL = "https://search.aramb.dev"
 
 function toLanguage(lang: string): Language {
   return (SUPPORTED_LANGUAGES as readonly string[]).includes(lang)

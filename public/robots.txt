@@ -2,4 +2,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://is-search.aramb.dev/sitemap.xml
+Sitemap: https://search.aramb.dev/sitemap.xml

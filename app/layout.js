@@ -6,7 +6,7 @@ export const metadata = {
   title: "Ilm Search - بحث العلم",
   description:
     "Search Islamic knowledge across verified scholar sites and curated YouTube channels from the Mashāyikh - ابحث في مواقع المشايخ وقنوات اليوتيوب الموثوقة",
-  metadataBase: new URL("https://is-search.aramb.dev"),
+  metadataBase: new URL("https://search.aramb.dev"),
   icons: {
     icon: { url: "/favicon.svg", type: "image/svg+xml" },
   },
@@ -14,7 +14,7 @@ export const metadata = {
     title: "Ilm Search - بحث العلم",
     description:
       "Search Islamic knowledge across verified scholar sites and curated YouTube channels from the Mashāyikh",
-    url: "https://is-search.aramb.dev",
+    url: "https://search.aramb.dev",
     siteName: "Ilm Search",
     type: "website",
   },

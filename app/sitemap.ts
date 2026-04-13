@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next"
 
-const BASE_URL = "https://is-search.aramb.dev"
+const BASE_URL = "https://search.aramb.dev"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

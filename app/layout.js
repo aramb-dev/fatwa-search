@@ -5,15 +5,30 @@ import Script from "next/script";
 export const metadata = {
   title: "Ilm Search - بحث العلم",
   description:
-    "Search Islamic knowledge across scholar sites, books, and references - ابحث في العلم الإسلامي عبر مواقع العلماء والكتب والمراجع",
+    "Search Islamic knowledge across verified scholar sites and curated YouTube channels from the Mashāyikh - ابحث في مواقع المشايخ وقنوات اليوتيوب الموثوقة",
+  metadataBase: new URL("https://is-search.aramb.dev"),
   icons: {
     icon: { url: "/favicon.svg", type: "image/svg+xml" },
+  },
+  openGraph: {
+    title: "Ilm Search - بحث العلم",
+    description:
+      "Search Islamic knowledge across verified scholar sites and curated YouTube channels from the Mashāyikh",
+    url: "https://is-search.aramb.dev",
+    siteName: "Ilm Search",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Ilm Search - بحث العلم",
+    description:
+      "Search Islamic knowledge across verified scholar sites and curated YouTube channels from the Mashāyikh",
   },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="en">
       <head>
         {/* Microsoft Clarity */}
         <Script id="clarity-script" strategy="afterInteractive">
